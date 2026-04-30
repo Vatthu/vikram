@@ -1,0 +1,35 @@
+<div class="grid">
+    <div class="card">
+        <div class="label">Uptime</div>
+        <div class="value" style="font-size:1.5rem">{{.Uptime}}</div>
+    </div>
+    <div class="card">
+        <div class="label">Tracked Users</div>
+        <div class="value">{{.TrackedUsers}}</div>
+    </div>
+    <div class="card">
+        <div class="label">Event Sources</div>
+        <div class="value">{{.EventSources}}</div>
+        <div class="sub">{{.EventSubscriptions}} subscriptions</div>
+    </div>
+    <div class="card">
+        <div class="label">Pending Jobs</div>
+        <div class="value">{{.PendingJobs}}</div>
+    </div>
+    <div class="card">
+        <div class="label">Knowledge Docs</div>
+        <div class="value">{{.KnowledgeDocs}}</div>
+    </div>
+    <div class="card">
+        <div class="label">Connected Devices</div>
+        <div class="value">{{.ConnectedDevices}}</div>
+    </div>
+    <div class="card">
+        <div class="label">WebSocket Clients</div>
+        <div class="value">{{.WebSocketClients}}</div>
+    </div>
+    <div class="card">
+        <div class="label">Version</div>
+        <div class="value" style="font-size:1rem">{{if .Version}}{{.Version}}{{else}}dev{{end}}</div>
+    </div>
+</div>

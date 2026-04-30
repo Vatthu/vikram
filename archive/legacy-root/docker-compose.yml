@@ -1,0 +1,40 @@
+services:
+  # ─────────────────────────────────────────────
+  # LeVik Agent (one-shot query)
+  #   docker compose run --rm levik-agent -m "Hello"
+  # ─────────────────────────────────────────────
+  levik-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: levik-agent
+    profiles:
+      - agent
+    volumes:
+      - ./config/config.json:/home/levik/.levik/config.json:ro
+      - levik-workspace:/home/levik/.levik/workspace
+    entrypoint: ["levik", "agent"]
+    stdin_open: true
+    tty: true
+
+  # ─────────────────────────────────────────────
+  # LeVik Gateway (Long-running Bot)
+  #   docker compose up levik-gateway
+  # ─────────────────────────────────────────────
+  levik-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: levik-gateway
+    restart: unless-stopped
+    profiles:
+      - gateway
+    volumes:
+      # Configuration file
+      - ./config/config.json:/home/levik/.levik/config.json:ro
+      # Persistent workspace (sessions, memory, logs)
+      - levik-workspace:/home/levik/.levik/workspace
+    command: ["gateway"]
+
+volumes:
+  levik-workspace:

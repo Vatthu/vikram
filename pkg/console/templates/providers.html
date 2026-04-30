@@ -1,0 +1,43 @@
+<div class="card">
+  <div class="card-header">
+    <h2>Providers</h2>
+    <span class="count">{{len .Providers}} configured</span>
+  </div>
+  <table>
+    <tr><th>Provider</th><th>API Key</th><th>Status</th><th>Endpoint</th></tr>
+    {{range .Providers}}
+    <tr>
+      <td style="font-weight:600">{{.Name}}</td>
+      <td><span class="prov-key">{{if .Key}}{{.Key}}{{else}}—{{end}}</span></td>
+      <td>
+        <div class="status-row">
+          <span class="status-dot {{if eq .Status "configured"}}on{{else}}off{{end}}"></span>
+          {{.Status}}
+        </div>
+      </td>
+      <td class="mono" style="font-size:11px;color:var(--muted)">{{if .Base}}{{.Base}}{{else}}default{{end}}</td>
+    </tr>
+    {{end}}
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2>Configure Provider</h2></div>
+  <form hx-post="/providers/save" hx-target="#content">
+    <div class="form-row form-row-3">
+      <select name="name" required>
+        <option value="">Provider...</option>
+        <option value="deepseek">DeepSeek</option>
+        <option value="mistral">Mistral AI</option>
+        <option value="nvidia">NVIDIA NIM</option>
+        <option value="zhipu">Zhipu (GLM)</option>
+        <option value="openai">OpenAI</option>
+        <option value="anthropic">Anthropic</option>
+        <option value="openrouter">OpenRouter</option>
+      </select>
+      <input type="text" name="key" placeholder="API Key">
+      <input type="text" name="base" placeholder="API Base URL (optional)">
+    </div>
+    <button type="submit" class="btn btn-primary">Save Provider</button>
+  </form>
+</div>

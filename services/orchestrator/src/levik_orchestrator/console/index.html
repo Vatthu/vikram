@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LeVik Founder Console</title>
+    <link rel="stylesheet" href="/console/static/founder-console.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Founder operations</p>
+          <h1>LeVik Founder Console</h1>
+          <p class="lede">
+            Thin operator surface for review, approval, and follow-up. The API
+            contract stays stable so a larger frontend can replace this later
+            without touching workflow logic.
+          </p>
+        </div>
+        <div class="hero-metrics">
+          <div class="metric-card">
+            <span class="metric-label">Queue</span>
+            <strong id="metric-review-count">0</strong>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Follow-up</span>
+            <strong id="metric-follow-up-count">0</strong>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Loaded task</span>
+            <strong id="metric-current-task">None</strong>
+          </div>
+        </div>
+      </header>
+
+      <main class="console-grid">
+        <aside class="panel queue-panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-kicker">Queue</p>
+              <h2>Tasks</h2>
+            </div>
+            <button id="refresh-tasks" class="ghost-button" type="button">
+              Refresh
+            </button>
+          </div>
+
+          <form id="filters" class="filters">
+            <label>
+              <span>Status</span>
+              <select id="filter-status">
+                <option value="">All</option>
+                <option value="awaiting_approval">Awaiting approval</option>
+                <option value="paused">Paused</option>
+                <option value="running">Running</option>
+                <option value="completed">Completed</option>
+                <option value="failed">Failed</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Phase</span>
+              <input
+                id="filter-phase"
+                type="text"
+                placeholder="founder_review_requested"
+              />
+            </label>
+
+            <label class="toggle">
+              <input id="filter-needs-review" type="checkbox" checked />
+              <span>Review queue only</span>
+            </label>
+
+            <label class="toggle">
+              <input id="filter-follow-up" type="checkbox" />
+              <span>Follow-up required only</span>
+            </label>
+          </form>
+
+          <div id="task-list" class="task-list"></div>
+        </aside>
+
+        <section class="panel detail-panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-kicker">Review</p>
+              <h2 id="detail-title">Select a task</h2>
+            </div>
+            <div id="detail-badge" class="status-badge subtle">Idle</div>
+          </div>
+
+          <div id="flash" class="flash hidden"></div>
+
+          <section id="detail-summary" class="detail-grid hidden">
+            <article class="card">
+              <h3>Task</h3>
+              <dl class="fact-list">
+                <div>
+                  <dt>Objective</dt>
+                  <dd id="task-objective"></dd>
+                </div>
+                <div>
+                  <dt>Status</dt>
+                  <dd id="task-status"></dd>
+                </div>
+                <div>
+                  <dt>Phase</dt>
+                  <dd id="task-phase"></dd>
+                </div>
+                <div>
+                  <dt>Risk</dt>
+                  <dd id="task-risk"></dd>
+                </div>
+                <div>
+                  <dt>Route</dt>
+                  <dd id="task-route"></dd>
+                </div>
+                <div>
+                  <dt>Summary</dt>
+                  <dd id="task-summary"></dd>
+                </div>
+              </dl>
+            </article>
+
+            <article class="card">
+              <h3>Approval</h3>
+              <div id="approval-request" class="stack"></div>
+            </article>
+
+            <article class="card">
+              <h3>Follow-up</h3>
+              <div id="follow-up" class="stack"></div>
+            </article>
+
+            <article class="card">
+              <h3>Merge Readiness</h3>
+              <div id="merge-readiness" class="stack"></div>
+            </article>
+
+            <article class="card">
+              <h3>Artifacts</h3>
+              <ul id="artifact-list" class="artifact-list"></ul>
+            </article>
+
+            <article class="card evidence-card">
+              <h3>Artifact Content</h3>
+              <div id="artifact-content-meta" class="task-summary"></div>
+              <pre id="artifact-content" class="json-box artifact-content-box">Select an artifact to load its full content.</pre>
+            </article>
+
+            <article class="card">
+              <h3>Change Evidence</h3>
+              <div id="change-evidence" class="stack"></div>
+            </article>
+
+            <article class="card">
+              <h3>Verification Runs</h3>
+              <div id="verification-evidence" class="stack"></div>
+            </article>
+
+            <article class="card evidence-card">
+              <h3>Artifact Previews</h3>
+              <div id="artifact-previews" class="stack"></div>
+            </article>
+          </section>
+
+          <section id="decision-panel" class="card action-panel hidden">
+            <div class="action-header">
+              <div>
+                <p class="panel-kicker">Founder decision</p>
+                <h3>Respond to current review</h3>
+              </div>
+              <p id="decision-state" class="decision-state">
+                Waiting for selected task
+              </p>
+            </div>
+
+            <label>
+              <span>Comment</span>
+              <textarea
+                id="decision-comment"
+                rows="4"
+                placeholder="Explain approval, rejection, or the next edit request."
+              ></textarea>
+            </label>
+
+            <label>
+              <span>Proposed edits JSON</span>
+              <textarea
+                id="decision-proposed-edits"
+                rows="5"
+                spellcheck="false"
+                placeholder='{"note": "mention why this change is safe"}'
+              ></textarea>
+            </label>
+
+            <div class="button-row">
+              <button class="action-button approve" data-decision="approve" type="button">
+                Approve
+              </button>
+              <button class="action-button edit" data-decision="edit_and_approve" type="button">
+                Edit and approve
+              </button>
+              <button class="action-button clarify" data-decision="clarify" type="button">
+                Clarify
+              </button>
+              <button class="action-button reject" data-decision="reject" type="button">
+                Reject
+              </button>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/console/static/founder-console.js"></script>
+  </body>
+</html>

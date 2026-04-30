@@ -1,0 +1,25 @@
+<div class="card">
+  <div class="card-header">
+    <h2>Orchestrator Tasks</h2>
+    {{if .Tasks}}<span class="count">{{len .Tasks}} active</span>{{end}}
+  </div>
+  {{if .Tasks}}
+  <table>
+    <tr><th>ID</th><th>Objective</th><th>Phase</th><th>Status</th><th>Risk</th></tr>
+    {{range .Tasks}}
+    <tr>
+      <td class="mono">{{index . "task_id"}}</td>
+      <td>{{index . "objective"}}</td>
+      <td><span class="prov-key">{{index . "phase"}}</span></td>
+      <td>
+        {{$status := index . "status"}}
+        <span class="badge {{if eq $status "completed"}}badge-ok{{else if eq $status "failed"}}badge-bad{{else}}badge-warn{{end}}">{{$status}}</span>
+      </td>
+      <td>{{index . "risk_class"}}</td>
+    </tr>
+    {{end}}
+  </table>
+  {{else}}
+  <div class="empty">{{.Note}}</div>
+  {{end}}
+</div>

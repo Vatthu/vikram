@@ -1,0 +1,41 @@
+<div class="glass-card fade-in" style="padding: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2 style="margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+            <span style="color: var(--accent-blue);">🧠</span> Agent Knowledge
+        </h2>
+        <button class="action-btn" hx-get="/knowledge" hx-target="#main-content"
+            style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+            Reload Memory
+        </button>
+    </div>
+
+    <div class="glass-card"
+        style="padding: 1.5rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); min-height: 400px; overflow-y: auto;">
+        {{if .Memory}}
+        <pre
+            style="white-space: pre-wrap; font-family: 'Inter', sans-serif; line-height: 1.6; color: #ccc;">{{.Memory}}</pre>
+        {{else}}
+        <div style="text-align: center; padding: 4rem; color: var(--text-dim);">
+            <p>Agent memory is currently empty.</p>
+            <p style="font-size: 0.875rem;">Conversations and long-term facts will appear here as the agent learns.</p>
+        </div>
+        {{end}}
+    </div>
+
+    <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+        <div
+            style="flex: 1; padding: 1rem; background: rgba(0, 240, 255, 0.05); border-radius: 8px; border: 1px solid rgba(0, 240, 255, 0.1);">
+            <div
+                style="font-size: 0.75rem; color: var(--accent-blue); text-transform: uppercase; margin-bottom: 0.5rem;">
+                Short-term Strategy</div>
+            <div style="font-size: 0.875rem;">Daily logs are indexed every 24 hours to reinforce agent world-view.</div>
+        </div>
+        <div
+            style="flex: 1; padding: 1rem; background: rgba(255, 100, 200, 0.05); border-radius: 8px; border: 1px solid rgba(255, 100, 200, 0.1);">
+            <div style="font-size: 0.75rem; color: #ff64c8; text-transform: uppercase; margin-bottom: 0.5rem;">Long-term
+                Recall</div>
+            <div style="font-size: 0.875rem;">Permanent cross-session facts are stored in MEMORY.md for persistent
+                identity.</div>
+        </div>
+    </div>
+</div>

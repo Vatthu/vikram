@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.levik.team</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-c</string>
+        <string>exec /usr/local/bin/levik gateway</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>LEVIK_HOME</key>
+        <string>/Users/levik/.levik</string>
+    </dict>
+    <key>WorkingDirectory</key>
+    <string>/Users/levik</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <dict>
+        <key>Crashed</key>
+        <true/>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/levik/.levik/logs/gateway.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/levik/.levik/logs/gateway.err</string>
+    <key>ProcessType</key>
+    <string>Background</string>
+    <key>Nice</key>
+    <integer>5</integer>
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+</dict>
+</plist>

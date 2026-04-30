@@ -1,0 +1,57 @@
+<div class="glass-card fade-in" style="padding: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2 style="margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+            <span style="color: var(--accent-blue);">📡</span> Node Discovery
+        </h2>
+        <button class="action-btn" hx-get="/nodes" hx-target="#main-content"
+            style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+            Refresh Mesh
+        </button>
+    </div>
+
+    {{if .Devices}}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+        {{range .Devices}}
+        <div class="glass-card"
+            style="padding: 1.5rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                <span style="font-weight: 600; color: #fff;">{{.Name}}</span>
+                <span class="status-badge {{if .Online}}status-online{{else}}status-offline{{end}}">
+                    {{if .Online}}online{{else}}offline{{end}}
+                </span>
+            </div>
+            <div style="font-size: 0.875rem; color: var(--text-dim); display: grid; gap: 0.5rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>ID:</span>
+                    <span style="font-family: monospace; color: #aaa;">{{.ID}}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Host:</span>
+                    <span>{{.Host}}:{{.Port}}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Platform:</span>
+                    <span style="text-transform: capitalize;">{{.Platform}}</span>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <div style="margin-bottom: 0.25rem;">Capabilities:</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                        {{range .Capabilities}}
+                        <span
+                            style="font-size: 0.75rem; padding: 2px 6px; background: rgba(0, 240, 255, 0.1); color: var(--accent-blue); border-radius: 4px; border: 1px solid rgba(0, 240, 255, 0.2);">
+                            {{.}}
+                        </span>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+    </div>
+    {{else}}
+    <div style="text-align: center; padding: 3rem; color: var(--text-dim);">
+        <p>No other nodes discovered on the mesh yet.</p>
+        <p style="font-size: 0.875rem;">Make sure Tailscale is active and peer-to-peer discovery is enabled.</p>
+    </div>
+    {{end}}
+</div>

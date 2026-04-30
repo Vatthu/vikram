@@ -1,0 +1,16 @@
+FROM alpine:3.21
+
+ARG TARGETPLATFORM
+
+RUN apk add --no-cache ca-certificates tzdata
+
+RUN addgroup -S levik && adduser -S -G levik levik
+
+COPY $TARGETPLATFORM/levik /usr/local/bin/levik
+
+RUN mkdir -p /home/levik && chown -R levik:levik /home/levik
+
+USER levik
+
+ENTRYPOINT ["levik"]
+CMD ["gateway"]

@@ -1,0 +1,48 @@
+<div class="card">
+  <div class="card-header">
+    <h2>Team Agents</h2>
+    <span class="count">{{len .Agents}} registered</span>
+  </div>
+  <table>
+    <tr><th>Agent</th><th>Role</th><th>Provider</th><th>Model</th><th style="width:80px"></th></tr>
+    {{range .Agents}}
+    <tr>
+      <td class="mono">{{.ID}}</td>
+      <td><span class="badge badge-{{.Role}}">{{.Role}}</span></td>
+      <td style="font-size:12px">{{if .Provider}}{{.Provider}}{{else}}default{{end}}</td>
+      <td class="mono">{{.Model}}</td>
+      <td>
+        <form hx-post="/agents/remove" hx-target="#content" style="display:inline">
+          <input type="hidden" name="id" value="{{.ID}}">
+          <button class="btn btn-danger">Remove</button>
+        </form>
+      </td>
+    </tr>
+    {{end}}
+    {{if not .Agents}}
+    <tr><td colspan="5"><div class="empty">No agents configured</div></td></tr>
+    {{end}}
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2>Add Agent</h2></div>
+  <form hx-post="/agents/add" hx-target="#content">
+    <div class="form-row">
+      <input type="text" name="id" placeholder="Agent ID" required>
+      <select name="role" required>
+        <option value="">Role...</option>
+        <option value="lead">Lead Engineer</option>
+        <option value="engineer">Engineer</option>
+        <option value="reviewer">Code Reviewer</option>
+        <option value="runner">Test Runner</option>
+        <option value="qa">QA Engineer</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <input type="text" name="provider" placeholder="Provider (deepseek, mistral, etc.)" required>
+      <input type="text" name="model" placeholder="Model name" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Agent</button>
+  </form>
+</div>

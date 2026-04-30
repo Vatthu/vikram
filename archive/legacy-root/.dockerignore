@@ -1,0 +1,10 @@
+.git
+.gitignore
+build/
+.v1claw/
+config/
+.env
+.env.example
+*.md
+LICENSE
+assets/

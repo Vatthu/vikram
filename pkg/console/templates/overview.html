@@ -1,0 +1,28 @@
+<div class="stats">
+  <div class="stat">
+    <div class="val">{{.AgentCount}}</div>
+    <div class="lbl">Team Agents</div>
+  </div>
+  <div class="stat">
+    <div class="val">{{.ProviderCount}}</div>
+    <div class="lbl">Providers Active</div>
+  </div>
+  <div class="stat">
+    <div class="val" style="font-size:22px">:{{.GatewayPort}}</div>
+    <div class="lbl">Gateway</div>
+  </div>
+  <div class="stat">
+    <div class="val" style="font-size:16px;color:var(--green)">{{.Uptime}}</div>
+    <div class="lbl">System Status</div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <h2>Quick Actions</h2>
+  </div>
+  <div class="actions">
+    <button class="btn btn-primary" hx-get="/agents" hx-target="#content">Manage Agents</button>
+    <button class="btn btn-ghost" hx-get="/providers" hx-target="#content">Configure Providers</button>
+    <button class="btn btn-ghost" hx-get="/tasks" hx-target="#content">View Tasks</button>
+  </div>
+</div>

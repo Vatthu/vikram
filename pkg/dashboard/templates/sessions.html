@@ -1,0 +1,43 @@
+<div class="glass-card fade-in" style="padding: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2 style="margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+            <span style="color: var(--accent-green);">💬</span> Global Sessions
+        </h2>
+        <div style="display: flex; gap: 1rem;">
+            <div style="font-size: 0.875rem; color: var(--text-dim);">
+                Active Users: <span style="color: #fff;">{{.Status.TrackedUsers}}</span>
+            </div>
+        </div>
+    </div>
+
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        {{range .Status.ActiveChannels}}
+        <div class="glass-card" style="padding: 1.5rem; border: 1px solid rgba(0, 240, 255, 0.1);">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--status-online);"></div>
+                <span style="font-weight: 600; text-transform: capitalize;">{{.}} Channel</span>
+            </div>
+            <div style="font-size: 0.875rem; color: var(--text-dim);">
+                Status: <span style="color: var(--status-online);">listening</span>
+            </div>
+            <div style="font-size: 0.75rem; color: #555; margin-top: 0.5rem;">
+                Routing events to Agent Mesh
+            </div>
+        </div>
+        {{end}}
+    </div>
+
+    <div class="glass-card"
+        style="padding: 1.5rem; border: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.1);">
+        <h3 style="margin-top: 0; font-size: 1.125rem;">Remote Connectivity</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="color: var(--text-dim); font-size: 0.875rem;">
+                Active WebSockets: <span style="color: #fff;">{{.Status.WebSocketClients}}</span>
+            </div>
+            <div style="font-size: 0.75rem; color: #555;">
+                Secure P2P Tunneling Active
+            </div>
+        </div>
+    </div>
+</div>

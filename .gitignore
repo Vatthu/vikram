@@ -1,0 +1,80 @@
+# Binaries
+# Go build artifacts
+bin/
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/levik
+/v1claw
+/v1claw-test
+
+# V1Claw specific
+
+# V1Claw
+.v1claw/
+config.json
+sessions/
+build/
+
+# Coverage
+
+# Secrets & Config (keep templates, ignore actual secrets)
+.env
+config/config.json
+*.key
+*.pem
+*.p12
+*.pfx
+*.secret
+
+# Test
+coverage.txt
+coverage.html
+
+# OS
+.DS_Store
+
+# Local tool caches
+.cache/
+
+# Ralph workspace
+ralph/
+.ralph/
+tasks/
+
+# Editors
+.vscode/
+.idea/
+
+# Added by goreleaser init:
+dist/
+OUR_WORK.md
+
+# Logs and Process IDs
+*.log
+*.pid
+
+# Local research clones and failed clone artifacts
+archive/research-failures/
+research/upstream/
+
+# Python orchestrator local state
+services/orchestrator/.venv/
+services/orchestrator/.pytest_cache/
+services/orchestrator/.mypy_cache/
+services/orchestrator/**/__pycache__/
+services/orchestrator/src/*.egg-info/
+
+# Web console local artifacts
+web/node_modules/
+web/dist/
+
+# Local agent customizations (keep project workflows/templates tracked)
+.github/agents/
+.github/instructions/
+.github/copilot-instructions.md
+.claude/

@@ -1,0 +1,182 @@
+{
+  "agents": {
+    "defaults": {
+      "workspace": "~/.levik/workspace",
+      "restrict_to_workspace": true,
+      "provider": "gemini",
+      "model": "gemini-3.1-pro-preview",
+      "max_tokens": 8192,
+      "temperature": 0.7,
+      "max_tool_iterations": 20
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": false,
+      "token": "YOUR_TELEGRAM_BOT_TOKEN",
+      "proxy": "",
+      "allow_from": [
+        "YOUR_USER_ID"
+      ]
+    },
+    "discord": {
+      "enabled": false,
+      "token": "YOUR_DISCORD_BOT_TOKEN",
+      "allow_from": []
+    },
+    "maixcam": {
+      "enabled": false,
+      "host": "0.0.0.0",
+      "port": 18790,
+      "allow_from": []
+    },
+    "whatsapp": {
+      "enabled": false,
+      "bridge_url": "ws://localhost:3001",
+      "allow_from": []
+    },
+    "feishu": {
+      "enabled": false,
+      "app_id": "",
+      "app_secret": "",
+      "encrypt_key": "",
+      "verification_token": "",
+      "allow_from": []
+    },
+    "dingtalk": {
+      "enabled": false,
+      "client_id": "YOUR_CLIENT_ID",
+      "client_secret": "YOUR_CLIENT_SECRET",
+      "allow_from": []
+    },
+    "slack": {
+      "enabled": false,
+      "bot_token": "YOUR_SLACK_BOT_TOKEN",
+      "app_token": "YOUR_SLACK_APP_TOKEN",
+      "allow_from": []
+    },
+    "line": {
+      "enabled": false,
+      "channel_secret": "YOUR_LINE_CHANNEL_SECRET",
+      "channel_access_token": "YOUR_LINE_CHANNEL_ACCESS_TOKEN",
+      "webhook_host": "0.0.0.0",
+      "webhook_port": 18791,
+      "webhook_path": "/webhook/line",
+      "allow_from": []
+    },
+    "onebot": {
+      "enabled": false,
+      "ws_url": "ws://127.0.0.1:3001",
+      "access_token": "",
+      "reconnect_interval": 5,
+      "group_trigger_prefix": [],
+      "allow_from": []
+    }
+  },
+  "providers": {
+    "anthropic": {
+      "api_key": "",
+      "api_base": ""
+    },
+    "openai": {
+      "api_key": "",
+      "api_base": ""
+    },
+    "openrouter": {
+      "api_key": "YOUR_OPENROUTER_API_KEY",
+      "api_base": ""
+    },
+    "groq": {
+      "api_key": "YOUR_GROQ_API_KEY",
+      "api_base": ""
+    },
+    "zhipu": {
+      "api_key": "YOUR_ZHIPU_API_KEY",
+      "api_base": ""
+    },
+    "gemini": {
+      "api_key": "",
+      "api_base": ""
+    },
+    "vertex": {
+      "project_id": "YOUR_GCP_PROJECT_ID",
+      "location": "us-central1",
+      "grounding": false
+    },
+    "bedrock": {
+      "region": "us-east-1",
+      "profile": "default"
+    },
+    "azure_openai": {
+      "endpoint": "https://YOUR_RESOURCE.openai.azure.com",
+      "deployment": "gpt-4o",
+      "api_key": "",
+      "api_version": "2024-10-21"
+    },
+    "vllm": {
+      "api_key": "",
+      "api_base": ""
+    },
+    "nvidia": {
+      "api_key": "YOUR_NVIDIA_API_KEY",
+      "api_base": "",
+      "proxy": "http://127.0.0.1:7890"
+    },
+    "moonshot": {
+      "api_key": "YOUR_MOONSHOT_API_KEY",
+      "api_base": ""
+    },
+    "ollama": {
+      "api_key": "",
+      "api_base": "http://localhost:11434/v1"
+    }
+  },
+  "tools": {
+    "web": {
+      "brave": {
+        "enabled": false,
+        "api_key": "YOUR_BRAVE_API_KEY",
+        "max_results": 5
+      },
+      "perplexity": {
+        "enabled": false,
+        "api_key": "pplx-xxx",
+        "max_results": 5
+      }
+    },
+    "cron": {
+      "exec_timeout_minutes": 5
+    }
+  },
+  "heartbeat": {
+    "enabled": true,
+    "interval": 30
+  },
+  "devices": {
+    "enabled": false,
+    "monitor_usb": true
+  },
+  "gateway": {
+    "host": "0.0.0.0",
+    "port": 18790
+  },
+  "voice": {
+    "enabled": false,
+    "mode": "wake-word",
+    "record_duration": 5,
+    "recorder_backend": "auto",
+    "player_backend": "auto",
+    "tts_provider": "auto",
+    "wake_word_phrases": ["hello v1", "hey v1", "hi v1"]
+  },
+  "permissions": {
+    "camera": false,
+    "microphone": false,
+    "sms": false,
+    "phone_calls": false,
+    "location": false,
+    "clipboard": false,
+    "sensors": false,
+    "shell_hardware": false
+  }
+}

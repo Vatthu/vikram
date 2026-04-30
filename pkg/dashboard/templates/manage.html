@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>LeVik Control Panel</title>
+<style>
+:root{--bg:#0d1117;--fg:#c9d1d9;--acc:#58a6ff;--bd:#30363d;--card:#161b22;--red:#f85149;--grn:#3fb950;--yel:#d29922}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--fg);line-height:1.5}
+header{background:var(--card);border-bottom:1px solid var(--bd);padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:18px;color:var(--acc)}
+nav{display:flex;gap:4px;padding:8px 20px;background:var(--card);border-bottom:1px solid var(--bd)}
+nav button{background:none;border:1px solid var(--bd);color:var(--fg);padding:6px 16px;border-radius:6px;cursor:pointer;font-size:13px}
+nav button:hover,nav button.active{background:var(--acc);color:#fff;border-color:var(--acc)}
+main{padding:20px;max-width:1200px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:16px;margin-bottom:16px}
+.card h2{font-size:15px;margin-bottom:12px;color:var(--acc)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--bd);font-size:13px}
+th{color:var(--fg);font-weight:600}
+.ok{color:var(--grn)}.warn{color:var(--yel)}.bad{color:var(--red)}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.badge-ok{background:var(--grn);color:#000}.badge-warn{background:var(--yel);color:#000}.badge-danger{background:var(--red);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:16px;text-align:center}
+.stat .val{font-size:32px;font-weight:700;color:var(--acc)}.stat .lbl{font-size:12px;color:#8b949e;margin-top:4px}
+.hidden{display:none}
+pre{background:#0d1117;padding:12px;border-radius:6px;overflow-x:auto;font-size:12px}
+</style>
+</head>
+<body>
+<header><h1>LeVik Control Panel</h1><span id="clock" style="font-size:13px;color:#8b949e"></span></header>
+<nav>
+  <button onclick="tab('overview')" class="active" id="btn-overview">Overview</button>
+  <button onclick="tab('tasks')" id="btn-tasks">Tasks</button>
+  <button onclick="tab('team')" id="btn-team">Team</button>
+  <button onclick="tab('config')" id="btn-config">Config</button>
+</nav>
+<main>
+<div id="p-overview"><div class="grid" id="stats"></div><div class="card"><h2>Services</h2><div id="services"></div></div></div>
+<div id="p-tasks" class="hidden"><div class="card"><h2>Tasks</h2><div id="tasks"></div></div></div>
+<div id="p-team" class="hidden"><div class="card"><h2>Team Members</h2><div id="team"></div></div></div>
+<div id="p-config" class="hidden"><div class="card"><h2>Providers</h2><div id="providers"></div></div><div class="card"><h2>Agents</h2><div id="agents"></div></div></div>
+</main>
+<script>
+function tab(n){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('btn-'+n).classList.add('active');
+  document.querySelectorAll('main>div').forEach(d=>d.classList.add('hidden'));
+  document.getElementById('p-'+n).classList.remove('hidden');
+  if(n==='overview')loadOverview();if(n==='tasks')loadTasks();if(n==='team')loadTeam();if(n==='config')loadConfig();
+}
+async function j(u){const r=await fetch(u);return r.json()}
+async function loadOverview(){
+  try{
+    const s=await j('/status');
+    document.getElementById('stats').innerHTML=
+      `<div class="stat"><div class="val">${s.status||'?'}</div><div class="lbl">Status</div></div>
+       <div class="stat"><div class="val">${s.active_channels?.length||0}</div><div class="lbl">Channels</div></div>
+       <div class="stat"><div class="val">${s.connected_devices||0}</div><div class="lbl">Devices</div></div>
+       <div class="stat"><div class="val">${s.pending_jobs||0}</div><div class="lbl">Jobs</div></div>
+       <div class="stat"><div class="val">${s.uptime||'?'}</div><div class="lbl">Uptime</div></div>
+       <div class="stat"><div class="val">${s.websocket_clients||0}</div><div class="lbl">WS Clients</div></div>`;
+    document.getElementById('services').innerHTML='<p>Gateway running. <span class="ok">Healthy</span></p>';
+  }catch(e){document.getElementById('services').innerHTML='<p class="bad">Gateway unreachable</p>'}
+}
+async function loadTasks(){
+  try{
+    const tasks=await j('/manage/tasks');
+    document.getElementById('tasks').innerHTML=tasks&&tasks.length?`<table>
+      <tr><th>ID</th><th>Objective</th><th>Phase</th><th>Status</th><th>Risk</th></tr>
+      ${tasks.map(t=>`<tr><td style="font-family:monospace;font-size:11px">${t.task_id}</td><td>${(t.objective||'').substring(0,70)}</td><td>${t.phase||'?'}</td><td><span class="badge badge-${t.status==='completed'?'ok':t.status==='failed'?'danger':'warn'}">${t.status}</span></td><td>${t.risk_class||'?'}</td></tr>`).join('')}
+    </table>`:'<p style="color:#8b949e">No tasks submitted yet</p>';
+  }catch(e){document.getElementById('tasks').innerHTML='<p class="bad">Task API unavailable — orchestrator may not be running</p>'}
+}
+async function loadTeam(){
+  try{
+    const agents=await j('/manage/team');
+    document.getElementById('team').innerHTML=agents&&agents.length?`<table>
+      <tr><th>Role</th><th>Agent</th><th>Provider</th><th>Model</th><th>Daily Budget</th><th>Budget Action</th></tr>
+      ${agents.map(a=>`<tr><td><span class="badge badge-ok">${a.role||'—'}</span></td><td>${a.id}</td><td>${a.provider||'default'}</td><td style="font-size:11px">${a.model||'default'}</td><td>${a.max_tokens_per_day?Math.round(a.max_tokens_per_day/1000)+'K':'unlimited'}</td><td>${a.budget_action||'notify'}</td></tr>`).join('')}
+    </table>`:'<p style="color:#8b949e">No team members configured. Add agents in config.json under agents.list</p>';
+  }catch(e){document.getElementById('team').innerHTML='<p class="bad">Team data unavailable</p>'}
+}
+async function loadConfig(){
+  try{
+    const cfg=await j('/manage/config');
+    document.getElementById('providers').innerHTML=`<table>
+      <tr><th>Provider</th><th>Status</th><th>Endpoint</th></tr>
+      ${(cfg.providers||[]).map(p=>`<tr><td>${p.name}</td><td><span class="badge badge-${p.configured?'ok':'warn'}">${p.configured?'configured':'not set'}</span></td><td style="font-size:11px">${p.base||'default'}</td></tr>`).join('')}
+    </table>`;
+    document.getElementById('agents').innerHTML=`<table>
+      <tr><th>ID</th><th>Role</th><th>Provider</th><th>Model</th><th>Budget/Day</th></tr>
+      ${(cfg.agents||[]).map(a=>`<tr><td>${a.id}</td><td>${a.role||'—'}</td><td>${a.provider||'default'}</td><td style="font-size:11px">${a.model||'default'}</td><td>${a.max_tokens_per_day?Math.round(a.max_tokens_per_day/1000)+'K':'unlimited'}</td></tr>`).join('')}
+    </table>`;
+  }catch(e){document.getElementById('providers').innerHTML='<p class="bad">Config unavailable</p>'}
+}
+setInterval(()=>document.getElementById('clock').textContent=new Date().toLocaleString(),1000);
+loadOverview();
+</script>
+</body>
+</html>
