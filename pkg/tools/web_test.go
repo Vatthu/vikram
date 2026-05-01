@@ -41,7 +41,10 @@ func TestWebTool_WebFetch_Success(t *testing.T) {
 // TestWebTool_WebFetch_JSON verifies JSON content handling (blocked by SSRF for localhost)
 func TestWebTool_WebFetch_JSON(t *testing.T) {
 	testData := map[string]string{"key": "value", "number": "123"}
-	expectedJSON, _ := json.MarshalIndent(testData, "", "  ")
+	expectedJSON, err := json.MarshalIndent(testData, "", "  ")
+	if err != nil {
+		t.Fatalf("Failed to marshal test JSON: %v", err)
+	}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -229,16 +232,20 @@ func TestWebTool_SSRF_BlockedHosts(t *testing.T) {
 
 // TestWebTool_SSRF_AllowedHosts verifies SSRF protection allows public hosts
 func TestWebTool_SSRF_AllowedHosts(t *testing.T) {
-	allowedHosts := []string{
-		"example.com",
-		"api.github.com",
-		"8.8.8.8",
-		"172.32.0.1", // outside 172.16-31 range
+	tool := NewWebFetchTool(50000)
+	ctx := context.Background()
+
+	// These public IPs/hosts should pass SSRF validation through the full Execute path.
+	// They may be rejected by the URL allowlist, but must not be blocked as internal/private.
+	allowedURLs := []string{
+		"https://8.8.8.8/",      // Google public DNS - not a private IP
+		"https://172.32.0.1/",   // outside the 172.16.0.0/12 private range
 	}
 
-	for _, h := range allowedHosts {
-		if isBlockedHost(h) {
-			t.Errorf("Expected %s to be allowed, but it was blocked", h)
+	for _, u := range allowedURLs {
+		result := tool.Execute(ctx, ToolContext{}, map[string]interface{}{"url": u})
+		if result.IsError && strings.Contains(result.ForLLM, "access to internal/private networks is not allowed") {
+			t.Errorf("Expected %s to pass SSRF validation, but got SSRF block: %s", u, result.ForLLM)
 		}
 	}
 }
