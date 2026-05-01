@@ -53,6 +53,31 @@ Suggested runtime layout under `~/.levik/`:
 - `workspaces/` for provisioned repo worktrees
 - `secrets/` for local encrypted state when Keychain is not yet used
 
+The launchd installer now creates the production layout with private
+permissions:
+
+- `run/levikd.sock` for the Go host API
+- `run/levik-orchestrator.sock` for the Python orchestrator API
+- `secrets/console-api-key` with `0600` permissions
+- `bin/levik-gateway-wrapper.sh` with `0700` permissions
+- `logs/gateway.log` and `logs/gateway.err` for daemon output
+
+Install without starting the daemon:
+
+```bash
+contrib/install-daemon.sh --no-load
+```
+
+Install and start under launchd:
+
+```bash
+contrib/install-daemon.sh
+```
+
+The launchd plist runs the wrapper directly, not through `sh -c`. The wrapper
+sets stable socket paths and reads the console API key from the private secrets
+file before starting `levik gateway`.
+
 ## Dedicated macOS User
 
 This is not mandatory for local development.

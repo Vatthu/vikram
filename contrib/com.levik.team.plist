@@ -6,17 +6,15 @@
     <string>com.levik.team</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/bin/sh</string>
-        <string>-c</string>
-        <string>exec /usr/local/bin/levik gateway</string>
+        <string>__LEVIK_WRAPPER__</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>
         <key>LEVIK_HOME</key>
-        <string>/Users/levik/.levik</string>
+        <string>__LEVIK_HOME__</string>
     </dict>
     <key>WorkingDirectory</key>
-    <string>/Users/levik</string>
+    <string>__LEVIK_HOME__</string>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
@@ -27,14 +25,14 @@
         <false/>
     </dict>
     <key>StandardOutPath</key>
-    <string>/Users/levik/.levik/logs/gateway.log</string>
+    <string>__LEVIK_HOME__/logs/gateway.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/levik/.levik/logs/gateway.err</string>
+    <string>__LEVIK_HOME__/logs/gateway.err</string>
     <key>ProcessType</key>
     <string>Background</string>
     <key>Nice</key>
     <integer>5</integer>
     <key>ThrottleInterval</key>
-    <integer>5</integer>
+    <integer>10</integer>
 </dict>
 </plist>
