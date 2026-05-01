@@ -41,7 +41,10 @@ func TestWebTool_WebFetch_Success(t *testing.T) {
 // TestWebTool_WebFetch_JSON verifies JSON content handling (blocked by SSRF for localhost)
 func TestWebTool_WebFetch_JSON(t *testing.T) {
 	testData := map[string]string{"key": "value", "number": "123"}
-	expectedJSON, _ := json.MarshalIndent(testData, "", "  ")
+	expectedJSON, err := json.MarshalIndent(testData, "", "  ")
+	if err != nil {
+		t.Fatalf("Failed to marshal test JSON: %v", err)
+	}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -229,16 +232,22 @@ func TestWebTool_SSRF_BlockedHosts(t *testing.T) {
 
 // TestWebTool_SSRF_AllowedHosts verifies SSRF protection allows public hosts
 func TestWebTool_SSRF_AllowedHosts(t *testing.T) {
-	allowedHosts := []string{
-		"example.com",
-		"api.github.com",
-		"8.8.8.8",
-		"172.32.0.1", // outside 172.16-31 range
+	ctx := context.Background()
+
+	// Use public IPs (no DNS required) to verify the full validateFetchURL pipeline
+	// does not block legitimate public addresses.
+	allowedURLs := []string{
+		"https://8.8.8.8/",    // public Google DNS IP
+		"http://172.32.0.1/",  // outside 172.16-31 RFC1918 range
 	}
 
-	for _, h := range allowedHosts {
-		if isBlockedHost(h) {
-			t.Errorf("Expected %s to be allowed, but it was blocked", h)
+	for _, rawURL := range allowedURLs {
+		parsedURL, err := url.Parse(rawURL)
+		if err != nil {
+			t.Fatalf("Failed to parse URL %s: %v", rawURL, err)
+		}
+		if err := validateFetchURL(ctx, parsedURL); err != nil {
+			t.Errorf("Expected %s to be allowed, but got error: %v", rawURL, err)
 		}
 	}
 }

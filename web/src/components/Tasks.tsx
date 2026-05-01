@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge, Button, Card, Divider, Group, Modal, Paper, Stack, Table, Text, TextInput, Textarea, Title } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
@@ -49,11 +49,25 @@ export default function Tasks() {
   const [modalOpen, setModalOpen] = useState(false);
   const [orch, setOrch] = useState<OrchStatus>({running:false,reachable:false,socket:''});
   const [starting, setStarting] = useState(false);
-  const form = useForm({initialValues:{objective:'',repo_path:''}});
+  const form = useForm({initialValues:{objective:'',repoPath:''}});
 
-  useEffect(()=>{loadTasks();loadOrch();},[]);
-  const loadTasks=()=>api.tasks().then(d=>{setTasks(d.tasks);setNote(d.note)}).catch(()=>{});
-  const loadOrch=()=>api.orchestrator().then(setOrch).catch(()=>{});
+  const orchReloadTimeouts = useRef<number[]>([]);
+
+  const loadTasks = useCallback(
+    () => api.tasks().then(d => { setTasks(d.tasks); setNote(d.note); }).catch(() => {}),
+    []
+  );
+  const loadOrch = useCallback(
+    () => api.orchestrator().then(setOrch).catch(() => {}),
+    []
+  );
+  useEffect(() => { loadTasks(); loadOrch(); }, [loadTasks, loadOrch]);
+  useEffect(() => {
+    return () => {
+      orchReloadTimeouts.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      orchReloadTimeouts.current = [];
+    };
+  }, []);
 
   const loadReview = async (taskId: string) => {
     setSelectedTaskId(taskId);
@@ -72,7 +86,7 @@ export default function Tasks() {
 
   const submit=async()=>{
     try {
-      const r=await api.submitTask(form.values);
+      const r=await api.submitTask({ objective: form.values.objective, repo_path: form.values.repoPath });
       notifications.show({title:'Submitted',message:r.task_id,color:'green'});
       setModalOpen(false);
       form.reset();
@@ -84,13 +98,23 @@ export default function Tasks() {
 
   const startOrch=async()=>{
     setStarting(true);
-    try{await api.startOrch();notifications.show({title:'Orchestrator',message:'Started',color:'green'});setTimeout(loadOrch,2000)}
+    try{
+      await api.startOrch();
+      notifications.show({title:'Orchestrator',message:'Started',color:'green'});
+      const timeoutId = window.setTimeout(loadOrch,2000);
+      orchReloadTimeouts.current.push(timeoutId);
+    }
     catch(e:any){notifications.show({title:'Error',message:e.message,color:'red'})}
-    setStarting(false);
+    finally{setStarting(false);}
   };
 
   const stopOrch=async()=>{
-    try{await api.stopOrch();notifications.show({title:'Orchestrator',message:'Stopped',color:'orange'});setTimeout(loadOrch,1500)}
+    try{
+      await api.stopOrch();
+      notifications.show({title:'Orchestrator',message:'Stopped',color:'orange'});
+      const timeoutId = window.setTimeout(loadOrch,1500);
+      orchReloadTimeouts.current.push(timeoutId);
+    }
     catch(e:any){notifications.show({title:'Error',message:e.message,color:'red'})}
   };
 
@@ -245,7 +269,7 @@ export default function Tasks() {
     <Modal opened={modalOpen} onClose={()=>setModalOpen(false)} title="New Task">
       <form onSubmit={form.onSubmit(submit)}>
         <Textarea label="Objective" {...form.getInputProps('objective')} required rows={3} mb="sm"/>
-        <TextInput label="Repository Path" {...form.getInputProps('repo_path')} placeholder="/path/to/repo" required mb="lg"/>
+        <TextInput label="Repository Path" {...form.getInputProps('repoPath')} placeholder="/path/to/repo" required mb="lg"/>
         <Button type="submit" fullWidth>Submit Task</Button>
       </form>
     </Modal>
