@@ -156,6 +156,9 @@ class OrchestratorState(TypedDict, total=False):
     merge_notes: list[str]
     merge_artifact_id: str
     merge_artifact_path: str
+    archive_artifact_id: str
+    archive_artifact_path: str
+    operator_notifications: list[dict[str, str | bool]]
 
 
 def initial_state_from_request(request: TaskCreateRequest) -> OrchestratorState:
@@ -520,6 +523,19 @@ def artifact_previews(state: OrchestratorState) -> list[ArtifactPreview]:
             )
         )
 
+    archive_path = str(state.get("archive_artifact_path", "")).strip()
+    if archive_path:
+        previews.append(
+            ArtifactPreview(
+                title="Archive Email Draft",
+                kind="archive",
+                path=archive_path,
+                content_preview=preview_text(
+                    archive_email_draft_content(state), limit=2200
+                ),
+            )
+        )
+
     return previews
 
 
@@ -559,6 +575,40 @@ def build_graph(
         router = TeamRouter.from_state(state.get("team_roster", []))
         request = router.request(task_id=state["task_id"], role=role, prompt=prompt)
         return host_client.agent_think(request)
+
+    def notify_operator_state(
+        state: OrchestratorState, operator_state: str, content: str
+    ) -> OrchestratorState:
+        channel = str(state.get("operator_channel") or "telegram").strip() or "telegram"
+        chat_id = str(state.get("operator_chat_id") or "").strip()
+        notifications = [
+            dict(item) for item in state.get("operator_notifications", [])
+        ]
+        entry: dict[str, str | bool] = {
+            "state": operator_state,
+            "channel": channel,
+            "delivered": False,
+            "summary": "no operator chat configured",
+        }
+
+        if chat_id and channel == "telegram":
+            try:
+                response = host_client.notify_telegram(
+                    ChannelNotificationRequest(
+                        channel=channel,
+                        chat_id=chat_id,
+                        content=content,
+                    )
+                )
+                entry["delivered"] = response.delivered
+                entry["summary"] = response.summary
+            except Exception as exc:
+                entry["summary"] = f"notification failed: {exc}"
+        elif chat_id:
+            entry["summary"] = f"unsupported operator channel: {channel}"
+
+        notifications.append(entry)
+        return {**state, "operator_notifications": notifications}
 
     def verify_host(state: OrchestratorState) -> OrchestratorState:
         health = host_client.health()
@@ -1514,24 +1564,18 @@ Return ONLY the JavaScript code, no explanation."""
         }
 
     def notify_founder(state: OrchestratorState) -> OrchestratorState:
-        operator_chat_id = str(state.get("operator_chat_id") or "").strip()
-        if not operator_chat_id:
-            return {
-                **state,
-                "summary": f"{state['summary']} (no operator chat configured)",
-            }
-
         channel = str(state.get("operator_channel") or "telegram").strip() or "telegram"
-        if channel == "telegram":
-            host_client.notify_telegram(
-                ChannelNotificationRequest(
-                    channel=channel,
-                    chat_id=operator_chat_id,
-                    content=format_founder_notification(state),
-                )
-            )
+        updated = notify_operator_state(
+            state, "awaiting_approval", format_founder_notification(state)
+        )
+        latest = updated.get("operator_notifications", [])[-1]
+        if not latest.get("delivered"):
+            return {
+                **updated,
+                "summary": f"{state['summary']} ({latest.get('summary', 'not notified')})",
+            }
         return {
-            **state,
+            **updated,
             "summary": f"{state['summary']} (founder notified on {channel})",
         }
 
@@ -1618,7 +1662,7 @@ Return ONLY the JavaScript code, no explanation."""
         summary = "Founder requested follow-up edits before approval"
         if comment:
             summary += f": {comment}"
-        return {
+        updated = {
             **state,
             "status": "paused",
             "phase": "founder_edit_requested",
@@ -1628,6 +1672,11 @@ Return ONLY the JavaScript code, no explanation."""
             "pending_follow_up_comment": comment,
             "pending_follow_up_proposed_edits": dict(decision.get("proposed_edits", {})),
         }
+        return notify_operator_state(
+            updated,
+            "retryable",
+            format_operator_state_notification(updated, "retryable"),
+        )
 
     def founder_clarify(state: OrchestratorState) -> OrchestratorState:
         decision = state.get("founder_decision", {})
@@ -1635,7 +1684,7 @@ Return ONLY the JavaScript code, no explanation."""
         summary = "Founder requested clarification"
         if comment:
             summary += f": {comment}"
-        return {
+        updated = {
             **state,
             "status": "paused",
             "phase": "founder_clarification_requested",
@@ -1645,6 +1694,11 @@ Return ONLY the JavaScript code, no explanation."""
             "pending_follow_up_comment": comment,
             "pending_follow_up_proposed_edits": dict(decision.get("proposed_edits", {})),
         }
+        return notify_operator_state(
+            updated,
+            "retryable",
+            format_operator_state_notification(updated, "retryable"),
+        )
 
     def write_founder_decision_artifact(
         state: OrchestratorState,
@@ -1788,21 +1842,56 @@ Return ONLY the JavaScript code, no explanation."""
             "summary": f"{state.get('merge_summary', 'Merge readiness assessed')} ({artifact.path})",
         }
 
+    def write_archive_email_draft(state: OrchestratorState) -> OrchestratorState:
+        if state.get("merge_readiness") != "ready":
+            return state
+        attempt = int(state.get("change_attempt", 1) or 1)
+        artifact_id = f"archive-email-draft-{attempt}"
+        artifact = host_client.write_artifact(
+            ArtifactWriteRequest(
+                artifact=Artifact(
+                    task_id=state["task_id"],
+                    artifact_id=artifact_id,
+                    kind="archive",
+                    title="Archive Email Draft",
+                    summary="Founder archival email draft for the approved merge-ready handoff",
+                ),
+                content=archive_email_draft_content(state) + "\n",
+                format="eml",
+            )
+        )
+        return {
+            **state,
+            "archive_artifact_id": artifact.artifact.artifact_id,
+            "archive_artifact_path": artifact.path,
+            "summary": f"{state.get('summary', 'Archive email draft prepared')} ({artifact.path})",
+        }
+
     def finalize_merge_readiness(state: OrchestratorState) -> OrchestratorState:
         summary = str(state.get("summary", state.get("merge_summary", ""))).strip()
         if state.get("merge_readiness") == "ready":
-            return {
+            updated = {
                 **state,
                 "status": "completed",
                 "phase": "merge_ready",
                 "summary": summary or "Change is ready to merge",
             }
-        return {
+            return notify_operator_state(
+                updated,
+                "merge_ready",
+                format_operator_state_notification(updated, "merge_ready"),
+            )
+        updated = {
             **state,
             "status": "paused",
             "phase": "merge_blocked",
             "summary": summary or "Change is not merge-ready",
         }
+        return notify_operator_state(
+            updated,
+            "blocked",
+            format_operator_state_notification(updated, "blocked"),
+        )
 
     def route_after_founder_decision_artifact(state: OrchestratorState) -> str:
         if state.get("phase") in {"founder_approved", "founder_override_approved"}:
@@ -1845,6 +1934,7 @@ Return ONLY the JavaScript code, no explanation."""
     builder.add_node("inspect_post_change_repo", inspect_post_change_repo)
     builder.add_node("evaluate_merge_readiness", evaluate_merge_readiness)
     builder.add_node("write_merge_readiness_artifact", write_merge_readiness_artifact)
+    builder.add_node("write_archive_email_draft", write_archive_email_draft)
     builder.add_node("finalize_merge_readiness", finalize_merge_readiness)
     builder.add_edge(START, "verify_host")
     builder.add_edge("verify_host", "discover_team")
@@ -1882,7 +1972,8 @@ Return ONLY the JavaScript code, no explanation."""
     )
     builder.add_edge("inspect_post_change_repo", "evaluate_merge_readiness")
     builder.add_edge("evaluate_merge_readiness", "write_merge_readiness_artifact")
-    builder.add_edge("write_merge_readiness_artifact", "finalize_merge_readiness")
+    builder.add_edge("write_merge_readiness_artifact", "write_archive_email_draft")
+    builder.add_edge("write_archive_email_draft", "finalize_merge_readiness")
     builder.add_edge("finalize_merge_readiness", END)
     graph = builder.compile(checkpointer=checkpointer)
     setattr(graph, "_levik_checkpoint_conn", checkpoint_conn)
@@ -1938,6 +2029,8 @@ def apply_change_request(graph, task: TaskSession, request: TaskChangeRequest) -
             "merge_notes": [],
             "merge_artifact_id": "",
             "merge_artifact_path": "",
+            "archive_artifact_id": "",
+            "archive_artifact_path": "",
             "post_change_dirty": False,
             "post_change_branch": "",
             "post_change_head_ref": "",
@@ -2057,6 +2150,63 @@ def merge_readiness_artifact_content(state: OrchestratorState) -> str:
             *changed_files,
         ]
     )
+
+
+def archive_email_draft_content(state: OrchestratorState) -> str:
+    task_id = state["task_id"]
+    subject = f"[LeVik] {task_id} merge-ready handoff"
+    branch = str(state.get("post_change_branch", "") or state.get("worktree_branch", ""))
+    head = str(state.get("post_change_head_ref", "") or state.get("repo_head_ref", ""))
+    artifact_paths = [
+        str(state.get("change_artifact_path", "")).strip(),
+        str(state.get("verification_result_artifact_path", "")).strip(),
+        str(state.get("approval_artifact_path", "")).strip(),
+        str(state.get("founder_decision_artifact_path", "")).strip(),
+        str(state.get("merge_artifact_path", "")).strip(),
+    ]
+    artifact_paths = [item for item in artifact_paths if item]
+    return "\n".join(
+        [
+            "To: founder-archive@levik.local",
+            f"Subject: {subject}",
+            "Content-Type: text/plain; charset=utf-8",
+            f"X-LeVik-Task-ID: {task_id}",
+            f"X-LeVik-Phase: {state.get('phase', '')}",
+            f"X-LeVik-Merge-Readiness: {state.get('merge_readiness', 'unknown')}",
+            "",
+            "LeVik prepared a merge-ready engineering handoff.",
+            "",
+            "Task",
+            f"- Objective: {state.get('objective', '')}",
+            f"- Summary: {state.get('summary', '')}",
+            f"- Risk: {state.get('approval_risk', 'unknown')}",
+            f"- Approval route: {state.get('approval_route', 'unknown')}",
+            "",
+            "Merge Handoff",
+            f"- Branch: {branch or 'unknown'}",
+            f"- HEAD: {head[:12] if head else 'unknown'}",
+            f"- Merge summary: {state.get('merge_summary', '')}",
+            f"- Changed files: {int(state.get('post_change_changed_file_count', 0) or 0)}",
+            f"- Diff stat: {state.get('post_change_diff_short_stat', '') or 'No tracked diff stat recorded.'}",
+            "",
+            "Verification",
+            *format_verification_runs(state),
+            "",
+            "Artifacts",
+            *([f"- {item}" for item in artifact_paths] or ["- No artifacts recorded."]),
+            "",
+            "Changed Files",
+            *format_changed_file_lines_for_archive(state),
+        ]
+    )
+
+
+def format_changed_file_lines_for_archive(state: OrchestratorState) -> list[str]:
+    return [
+        format_changed_file(item)
+        for item in state.get("post_change_changed_files", [])
+        if str(item.get("path", "")).strip()
+    ] or ["- No changed files recorded."]
 
 
 def format_changed_file(item: dict[str, str | int | bool]) -> str:
@@ -2330,7 +2480,7 @@ def format_approval_request_artifact(
 def format_founder_notification(state: OrchestratorState) -> str:
     approval_request = state.get("approval_request", {})
     lines = [
-        f"LeVik founder review required for `{state['task_id']}`.",
+        f"LeVik operator state: `awaiting_approval` for `{state['task_id']}`.",
         "",
         f"Risk class: `{approval_request.get('risk_class', 'unknown')}`",
         "",
@@ -2343,6 +2493,40 @@ def format_founder_notification(state: OrchestratorState) -> str:
         )
     if state.get("approval_artifact_path"):
         lines.append(f"Approval artifact: `{state['approval_artifact_path']}`")
+    return "\n".join(lines)
+
+
+def format_operator_state_notification(
+    state: OrchestratorState, operator_state: str
+) -> str:
+    lines = [
+        f"LeVik operator state: `{operator_state}` for `{state['task_id']}`.",
+        "",
+        str(state.get("summary") or state.get("merge_summary") or "State updated."),
+    ]
+    if state.get("approval_route"):
+        lines.extend(["", f"Approval route: `{state['approval_route']}`"])
+    if state.get("merge_readiness"):
+        lines.append(f"Merge readiness: `{state['merge_readiness']}`")
+    if state.get("merge_summary"):
+        lines.append(f"Merge summary: {state['merge_summary']}")
+    blockers = [
+        str(item).strip()
+        for item in state.get("merge_blockers", [])
+        if str(item).strip()
+    ]
+    if blockers:
+        lines.extend(["", "Blockers:"])
+        lines.extend(f"- {item}" for item in blockers)
+    artifact_paths = [
+        str(state.get("approval_artifact_path", "")).strip(),
+        str(state.get("founder_decision_artifact_path", "")).strip(),
+        str(state.get("merge_artifact_path", "")).strip(),
+    ]
+    artifact_paths = [item for item in artifact_paths if item]
+    if artifact_paths:
+        lines.extend(["", "Artifacts:"])
+        lines.extend(f"- `{item}`" for item in artifact_paths)
     return "\n".join(lines)
 
 

@@ -42,6 +42,7 @@ ArtifactKind = Literal[
     "review",
     "founder_approval",
     "blocker",
+    "archive",
 ]
 
 

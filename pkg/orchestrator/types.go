@@ -63,6 +63,7 @@ const (
 	ArtifactKindReview          ArtifactKind = "review"
 	ArtifactKindFounderApproval ArtifactKind = "founder_approval"
 	ArtifactKindBlocker         ArtifactKind = "blocker"
+	ArtifactKindArchive         ArtifactKind = "archive"
 )
 
 // RepoRef identifies the repository a task operates on.

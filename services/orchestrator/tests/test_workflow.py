@@ -454,6 +454,10 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(1, len(host_client.file_replace_requests))
         self.assertEqual(1, len(host_client.exec_requests))
         self.assertEqual(1, len(host_client.notification_requests))
+        self.assertIn(
+            "LeVik operator state: `awaiting_approval`",
+            host_client.notification_requests[0].content,
+        )
         self.assertEqual(
             "go test ./pkg/orchestratorhost",
             host_client.exec_requests[0].arguments["command"],
@@ -924,6 +928,12 @@ class WorkflowTests(unittest.TestCase):
                         for transition in review_payload["action_transitions"]
                     )
                 )
+                self.assertTrue(
+                    any(
+                        "LeVik operator state: `blocked`" in request.content
+                        for request in host_client.notification_requests
+                    )
+                )
 
                 retry_response = client.post(
                     "/v1/tasks/task-005b/changes",
@@ -1021,7 +1031,15 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual("completed", payload["status"])
         self.assertEqual("ready", payload["merge_readiness"])
         self.assertIn("merge-readiness-1.md", payload["summary"])
-        self.assertEqual(8, len(host_client.artifact_requests))
+        self.assertEqual(9, len(host_client.artifact_requests))
+        self.assertEqual("archive", host_client.artifact_requests[8].artifact.kind)
+        self.assertIn("Subject: [LeVik] task-006 merge-ready handoff", host_client.artifact_requests[8].content)
+        self.assertTrue(
+            any(
+                "LeVik operator state: `merge_ready`" in request.content
+                for request in host_client.notification_requests
+            )
+        )
 
         self.assertEqual(200, review_response.status_code)
         review_payload = review_response.json()
@@ -1117,6 +1135,12 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual("awaiting_approval", second_payload["status"])
         self.assertEqual("founder_review", second_payload["approval_route"])
         self.assertTrue(second_payload["requires_founder_review"])
+        self.assertTrue(
+            any(
+                "LeVik operator state: `retryable`" in request.content
+                for request in host_client.notification_requests
+            )
+        )
 
 
 if __name__ == "__main__":
