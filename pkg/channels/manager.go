@@ -5,6 +5,7 @@ package channels
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/v1claw/levik/pkg/bus"
@@ -189,6 +190,68 @@ func truncateForChannelLog(content string) string {
 		return content
 	}
 	return content[:limit] + "..."
+}
+
+func (m *Manager) ReconnectChannel(ctx context.Context, name string) error {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return fmt.Errorf("channel name is required")
+	}
+
+	m.mu.Lock()
+	current := m.channels[name]
+	delete(m.channels, name)
+	m.mu.Unlock()
+
+	if current != nil {
+		if err := current.Stop(ctx); err != nil {
+			logger.WarnCF("channels", "Error stopping channel before reconnect", map[string]interface{}{
+				"channel": name,
+				"error":   err.Error(),
+			})
+		}
+	}
+
+	var next Channel
+	switch name {
+	case "telegram":
+		if m.config.Channels.Telegram.Enabled && m.config.Channels.Telegram.Token != "" {
+			tg, err := NewTelegramChannel(m.config, m.bus)
+			if err != nil {
+				return fmt.Errorf("telegram reconnect failed: %w", err)
+			}
+			next = tg
+		}
+	case "whatsapp":
+		if m.config.Channels.WhatsApp.Enabled && m.config.Channels.WhatsApp.BridgeURL != "" {
+			wa, err := NewWhatsAppChannel(m.config.Channels.WhatsApp, m.bus)
+			if err != nil {
+				return fmt.Errorf("whatsapp reconnect failed: %w", err)
+			}
+			next = wa
+		}
+	default:
+		return fmt.Errorf("unknown channel %q", name)
+	}
+
+	if next == nil {
+		logger.InfoCF("channels", "Channel disabled after config update", map[string]interface{}{
+			"channel": name,
+		})
+		return nil
+	}
+
+	if err := next.Start(ctx); err != nil {
+		return fmt.Errorf("%s start failed: %w", name, err)
+	}
+
+	m.mu.Lock()
+	m.channels[name] = next
+	m.mu.Unlock()
+	logger.InfoCF("channels", "Channel reconnected", map[string]interface{}{
+		"channel": name,
+	})
+	return nil
 }
 
 func (m *Manager) GetChannel(name string) (Channel, bool) {

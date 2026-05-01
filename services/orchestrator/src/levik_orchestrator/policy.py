@@ -15,6 +15,7 @@ def decide_approval_policy(state: Mapping[str, object]) -> ApprovalPolicyDecisio
     review_verdict = str(state.get("review_verdict", "APPROVE")).strip()
     applied_paths = normalized_applied_paths(state)
     require_human_approval = bool(state.get("require_human_approval", False))
+    active_follow_up_phase = str(state.get("active_follow_up_phase", "")).strip()
 
     # Lint guard: new lint errors after edits are a hard block.
     if not lint_passed:
@@ -91,6 +92,25 @@ def decide_approval_policy(state: Mapping[str, object]) -> ApprovalPolicyDecisio
             reasons=reasons,
             summary=summary,
             options=approval_options_for_route(route, verification_outcome),
+        )
+
+    if active_follow_up_phase in {
+        "founder_edit_requested",
+        "founder_clarification_requested",
+        "merge_blocked",
+    }:
+        reasons.append(
+            f"task is resuming from prior follow-up phase `{active_follow_up_phase}`"
+        )
+        return ApprovalPolicyDecision(
+            risk_class=max_risk(risk_class, "medium"),
+            route="founder_review",
+            reasons=reasons,
+            summary=(
+                "Founder review required because the task is resuming from prior follow-up "
+                f"phase `{active_follow_up_phase}`"
+            ),
+            options=approval_options_for_route("founder_review", verification_outcome),
         )
 
     if len(applied_paths) > 1:

@@ -5,8 +5,27 @@ import { api } from '../api';
 
 interface Message { role: 'user' | 'assistant' | 'system'; content: string; ts: number }
 
+const chatStorageKey = 'levik.web.chat.messages';
+
 export default function Chat({ wsLive }: { wsLive: boolean }) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const stored = localStorage.getItem(chatStorageKey);
+      if (!stored) return [];
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) ? parsed.filter((item): item is Message => {
+        return Boolean(
+          item &&
+          typeof item === 'object' &&
+          'role' in item &&
+          'content' in item &&
+          'ts' in item
+        );
+      }) : [];
+    } catch {
+      return [];
+    }
+  });
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
   const viewport = useRef<HTMLDivElement>(null);
@@ -35,6 +54,11 @@ export default function Chat({ wsLive }: { wsLive: boolean }) {
   }, []);
 
   useEffect(() => { viewport.current?.scrollTo({ top: viewport.current.scrollHeight, behavior: 'smooth' }); }, [messages, thinking]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(chatStorageKey, JSON.stringify(messages.slice(-200)));
+    } catch {}
+  }, [messages]);
 
   const send = async () => {
     if (!input.trim()) return;
@@ -59,7 +83,7 @@ export default function Chat({ wsLive }: { wsLive: boolean }) {
           {messages.length === 0 && (
             <div style={{ textAlign: 'center', padding: 60, color: '#888' }}>
               <div style={{ fontSize: 32, marginBottom: 16 }}>LeVik</div>
-              <div style={{ fontSize: 14 }}>Your enterprise AI engineering team.<br/>Ask us anything — plan, implement, review, deploy.</div>
+              <div style={{ fontSize: 14 }}>Your enterprise AI engineering team.<br/>Ask us anything: plan, implement, review, deploy.</div>
             </div>
           )}
           {messages.map((m, i) => (

@@ -37,8 +37,12 @@ type TelegramStore struct {
 }
 
 func NewTelegramStore() *TelegramStore {
+	return NewTelegramStoreAt(config.HomeDir())
+}
+
+func NewTelegramStoreAt(homeDir string) *TelegramStore {
 	return &TelegramStore{
-		path: filepath.Join(config.HomeDir(), "telegram_pairings.json"),
+		path: filepath.Join(homeDir, "telegram_pairings.json"),
 	}
 }
 

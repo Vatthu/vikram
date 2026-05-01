@@ -38,7 +38,7 @@ export default function App() {
     let ws:WebSocket; let t:ReturnType<typeof setTimeout>;
     (function c(){ws=new WebSocket(`ws://${location.host}/ws`);ws.onopen=()=>setWsLive(true);ws.onclose=()=>{setWsLive(false);t=setTimeout(c,2000)};ws.onmessage=(e)=>{
   bump();
-  // Forward all WS messages so Chat component can receive them
+  // Forward all WS messages so Chat component can receive them.
   window.dispatchEvent(new MessageEvent('message',{data:e.data}));
 }})();
     return ()=>{ws?.close();clearTimeout(t)};
@@ -63,7 +63,7 @@ export default function App() {
           </AppShell.Section>
         </AppShell.Navbar>
         <AppShell.Main>
-          {tab==='chat'&&<Chat key={refresh} wsLive={wsLive}/>}
+          {tab==='chat'&&<Chat wsLive={wsLive}/>}
           {tab==='dashboard'&&<Dashboard key={refresh}/>}
           {tab==='agents'&&<Agents key={refresh}/>}
           {tab==='providers'&&<Providers key={refresh}/>}

@@ -19,6 +19,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/v1claw/levik/pkg/config"
 	"github.com/v1claw/levik/pkg/logger"
+	"github.com/v1claw/levik/pkg/pairing"
 )
 
 //go:embed templates/*
@@ -105,22 +106,27 @@ type AgentChangedFunc func(action string, agent config.AgentConfig)
 // The gateway wires this to the agent loop for LLM processing.
 type ChatFunc func(ctx context.Context, message string) (string, error)
 
+// ChannelChangedFunc is called when channel config is saved via the Web UI.
+// The gateway wires this to reinitialize the channel at runtime.
+type ChannelChangedFunc func(name string)
+
 // Server serves the management console.
 type Server struct {
-	config         Config
-	hub            *wsHub
-	cfg            *config.Config
-	cfgPath        string
-	templates      *template.Template
-	httpSrv        *http.Server
-	onAgentChange  AgentChangedFunc
-	chatHandler    ChatFunc
-	orchCmd        *exec.Cmd
-	orchMu         sync.Mutex
-	projectRoot    string
-	orchSocket     string
-	orchHTTPClient *http.Client
-	orchBaseURL    string
+	config          Config
+	hub             *wsHub
+	cfg             *config.Config
+	cfgPath         string
+	templates       *template.Template
+	httpSrv         *http.Server
+	onAgentChange   AgentChangedFunc
+	onChannelChange ChannelChangedFunc
+	chatHandler     ChatFunc
+	orchCmd         *exec.Cmd
+	orchMu          sync.Mutex
+	projectRoot     string
+	orchSocket      string
+	orchHTTPClient  *http.Client
+	orchBaseURL     string
 }
 
 // SetOnAgentChange wires a callback for runtime agent registration.
@@ -131,6 +137,19 @@ func (s *Server) SetOnAgentChange(fn AgentChangedFunc) {
 // SetChatHandler wires the chat callback so the Web UI can talk to LeVik.
 func (s *Server) SetChatHandler(fn ChatFunc) {
 	s.chatHandler = fn
+}
+
+// SetOnChannelChange wires a callback so channel config changes reconnect
+// the channel at runtime instead of requiring a gateway restart.
+func (s *Server) SetOnChannelChange(fn ChannelChangedFunc) {
+	s.onChannelChange = fn
+}
+
+func (s *Server) notifyChannelChanged(name string) {
+	if s.onChannelChange == nil {
+		return
+	}
+	go s.onChannelChange(name)
 }
 
 // NewServer creates a new console server.
@@ -253,10 +272,13 @@ func (s *Server) Start(ctx context.Context) error {
 	mux.HandleFunc("/api/config/mcp/{name}", s.auth(s.handleAPIMCPDelete))
 	// --- Tasks ---
 	mux.HandleFunc("/api/tasks", s.auth(s.handleAPITasks))
+	mux.HandleFunc("/api/tasks/{task_id}/review", s.auth(s.handleAPITaskReview))
+	mux.HandleFunc("/api/tasks/{task_id}/resume", s.auth(s.handleAPITaskResume))
 	mux.HandleFunc("/api/orchestrator", s.auth(s.handleOrchStatus))
 	mux.HandleFunc("/api/orchestrator/start", s.auth(s.handleOrchStart))
 	mux.HandleFunc("/api/orchestrator/stop", s.auth(s.handleOrchStop))
 	mux.HandleFunc("/api/chat/send", s.auth(s.handleChatSend))
+	mux.HandleFunc("/api/telegram/pair", s.auth(s.handleTelegramPair))
 	// --- Skills ---
 	mux.HandleFunc("/api/skills", s.auth(s.handleAPISkills))
 	// Legacy HTML fragment routes
@@ -397,6 +419,57 @@ func (s *Server) handleChatSend(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) orchSocketAlive() bool {
 	return orchSocketAlive(s.orchSocket)
+}
+
+func (s *Server) handleTelegramPair(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		s.writeError(w, http.StatusMethodNotAllowed, "POST only")
+		return
+	}
+
+	var body struct {
+		OTP string `json:"otp"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		s.writeError(w, http.StatusBadRequest, "invalid JSON")
+		return
+	}
+	body.OTP = strings.TrimSpace(body.OTP)
+	if body.OTP == "" {
+		s.writeError(w, http.StatusBadRequest, "otp required")
+		return
+	}
+
+	homeDir := filepath.Dir(s.cfgPath)
+	store := pairing.NewTelegramStoreAt(homeDir)
+	req, err := store.Approve(body.OTP)
+	if err != nil {
+		s.writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	found := false
+	for _, id := range s.cfg.Channels.Telegram.AllowFrom {
+		if id == req.SenderID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		s.cfg.Channels.Telegram.AllowFrom = append(s.cfg.Channels.Telegram.AllowFrom, req.SenderID)
+		if err := config.SaveConfig(s.cfgPath, s.cfg); err != nil {
+			s.writeError(w, http.StatusInternalServerError, "save config: "+err.Error())
+			return
+		}
+		s.notifyChannelChanged("telegram")
+	}
+
+	s.writeOK(w, map[string]interface{}{
+		"status":    "paired",
+		"chat_id":   req.ChatID,
+		"username":  req.Username,
+		"sender_id": req.SenderID,
+	})
 }
 
 func orchSocketAlive(socketPath string) bool {

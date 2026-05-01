@@ -51,6 +51,25 @@ func TestTelegramStoreCreateOrReuseAndApprove(t *testing.T) {
 	}
 }
 
+func TestTelegramStoreAtUsesExplicitHome(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("LEVIK_HOME", t.TempDir())
+
+	store := NewTelegramStoreAt(home)
+	req, err := store.CreateOrReuse("123|alice", "123", "alice", "Alice")
+	if err != nil {
+		t.Fatalf("CreateOrReuse() error = %v", err)
+	}
+
+	approved, err := store.Approve(req.OTP)
+	if err != nil {
+		t.Fatalf("Approve() error = %v", err)
+	}
+	if approved.SenderID != "123|alice" {
+		t.Fatalf("Approve() sender = %q, want %q", approved.SenderID, "123|alice")
+	}
+}
+
 func TestTelegramStorePrunesExpiredRequests(t *testing.T) {
 	t.Setenv("LEVIK_HOME", t.TempDir())
 

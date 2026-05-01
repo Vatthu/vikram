@@ -6,7 +6,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
+	"time"
+
+	"github.com/v1claw/levik/pkg/config"
+	"github.com/v1claw/levik/pkg/orchestrator"
+	"github.com/v1claw/levik/pkg/pairing"
 )
 
 func TestHandleAPITasksListsRealOrchestratorTasks(t *testing.T) {
@@ -162,6 +168,118 @@ func TestHandleAPITasksRejectsMissingRepoPath(t *testing.T) {
 
 	if recorder.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+}
+
+func TestHandleAPITaskReviewProxiesReviewDetail(t *testing.T) {
+	server := testConsoleServer(roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		if r.Method != http.MethodGet || r.URL.Path != "/v1/tasks/task-001/review" {
+			return nil, unexpectedRequestError(r)
+		}
+		return testJSONResponse(t, http.StatusOK, map[string]interface{}{
+			"task": map[string]interface{}{
+				"task_id":   "task-001",
+				"objective": "Wire the console",
+				"phase":     "awaiting_approval",
+				"status":    "awaiting_approval",
+			},
+			"can_resume": true,
+		}), nil
+	}))
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/api/tasks/task-001/review", nil)
+	request.SetPathValue("task_id", "task-001")
+
+	server.handleAPITaskReview(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+
+	var payload map[string]interface{}
+	decodeTestJSON(t, recorder, &payload)
+	if payload["can_resume"] != true {
+		t.Fatalf("unexpected review payload: %#v", payload)
+	}
+}
+
+func TestHandleAPITaskResumeProxiesDecision(t *testing.T) {
+	var upstream orchestrator.ApprovalDecision
+	server := testConsoleServer(roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/tasks/task-001/resume" {
+			return nil, unexpectedRequestError(r)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&upstream); err != nil {
+			return nil, err
+		}
+		return testJSONResponse(t, http.StatusOK, map[string]interface{}{
+			"task_id":   "task-001",
+			"objective": "Wire the console",
+			"phase":     "founder_approved",
+			"status":    "completed",
+		}), nil
+	}))
+
+	recorder := httptest.NewRecorder()
+	body := bytes.NewBufferString(`{"task_id":"task-001","decision":"approve","comment":"ship it"}`)
+	request := httptest.NewRequest(http.MethodPost, "/api/tasks/task-001/resume", body)
+	request.SetPathValue("task_id", "task-001")
+
+	server.handleAPITaskResume(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+	if upstream.TaskID != "task-001" || upstream.Decision != orchestrator.ApprovalDecisionApprove {
+		t.Fatalf("unexpected upstream decision: %#v", upstream)
+	}
+	if upstream.Comment != "ship it" {
+		t.Fatalf("unexpected upstream comment: %#v", upstream)
+	}
+}
+
+func TestHandleTelegramPairApprovesOtpAndTriggersReconnect(t *testing.T) {
+	home := t.TempDir()
+	cfg := config.DefaultConfig()
+	cfgPath := filepath.Join(home, "config.json")
+	if err := config.SaveConfig(cfgPath, cfg); err != nil {
+		t.Fatalf("SaveConfig() error = %v", err)
+	}
+	req, err := pairing.NewTelegramStoreAt(home).CreateOrReuse("123|alice", "123", "alice", "Alice")
+	if err != nil {
+		t.Fatalf("CreateOrReuse() error = %v", err)
+	}
+
+	changed := make(chan string, 1)
+	server := &Server{
+		hub:     newWSHub(),
+		cfg:     cfg,
+		cfgPath: cfgPath,
+	}
+	server.SetOnChannelChange(func(name string) {
+		changed <- name
+	})
+
+	recorder := httptest.NewRecorder()
+	body := bytes.NewBufferString(`{"otp":"` + req.OTP + `"}`)
+	request := httptest.NewRequest(http.MethodPost, "/api/telegram/pair", body)
+
+	server.handleTelegramPair(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+	if len(cfg.Channels.Telegram.AllowFrom) != 1 || cfg.Channels.Telegram.AllowFrom[0] != "123|alice" {
+		t.Fatalf("unexpected allowlist: %#v", cfg.Channels.Telegram.AllowFrom)
+	}
+	select {
+	case name := <-changed:
+		if name != "telegram" {
+			t.Fatalf("unexpected channel change: %q", name)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("expected telegram reconnect callback")
 	}
 }
 

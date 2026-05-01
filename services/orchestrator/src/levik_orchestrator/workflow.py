@@ -11,6 +11,7 @@ from langgraph.types import Command, interrupt
 
 from .host_client import HostClient
 from .models import (
+    ActionTransition,
     GitRollbackRequest,
     ChangeReviewRequest,
     LintDiscoveryRequest,
@@ -34,6 +35,7 @@ from .models import (
     TaskCreateRequest,
     TaskReviewDetail,
     TaskSession,
+    TaskStatus,
     VerificationDiscoveryRequest,
     VerificationRunEvidence,
     WorkspaceProvisionRequest,
@@ -242,6 +244,7 @@ def task_review_from_state(task: TaskSession, state: OrchestratorState) -> TaskR
     session = task_session_from_existing(task, state)
     approval_request_data = state.get("approval_request") or None
     founder_decision_data = state.get("founder_decision") or None
+    action_transitions = review_action_transitions(session, state)
     pending_follow_up_required = bool(state.get("pending_follow_up_required", False))
     follow_up_phase = str(state.get("pending_follow_up_phase", "")).strip() or None
     follow_up_comment = str(state.get("pending_follow_up_comment", "")).strip()
@@ -334,15 +337,119 @@ def task_review_from_state(task: TaskSession, state: OrchestratorState) -> TaskR
         applied_edits=applied_edits,
         verification_runs=verification_runs,
         artifact_previews=artifact_previews(state),
-        can_resume=session.status == "awaiting_approval",
+        action_transitions=action_transitions,
+        can_resume=any(item.state == "awaiting_approval" for item in action_transitions),
         can_apply_follow_up=session.phase
         in {
             "founder_edit_requested",
             "founder_clarification_requested",
             "change_ready",
             "merge_blocked",
-        },
+        }
+        or any(
+            item.state in {"retryable", "blocked"} for item in action_transitions
+        ),
     )
+
+
+def review_action_transitions(
+    session: TaskSession, state: OrchestratorState
+) -> list[ActionTransition]:
+    transitions: list[ActionTransition] = []
+    verification_outcome = str(state.get("verification_outcome", "")).strip()
+    active_follow_up_phase = str(state.get("active_follow_up_phase", "")).strip()
+    has_retry_context = session.phase == "merge_blocked" or active_follow_up_phase in {
+        "founder_edit_requested",
+        "founder_clarification_requested",
+        "merge_blocked",
+    }
+
+    if session.status == "awaiting_approval":
+        for option in approval_options(state):
+            if option == "approve":
+                target_phase = "merge_ready"
+                target_status: TaskStatus = "completed"
+                summary = "Approve the change and continue to merge readiness"
+                if verification_outcome == "failed":
+                    target_phase = "merge_blocked"
+                    target_status = "paused"
+                    summary = (
+                        "Approve the change despite failed verification and keep the task "
+                        "blocked until a passing run exists"
+                    )
+                transitions.append(
+                    ActionTransition(
+                        state="awaiting_approval",
+                        action=option,
+                        target_phase=target_phase,
+                        target_status=target_status,
+                        summary=summary,
+                    )
+                )
+                continue
+
+            if option == "reject":
+                transitions.append(
+                    ActionTransition(
+                        state="awaiting_approval",
+                        action=option,
+                        target_phase="founder_rejected",
+                        target_status="failed",
+                        summary="Reject the change and roll back the worktree",
+                    )
+                )
+                continue
+
+            if option == "edit_and_approve":
+                transitions.append(
+                    ActionTransition(
+                        state="awaiting_approval",
+                        action=option,
+                        target_phase="founder_edit_requested",
+                        target_status="paused",
+                        summary="Request a bounded follow-up edit before approval",
+                    )
+                )
+                continue
+
+            transitions.append(
+                ActionTransition(
+                    state="awaiting_approval",
+                    action=option,
+                    target_phase="founder_clarification_requested",
+                    target_status="paused",
+                    summary="Request clarification before approval",
+                )
+            )
+
+    if has_retry_context:
+        retry_state = "retryable"
+        retry_label = "Retry the bounded change with the founder's follow-up context"
+        if session.phase == "merge_blocked" or active_follow_up_phase == "merge_blocked":
+            retry_state = "blocked"
+            retry_label = "Retry the merge handoff after addressing the recorded blockers"
+        transitions.append(
+            ActionTransition(
+                state=retry_state,
+                action="retry_change",
+                target_phase="change_requested",
+                target_status="running",
+                summary=retry_label,
+            )
+        )
+
+    if session.phase == "merge_ready":
+        transitions.append(
+            ActionTransition(
+                state="merge_ready",
+                action="complete",
+                target_phase="merge_ready",
+                target_status="completed",
+                summary="No further action is required; the task is ready to merge",
+            )
+        )
+
+    return transitions
 
 
 def artifact_previews(state: OrchestratorState) -> list[ArtifactPreview]:

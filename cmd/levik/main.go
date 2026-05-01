@@ -2158,6 +2158,13 @@ func gatewayCmd() {
 				fmt.Printf("✓ Agent %s removed at runtime\n", agentCfg.ID)
 			}
 		})
+		consoleSrv.SetOnChannelChange(func(name string) {
+			if err := channelManager.ReconnectChannel(ctx, name); err != nil {
+				fmt.Printf("⚠ Channel %s reconnect failed: %v\n", name, err)
+			} else {
+				fmt.Printf("✓ Channel %s reconnected\n", name)
+			}
+		})
 		consoleSrv.SetChatHandler(func(ctx context.Context, message string) (string, error) {
 			msgBus.PublishInbound(bus.InboundMessage{
 				Channel: "web", SenderID: "founder", ChatID: "web-console",

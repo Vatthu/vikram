@@ -23,7 +23,79 @@ export interface DashboardData {
   heartbeat_enabled: boolean; mcp_enabled: boolean; ws_clients: number;
 }
 export type Overview = DashboardData & { uptime?: string };
-export interface TaskInfo { task_id: string; objective: string; phase: string; status: string; risk_class?: string | null; }
+export interface TaskInfo {
+  task_id: string;
+  objective: string;
+  phase: string;
+  status: string;
+  summary?: string | null;
+  risk_class?: string | null;
+  approval_route?: string | null;
+  requires_founder_review?: boolean;
+  follow_up_required?: boolean;
+  follow_up_summary?: string | null;
+  merge_readiness?: string | null;
+  merge_summary?: string | null;
+}
+export type ApprovalDecisionKind = 'approve' | 'reject' | 'edit_and_approve' | 'clarify';
+export type OperatorState = 'awaiting_approval' | 'retryable' | 'blocked' | 'merge_ready';
+export type ReviewAction = ApprovalDecisionKind | 'retry_change' | 'complete';
+
+export interface ApprovalDecision {
+  task_id: string;
+  decision: ApprovalDecisionKind;
+  comment?: string;
+  proposed_edits?: Record<string, unknown>;
+}
+
+export interface ActionTransition {
+  state: OperatorState;
+  action: ReviewAction;
+  target_phase: string;
+  target_status: string;
+  summary: string;
+  enabled?: boolean;
+}
+
+export interface TaskReviewDetail {
+  task: TaskInfo;
+  approval_request?: {
+    task_id: string;
+    phase: string;
+    summary: string;
+    reason: string;
+    options: ApprovalDecisionKind[];
+    related_artifacts?: string[];
+  } | null;
+  approval_artifact_path?: string | null;
+  change_artifact_path?: string | null;
+  verification_result_artifact_path?: string | null;
+  founder_decision?: ApprovalDecision | null;
+  founder_decision_artifact_path?: string | null;
+  follow_up?: {
+    required: boolean;
+    phase?: string | null;
+    comment: string;
+    proposed_edits?: Record<string, unknown>;
+  };
+  merge_assessment?: {
+    state: string;
+    summary: string;
+    branch: string;
+    head_ref: string;
+    changed_file_count: number;
+    additions: number;
+    deletions: number;
+    diff_short_stat: string;
+    blockers?: string[];
+    notes?: string[];
+    status_lines?: string[];
+  };
+  merge_artifact_path?: string | null;
+  action_transitions?: ActionTransition[];
+  can_resume?: boolean;
+  can_apply_follow_up?: boolean;
+}
 export interface OrchStatus { running: boolean; reachable: boolean; socket: string; }
 
 export const api = {
@@ -60,7 +132,10 @@ export const api = {
   stopOrch: () => fetchJSON<{status:string}>('/orchestrator/stop', { method: 'POST' }),
   tasks: () => fetchJSON<{tasks:TaskInfo[];note:string}>('/tasks'),
   submitTask: (d: Record<string,unknown>) => fetchJSON<{status:string;task_id:string;task?:TaskInfo}>('/tasks', { method: 'POST', body: JSON.stringify(d) }),
+  taskReview: (taskId: string) => fetchJSON<TaskReviewDetail>(`/tasks/${taskId}/review`),
+  resumeTask: (taskId: string, decision: ApprovalDecision) => fetchJSON<TaskInfo>(`/tasks/${taskId}/resume`, { method: 'POST', body: JSON.stringify(decision) }),
   skills: () => fetchJSON<any>('/skills'),
+  pairTelegram: (otp: string) => fetchJSON<{status:string;chat_id:string;username:string}>('/telegram/pair', { method: 'POST', body: JSON.stringify({otp}) }),
   sendChat: (message: string) => fetchJSON<{status:string}>('/chat/send', { method: 'POST', body: JSON.stringify({message}) }),
 };
 

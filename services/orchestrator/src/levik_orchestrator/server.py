@@ -38,7 +38,7 @@ def build_app(
 ) -> FastAPI:
     managed_host_client = host_client or HostClient(settings.host_socket)
     graph = build_graph(managed_host_client, checkpoint_db=checkpoint_db)
-    task_store = store or TaskStore()
+    task_store = store or TaskStore(settings.state_dir / "tasks.json")
     console_dir = Path(__file__).with_name("console")
     console_static_dir = console_dir / "static"
 

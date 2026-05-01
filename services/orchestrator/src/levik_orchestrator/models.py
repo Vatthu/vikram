@@ -14,6 +14,20 @@ TaskStatus = Literal[
     "failed",
 ]
 ApprovalDecisionKind = Literal["approve", "reject", "edit_and_approve", "clarify"]
+ActionTransitionState = Literal[
+    "awaiting_approval",
+    "retryable",
+    "blocked",
+    "merge_ready",
+]
+ActionTransitionKind = Literal[
+    "approve",
+    "reject",
+    "edit_and_approve",
+    "clarify",
+    "retry_change",
+    "complete",
+]
 ApprovalPolicy = Literal["never", "on_request", "always"]
 ApprovalRisk = Literal["low", "medium", "high", "critical"]
 ApprovalRoute = Literal["auto_complete", "founder_review", "stop"]
@@ -412,6 +426,15 @@ class MergeAssessment(BaseModel):
     status_lines: list[str] = Field(default_factory=list)
 
 
+class ActionTransition(BaseModel):
+    state: ActionTransitionState
+    action: ActionTransitionKind
+    target_phase: str
+    target_status: TaskStatus
+    summary: str
+    enabled: bool = True
+
+
 class TaskReviewDetail(BaseModel):
     task: TaskSession
     approval_request: ApprovalRequest | None = None
@@ -426,6 +449,7 @@ class TaskReviewDetail(BaseModel):
     applied_edits: list[AppliedEditEvidence] = Field(default_factory=list)
     verification_runs: list[VerificationRunEvidence] = Field(default_factory=list)
     artifact_previews: list[ArtifactPreview] = Field(default_factory=list)
+    action_transitions: list[ActionTransition] = Field(default_factory=list)
     can_resume: bool = False
     can_apply_follow_up: bool = False
 

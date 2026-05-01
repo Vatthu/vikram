@@ -543,6 +543,23 @@ class WorkflowTests(unittest.TestCase):
             "go test ./pkg/orchestratorhost", review["verification_runs"][0]["command"]
         )
         self.assertGreaterEqual(len(review["artifact_previews"]), 3)
+        self.assertTrue(review["can_resume"])
+        self.assertFalse(review["can_apply_follow_up"])
+        self.assertTrue(
+            any(
+                transition["state"] == "awaiting_approval"
+                and transition["action"] == "approve"
+                and transition["target_phase"] == "merge_ready"
+                for transition in review["action_transitions"]
+            )
+        )
+        self.assertTrue(
+            any(
+                transition["state"] == "awaiting_approval"
+                and transition["action"] == "edit_and_approve"
+                for transition in review["action_transitions"]
+            )
+        )
 
     def test_review_artifact_content_endpoint_reads_allowed_artifact(self) -> None:
         host_client = StubHostClient()
@@ -700,6 +717,7 @@ class WorkflowTests(unittest.TestCase):
                         verification_commands=["FAIL go test ./pkg/orchestratorhost"],
                     ).model_dump(),
                 )
+                review_response = client.get("/v1/tasks/task-005/review")
 
         self.assertEqual(200, change_response.status_code)
         payload = change_response.json()
@@ -708,6 +726,18 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual("critical", payload["risk_class"])
         self.assertEqual("founder_review", payload["approval_route"])
         self.assertTrue(payload["requires_founder_review"])
+
+        self.assertEqual(200, review_response.status_code)
+        review_payload = review_response.json()
+        self.assertTrue(
+            any(
+                transition["state"] == "awaiting_approval"
+                and transition["action"] == "approve"
+                and transition["target_phase"] == "merge_blocked"
+                and transition["target_status"] == "paused"
+                for transition in review_payload["action_transitions"]
+            )
+        )
 
     def test_follow_up_edit_request_carries_into_next_attempt(self) -> None:
         host_client = StubHostClient()
@@ -887,6 +917,13 @@ class WorkflowTests(unittest.TestCase):
                     "Focused verification did not pass",
                     review_payload["follow_up"]["proposed_edits"]["merge_blockers"][0],
                 )
+                self.assertTrue(
+                    any(
+                        transition["state"] == "blocked"
+                        and transition["action"] == "retry_change"
+                        for transition in review_payload["action_transitions"]
+                    )
+                )
 
                 retry_response = client.post(
                     "/v1/tasks/task-005b/changes",
@@ -976,6 +1013,8 @@ class WorkflowTests(unittest.TestCase):
                     ).model_dump(),
                 )
 
+                review_response = client.get("/v1/tasks/task-006/review")
+
         self.assertEqual(200, resume_response.status_code)
         payload = resume_response.json()
         self.assertEqual("merge_ready", payload["phase"])
@@ -984,10 +1023,100 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("merge-readiness-1.md", payload["summary"])
         self.assertEqual(8, len(host_client.artifact_requests))
 
+        self.assertEqual(200, review_response.status_code)
+        review_payload = review_response.json()
+        self.assertTrue(
+            any(
+                transition["state"] == "merge_ready"
+                and transition["action"] == "complete"
+                for transition in review_payload["action_transitions"]
+            )
+        )
+
         stored = store.get("task-006")
         self.assertIsNotNone(stored)
         assert stored is not None
         self.assertEqual("merge_ready", stored.phase)
+
+    def test_retry_from_follow_up_keeps_founder_review_gate(self) -> None:
+        host_client = StubHostClient()
+        store = TaskStore()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            app = build_app(
+                host_client=host_client,
+                store=store,
+                checkpoint_db=Path(tmpdir) / "orchestrator.sqlite",
+            )
+            with TestClient(app) as client:
+                create_response = client.post(
+                    "/v1/tasks",
+                    json={
+                        "task_id": "task-007",
+                        "source": "telegram",
+                        "requested_by": "founder",
+                        "objective": "Keep retry flows on the founder-review path",
+                        "repo": {
+                            "path": "/repos/levik",
+                            "default_branch": "main",
+                        },
+                        "operator_channel": "telegram",
+                        "operator_chat_id": "123456",
+                    },
+                )
+                self.assertEqual(200, create_response.status_code)
+
+                first_change = client.post(
+                    "/v1/tasks/task-007/changes",
+                    json=TaskChangeRequest(
+                        task_id="task-007",
+                        summary="Start with a bounded code change",
+                        edits=[
+                            {
+                                "path": "pkg/orchestratorhost/server.go",
+                                "old_text": "package orchestratorhost",
+                                "new_text": "package orchestratorhost\n// follow-up gating fixture",
+                                "rationale": "Create a review-gated task before retry hardening",
+                            }
+                        ],
+                        verification_commands=["go test ./pkg/orchestratorhost"],
+                    ).model_dump(),
+                )
+                self.assertEqual(200, first_change.status_code)
+
+                edit_response = client.post(
+                    "/v1/tasks/task-007/resume",
+                    json=ApprovalDecision(
+                        task_id="task-007",
+                        decision="edit_and_approve",
+                        comment="Keep the task on a founder-reviewed retry path",
+                    ).model_dump(),
+                )
+                self.assertEqual(200, edit_response.status_code)
+
+                second_change = client.post(
+                    "/v1/tasks/task-007/changes",
+                    json=TaskChangeRequest(
+                        task_id="task-007",
+                        summary="Retry with a lower-risk documentation follow-up",
+                        edits=[
+                            {
+                                "path": "README.md",
+                                "old_text": "# LeVik",
+                                "new_text": "# LeVik\nRetry follow-up still requires founder review",
+                                "rationale": "Exercise the hardened retry policy on a low-risk edit",
+                            }
+                        ],
+                        verification_commands=["go test ./pkg/orchestratorhost"],
+                    ).model_dump(),
+                )
+
+        self.assertEqual(200, second_change.status_code)
+        second_payload = second_change.json()
+        self.assertEqual("founder_review_requested", second_payload["phase"])
+        self.assertEqual("awaiting_approval", second_payload["status"])
+        self.assertEqual("founder_review", second_payload["approval_route"])
+        self.assertTrue(second_payload["requires_founder_review"])
 
 
 if __name__ == "__main__":

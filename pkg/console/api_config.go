@@ -73,7 +73,10 @@ func (s *Server) handleAPIChannels(w http.ResponseWriter, r *http.Request) {
 		// POST to /api/channels/{name} — save channel config
 		name := strings.TrimPrefix(r.URL.Path, "/api/channels/")
 		var body map[string]interface{}
-		json.NewDecoder(r.Body).Decode(&body)
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			s.writeError(w, http.StatusBadRequest, "invalid JSON")
+			return
+		}
 		switch name {
 		case "telegram":
 			if v, ok := body["token"].(string); ok {
@@ -92,12 +95,22 @@ func (s *Server) handleAPIChannels(w http.ResponseWriter, r *http.Request) {
 			if v, ok := body["bridge_url"].(string); ok {
 				s.cfg.Channels.WhatsApp.BridgeURL = v
 			}
+			if v, ok := body["bridge_token"].(string); ok {
+				s.cfg.Channels.WhatsApp.BridgeToken = v
+			}
 			if v, ok := body["token"].(string); ok {
 				s.cfg.Channels.WhatsApp.BridgeToken = v
 			}
+		default:
+			s.writeError(w, http.StatusBadRequest, "unknown channel")
+			return
 		}
-		config.SaveConfig(s.cfgPath, s.cfg)
+		if err := config.SaveConfig(s.cfgPath, s.cfg); err != nil {
+			s.writeError(w, http.StatusInternalServerError, "save config: "+err.Error())
+			return
+		}
 		s.hub.Broadcast("channel_updated", map[string]string{"name": name})
+		s.notifyChannelChanged(name)
 	}
 	// GET: return channel status
 	s.writeOK(w, map[string]interface{}{
@@ -108,10 +121,11 @@ func (s *Server) handleAPIChannels(w http.ResponseWriter, r *http.Request) {
 			"allow_from": s.cfg.Channels.Telegram.AllowFrom,
 		},
 		"whatsapp": map[string]interface{}{
-			"enabled":    s.cfg.Channels.WhatsApp.Enabled,
-			"bridge_url": s.cfg.Channels.WhatsApp.BridgeURL,
-			"token":      maskKey(s.cfg.Channels.WhatsApp.BridgeToken),
-			"allow_from": s.cfg.Channels.WhatsApp.AllowFrom,
+			"enabled":      s.cfg.Channels.WhatsApp.Enabled,
+			"bridge_url":   s.cfg.Channels.WhatsApp.BridgeURL,
+			"bridge_token": maskKey(s.cfg.Channels.WhatsApp.BridgeToken),
+			"token":        maskKey(s.cfg.Channels.WhatsApp.BridgeToken),
+			"allow_from":   s.cfg.Channels.WhatsApp.AllowFrom,
 		},
 	})
 }
