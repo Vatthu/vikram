@@ -90,11 +90,23 @@ type smokeTaskChangeRequest struct {
 	VerificationCommands []string               `json:"verification_commands,omitempty"`
 }
 
+type smokeTaskResumeRequest struct {
+	TaskID        string                 `json:"task_id"`
+	Decision      string                 `json:"decision"`
+	Comment       string                 `json:"comment"`
+	ProposedEdits map[string]interface{} `json:"proposed_edits"`
+}
+
 type smokeTaskReview struct {
 	Task                           smokeTaskSession `json:"task"`
 	ChangeArtifactPath             string           `json:"change_artifact_path"`
 	VerificationResultArtifactPath string           `json:"verification_result_artifact_path"`
 	MergeArtifactPath              string           `json:"merge_artifact_path"`
+	ArtifactPreviews               []struct {
+		Title string `json:"title"`
+		Kind  string `json:"kind"`
+		Path  string `json:"path"`
+	} `json:"artifact_previews"`
 }
 
 type smokeArtifactContent struct {
@@ -186,7 +198,7 @@ func runOrchestratorSmoke(opts smokeOptions) error {
 
 	homeDir := filepath.Join(tmpRoot, "home")
 	workspaceDir := filepath.Join(tmpRoot, "workspace")
-	repoDir := filepath.Join(tmpRoot, "repo")
+	repoDir := smokeRepoPath(workspaceDir)
 	runDir := filepath.Join(tmpRoot, "run")
 	logDir := filepath.Join(tmpRoot, "logs")
 	for _, dir := range []string{homeDir, workspaceDir, repoDir, runDir, logDir} {
@@ -325,6 +337,9 @@ func runOrchestratorSmoke(opts smokeOptions) error {
 	if review.ChangeArtifactPath == "" || review.MergeArtifactPath == "" {
 		return attachSmokeContext(fmt.Errorf("expected change and merge artifacts, got change=%q merge=%q", review.ChangeArtifactPath, review.MergeArtifactPath), tmpRoot, logDir)
 	}
+	if !hasSmokeArtifactPreview(review.ArtifactPreviews, "Archive Email Draft", "archive") {
+		return attachSmokeContext(fmt.Errorf("expected archive email draft artifact preview"), tmpRoot, logDir)
+	}
 
 	changeArtifactURL := "http://levik-orchestrator/v1/tasks/" + submitResp.TaskID + "/artifacts/content?path=" + url.QueryEscape(review.ChangeArtifactPath)
 	var changeArtifact smokeArtifactContent
@@ -356,10 +371,62 @@ func runOrchestratorSmoke(opts smokeOptions) error {
 		return attachSmokeContext(fmt.Errorf("console task shows %s/%s, want completed/merge_ready", finalConsoleTask.Status, finalConsoleTask.Phase), tmpRoot, logDir)
 	}
 
+	founderTaskPayload := map[string]interface{}{
+		"objective": "Exercise founder approval for a bounded code change in the smoke repository.",
+		"repo_path": repoDir,
+	}
+	var founderSubmit smokeConsoleTaskSubmitResponse
+	if err := smokeConsoleJSON(ctx, consoleClient, consoleAddr, consoleAPIKey, http.MethodPost, "/api/tasks", founderTaskPayload, &founderSubmit); err != nil {
+		return attachSmokeContext(fmt.Errorf("submit founder approval task: %w", err), tmpRoot, logDir)
+	}
+	if founderSubmit.TaskID == "" {
+		return attachSmokeContext(fmt.Errorf("founder approval task returned empty task_id"), tmpRoot, logDir)
+	}
+
+	founderChange := smokeTaskChangeRequest{
+		TaskID:  founderSubmit.TaskID,
+		Summary: "Change a tracked Go source file and require founder approval.",
+		Edits: []smokeTextReplacement{
+			{
+				Path:      "main.go",
+				OldText:   "fmt.Println(\"smoke\")",
+				NewText:   "fmt.Println(\"smoke approved\")",
+				Rationale: "Bounded code edit to exercise the founder approval path.",
+			},
+		},
+	}
+	var approvalTask smokeTaskSession
+	if err := smokeUnixJSON(ctx, orchestratorClient, "http://levik-orchestrator/v1/tasks/"+founderSubmit.TaskID+"/changes", founderChange, &approvalTask); err != nil {
+		return attachSmokeContext(fmt.Errorf("apply founder approval change: %w", err), tmpRoot, logDir)
+	}
+	if approvalTask.Phase != "founder_review_requested" || approvalTask.Status != "awaiting_approval" {
+		return attachSmokeContext(fmt.Errorf("expected founder_review_requested/awaiting_approval, got %s/%s", approvalTask.Phase, approvalTask.Status), tmpRoot, logDir)
+	}
+	if approvalTask.RiskClass != "high" || approvalTask.ApprovalRoute != "founder_review" {
+		return attachSmokeContext(fmt.Errorf("expected high/founder_review, got %s/%s", approvalTask.RiskClass, approvalTask.ApprovalRoute), tmpRoot, logDir)
+	}
+
+	resumeRequest := smokeTaskResumeRequest{
+		TaskID:        founderSubmit.TaskID,
+		Decision:      "approve",
+		Comment:       "Smoke approval for bounded code change",
+		ProposedEdits: map[string]interface{}{},
+	}
+	var resumedTask smokeTaskSession
+	if err := smokeUnixJSON(ctx, orchestratorClient, "http://levik-orchestrator/v1/tasks/"+founderSubmit.TaskID+"/resume", resumeRequest, &resumedTask); err != nil {
+		return attachSmokeContext(fmt.Errorf("resume founder approval task: %w", err), tmpRoot, logDir)
+	}
+	if resumedTask.Phase != "merge_ready" || resumedTask.Status != "completed" {
+		return attachSmokeContext(fmt.Errorf("expected approved task merge_ready/completed, got %s/%s", resumedTask.Phase, resumedTask.Status), tmpRoot, logDir)
+	}
+	if resumedTask.MergeReadiness != "ready" {
+		return attachSmokeContext(fmt.Errorf("expected approved task merge readiness ready, got %q", resumedTask.MergeReadiness), tmpRoot, logDir)
+	}
+
 	fmt.Printf("✓ Orchestrator smoke passed\n")
 	fmt.Printf("  temp root: %s\n", tmpRoot)
 	fmt.Printf("  console:   http://%s\n", consoleAddr)
-	fmt.Printf("  task:      %s\n", submitResp.TaskID)
+	fmt.Printf("  tasks:     %s, %s\n", submitResp.TaskID, founderSubmit.TaskID)
 	if !opts.keepTemp {
 		fmt.Println("  cleanup:   automatic")
 	}
@@ -390,6 +457,10 @@ func buildSmokeConfig(workspaceDir, stubURL string, gatewayPort int) *config.Con
 		{ID: "reviewer", Name: "Reviewer", Role: "reviewer", Provider: "vllm", Model: "fake-model", Workspace: filepath.Join(workspaceDir, "agents", "reviewer")},
 	}
 	return cfg
+}
+
+func smokeRepoPath(workspaceDir string) string {
+	return filepath.Join(workspaceDir, "repos", "smoke-repo")
 }
 
 func detectProjectRoot() (string, error) {
@@ -503,6 +574,10 @@ func createSmokeRepo(ctx context.Context, repoDir string) error {
 	if err := os.WriteFile(filepath.Join(repoDir, "README.md"), []byte("# Smoke Repo\n\nInitial note.\n"), 0o644); err != nil {
 		return err
 	}
+	mainSource := "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"smoke\")\n}\n"
+	if err := os.WriteFile(filepath.Join(repoDir, "main.go"), []byte(mainSource), 0o644); err != nil {
+		return err
+	}
 	if err := runSmokeGit(ctx, repoDir, "init"); err != nil {
 		return err
 	}
@@ -512,7 +587,7 @@ func createSmokeRepo(ctx context.Context, repoDir string) error {
 	if err := runSmokeGit(ctx, repoDir, "config", "user.email", "smoke@levik.local"); err != nil {
 		return err
 	}
-	if err := runSmokeGit(ctx, repoDir, "add", "README.md"); err != nil {
+	if err := runSmokeGit(ctx, repoDir, "add", "README.md", "main.go"); err != nil {
 		return err
 	}
 	if err := runSmokeGit(ctx, repoDir, "commit", "-m", "initial"); err != nil {
@@ -732,6 +807,19 @@ func findSmokeTask(tasks []smokeConsoleTask, taskID string) (smokeConsoleTask, b
 		}
 	}
 	return smokeConsoleTask{}, false
+}
+
+func hasSmokeArtifactPreview(previews []struct {
+	Title string `json:"title"`
+	Kind  string `json:"kind"`
+	Path  string `json:"path"`
+}, title, kind string) bool {
+	for _, preview := range previews {
+		if preview.Title == title && preview.Kind == kind && strings.TrimSpace(preview.Path) != "" {
+			return true
+		}
+	}
+	return false
 }
 
 func attachSmokeContext(err error, tmpRoot, logDir string) error {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -39,5 +40,18 @@ func TestBuildSmokeConfigUsesLocalVLLMTeam(t *testing.T) {
 	}
 	if cfg.Heartbeat.Enabled {
 		t.Fatal("heartbeat should be disabled for smoke config")
+	}
+}
+
+func TestSmokeRepoPathStaysInsideWorkspace(t *testing.T) {
+	workspace := filepath.Join(t.TempDir(), "workspace")
+	repoPath := smokeRepoPath(workspace)
+
+	rel, err := filepath.Rel(workspace, repoPath)
+	if err != nil {
+		t.Fatalf("rel: %v", err)
+	}
+	if rel == "." || strings.HasPrefix(rel, "..") || filepath.IsAbs(rel) {
+		t.Fatalf("repo path %q must stay inside workspace %q", repoPath, workspace)
 	}
 }
