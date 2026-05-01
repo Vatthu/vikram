@@ -25,6 +25,7 @@ var (
 	ddgLinkPattern    = regexp.MustCompile(`<a[^>]+class="[^"]*result__a[^"]*"[^>]+href="([^"]+)"[^>]*>([^<]+)</a>`)
 	ddgSnippetPattern = regexp.MustCompile(`<a[^>]+class="result__snippet[^"]*"[^>]*>([^<]+)</a>`)
 	htmlTagPattern    = regexp.MustCompile(`<[^>]+>`)
+	allowedFetchURL   = regexp.MustCompile(`^https://(?:api\.github\.com|arxiv\.org|cloud\.google\.com|developer\.mozilla\.org|dl\.acm\.org|docs\.anthropic\.com|docs\.github\.com|docs\.langchain\.com|docs\.python\.org|export\.arxiv\.org|github\.com|gist\.githubusercontent\.com|go\.dev|huggingface\.co|ieeexplore\.ieee\.org|learn\.microsoft\.com|openreview\.net|papers\.nips\.cc|pkg\.go\.dev|platform\.openai\.com|proceedings\.mlr\.press|pypi\.org|raw\.githubusercontent\.com|registry\.npmjs\.org)(?::443)?(?:/[A-Za-z0-9._~%!$&'()*+,;=:@/-]*)?(?:\?[A-Za-z0-9._~%!$&'()*+,;=:@/?-]*)?$`)
 )
 
 type SearchProvider interface {
@@ -380,6 +381,9 @@ func newWebFetchHTTPClient() *http.Client {
 			if err := validateFetchURL(req.Context(), req.URL); err != nil {
 				return err
 			}
+			if !allowedFetchURL.MatchString(req.URL.String()) {
+				return fmt.Errorf("URL blocked: target is not in the web_fetch allowlist")
+			}
 			return nil
 		},
 	}
@@ -501,6 +505,10 @@ func (t *WebFetchTool) Execute(ctx context.Context, tc ToolContext, args map[str
 	if err := validateFetchURL(ctx, parsedURL); err != nil {
 		return ErrorResult(err.Error())
 	}
+	safeURL := parsedURL.String()
+	if !allowedFetchURL.MatchString(safeURL) {
+		return ErrorResult("URL blocked: target is not in the web_fetch allowlist")
+	}
 
 	maxChars := t.maxChars
 	if mc, ok := args["maxChars"].(float64); ok {
@@ -509,7 +517,6 @@ func (t *WebFetchTool) Execute(ctx context.Context, tc ToolContext, args map[str
 		}
 	}
 
-	safeURL := parsedURL.String()
 	req, err := http.NewRequestWithContext(ctx, "GET", safeURL, nil)
 	if err != nil {
 		return ErrorResult(fmt.Sprintf("failed to create request: %v", err))

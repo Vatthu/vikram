@@ -267,14 +267,23 @@ func TestWebFetch_BuildResultIncludesFetchedTextForLLM(t *testing.T) {
 func TestWebFetch_RejectsUserinfoAndNonDefaultPorts(t *testing.T) {
 	cases := []string{
 		"https://user:pass@example.com/",
-		"https://example.com:444/",
-		"http://example.com:8080/",
+		"https://github.com:444/",
+		"http://github.com:8080/",
 	}
 	for _, raw := range cases {
 		err := validateFetchURL(context.Background(), mustParseURL(t, raw))
 		if err == nil {
 			t.Fatalf("expected %s to be rejected", raw)
 		}
+	}
+}
+
+func TestWebFetch_RequiresAllowlistedTarget(t *testing.T) {
+	if !allowedFetchURL.MatchString("https://github.com/v1claw/levik") {
+		t.Fatal("expected GitHub to be allowlisted")
+	}
+	if allowedFetchURL.MatchString("https://example.com/") {
+		t.Fatal("expected non-allowlisted host to be blocked")
 	}
 }
 

@@ -17,7 +17,7 @@ func TestEditTool_EditFile_Success(t *testing.T) {
 	tool := NewEditFileTool(tmpDir, true)
 	ctx := context.Background()
 	args := map[string]interface{}{
-		"path":     testFile,
+		"path":     "test.txt",
 		"old_text": "World",
 		"new_text": "Universe",
 	}
@@ -56,12 +56,11 @@ func TestEditTool_EditFile_Success(t *testing.T) {
 // TestEditTool_EditFile_NotFound verifies error handling for non-existent file
 func TestEditTool_EditFile_NotFound(t *testing.T) {
 	tmpDir := t.TempDir()
-	testFile := filepath.Join(tmpDir, "nonexistent.txt")
 
 	tool := NewEditFileTool(tmpDir, true)
 	ctx := context.Background()
 	args := map[string]interface{}{
-		"path":     testFile,
+		"path":     "nonexistent.txt",
 		"old_text": "old",
 		"new_text": "new",
 	}
@@ -88,7 +87,7 @@ func TestEditTool_EditFile_OldTextNotFound(t *testing.T) {
 	tool := NewEditFileTool(tmpDir, true)
 	ctx := context.Background()
 	args := map[string]interface{}{
-		"path":     testFile,
+		"path":     "test.txt",
 		"old_text": "Goodbye",
 		"new_text": "Hello",
 	}
@@ -115,7 +114,7 @@ func TestEditTool_EditFile_MultipleMatches(t *testing.T) {
 	tool := NewEditFileTool(tmpDir, true)
 	ctx := context.Background()
 	args := map[string]interface{}{
-		"path":     testFile,
+		"path":     "test.txt",
 		"old_text": "test",
 		"new_text": "done",
 	}
@@ -218,10 +217,10 @@ func TestEditTool_AppendFile_Success(t *testing.T) {
 	testFile := filepath.Join(tmpDir, "test.txt")
 	os.WriteFile(testFile, []byte("Initial content"), 0644)
 
-	tool := NewAppendFileTool("", false)
+	tool := NewAppendFileTool(tmpDir, true)
 	ctx := context.Background()
 	args := map[string]interface{}{
-		"path":    testFile,
+		"path":    "test.txt",
 		"content": "\nAppended content",
 	}
 

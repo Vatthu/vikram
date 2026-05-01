@@ -11,65 +11,60 @@ import (
 	"github.com/v1claw/levik/pkg/bus"
 )
 
-// validatePath normalizes an agent-provided path and, when restrict is enabled,
-// proves the resolved path stays inside the configured workspace. It resolves
-// existing symlinks and existing ancestors for files that are about to be
-// created, which prevents "../" and symlink escape variants from reaching the
-// filesystem sinks below.
-func validatePath(path, workspace string, restrict bool) (string, error) {
+type safeLocalPath struct {
+	root string
+	rel  string
+}
+
+// validatePath converts an agent-provided path into a workspace-relative path.
+// Filesystem tools intentionally reject absolute paths: the host owns the root,
+// and models only choose a local path within that root.
+func validatePath(path, workspace string, restrict bool) (safeLocalPath, error) {
 	path = strings.TrimSpace(path)
 	workspace = strings.TrimSpace(workspace)
 	if path == "" {
-		return "", fmt.Errorf("path is required")
+		return safeLocalPath{}, fmt.Errorf("path is required")
 	}
 	if strings.Contains(path, "\x00") || strings.Contains(workspace, "\x00") {
-		return "", fmt.Errorf("path contains unsupported characters")
+		return safeLocalPath{}, fmt.Errorf("path contains unsupported characters")
 	}
-	if restrict && workspace == "" {
-		return "", fmt.Errorf("workspace is required when filesystem restriction is enabled")
+	if workspace == "" {
+		if restrict {
+			return safeLocalPath{}, fmt.Errorf("workspace is required when filesystem restriction is enabled")
+		}
+		workspace = "."
+	}
+	if filepath.IsAbs(path) || !filepath.IsLocal(path) {
+		return safeLocalPath{}, fmt.Errorf("access denied: path is outside the workspace")
 	}
 
-	var absWorkspace string
-	var err error
-	if workspace != "" {
-		absWorkspace, err = filepath.Abs(workspace)
-		if err != nil {
-			return "", fmt.Errorf("failed to resolve workspace path: %w", err)
-		}
-	}
-
-	var absPath string
-	if filepath.IsAbs(path) {
-		absPath = filepath.Clean(path)
-	} else if absWorkspace != "" {
-		absPath, err = filepath.Abs(filepath.Join(absWorkspace, path))
-		if err != nil {
-			return "", fmt.Errorf("failed to resolve file path: %w", err)
-		}
-	} else {
-		absPath, err = filepath.Abs(path)
-		if err != nil {
-			return "", fmt.Errorf("failed to resolve file path: %w", err)
-		}
-	}
-
-	if !restrict {
-		return absPath, nil
+	absWorkspace, err := filepath.Abs(workspace)
+	if err != nil {
+		return safeLocalPath{}, fmt.Errorf("failed to resolve workspace path: %w", err)
 	}
 
 	workspaceReal, err := filepath.EvalSymlinks(absWorkspace)
 	if err != nil {
-		return "", fmt.Errorf("failed to resolve workspace symlink: %w", err)
+		return safeLocalPath{}, fmt.Errorf("failed to resolve workspace symlink: %w", err)
 	}
 
+	rel := filepath.Clean(path)
+	if rel == "." {
+		return safeLocalPath{root: workspaceReal, rel: rel}, nil
+	}
+
+	absPath, err := filepath.Abs(filepath.Join(workspaceReal, rel))
+	if err != nil {
+		return safeLocalPath{}, fmt.Errorf("failed to resolve file path: %w", err)
+	}
 	pathReal, err := resolvePathForContainment(absPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to resolve path symlink: %w", err)
+		return safeLocalPath{}, fmt.Errorf("failed to resolve path symlink: %w", err)
 	}
 	if !isWithinWorkspace(pathReal, workspaceReal) {
-		return "", fmt.Errorf("access denied: path is outside the workspace or resolves outside via symlink")
+		return safeLocalPath{}, fmt.Errorf("access denied: path is outside the workspace or resolves outside via symlink")
 	}
-	return absPath, nil
+	return safeLocalPath{root: workspaceReal, rel: rel}, nil
 }
 
 func resolvePathForContainment(absPath string) (string, error) {
@@ -102,8 +97,13 @@ func isWithinWorkspace(candidate, workspace string) bool {
 	return err == nil && (rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator))))
 }
 
-func openRegularFileForRead(resolvedPath string) (*os.File, os.FileInfo, error) {
-	f, err := os.Open(resolvedPath)
+func openRegularFileForRead(path safeLocalPath) (*os.File, os.FileInfo, error) {
+	rel := path.rel
+	if !filepath.IsLocal(rel) {
+		return nil, nil, fmt.Errorf("access denied: path is outside the workspace")
+	}
+	fullPath := filepath.Join(path.root, rel)
+	f, err := os.Open(fullPath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -116,7 +116,7 @@ func openRegularFileForRead(resolvedPath string) (*os.File, os.FileInfo, error) 
 		_ = f.Close()
 		return nil, nil, fmt.Errorf("path must be a file")
 	}
-	linkInfo, err := os.Lstat(resolvedPath)
+	linkInfo, err := os.Lstat(fullPath)
 	if err != nil {
 		_ = f.Close()
 		return nil, nil, err
@@ -128,8 +128,13 @@ func openRegularFileForRead(resolvedPath string) (*os.File, os.FileInfo, error) 
 	return f, info, nil
 }
 
-func readDirectoryEntries(resolvedPath string) ([]os.DirEntry, error) {
-	info, err := os.Lstat(resolvedPath)
+func readDirectoryEntries(path safeLocalPath) ([]os.DirEntry, error) {
+	rel := path.rel
+	if !filepath.IsLocal(rel) {
+		return nil, fmt.Errorf("access denied: path is outside the workspace")
+	}
+	fullPath := filepath.Join(path.root, rel)
+	info, err := os.Lstat(fullPath)
 	if err != nil {
 		return nil, err
 	}
@@ -139,17 +144,22 @@ func readDirectoryEntries(resolvedPath string) ([]os.DirEntry, error) {
 	if !info.IsDir() {
 		return nil, fmt.Errorf("path must be a directory")
 	}
-	return os.ReadDir(resolvedPath)
+	return os.ReadDir(fullPath)
 }
 
-func writeFileReplacingPath(resolvedPath string, content []byte, defaultMode os.FileMode) error {
-	dir := filepath.Dir(resolvedPath)
+func writeFileReplacingPath(path safeLocalPath, content []byte, defaultMode os.FileMode) error {
+	rel := path.rel
+	if !filepath.IsLocal(rel) {
+		return fmt.Errorf("access denied: path is outside the workspace")
+	}
+	fullPath := filepath.Join(path.root, rel)
+	dir := filepath.Dir(fullPath)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
 	mode := defaultMode
-	if info, err := os.Lstat(resolvedPath); err == nil {
+	if info, err := os.Lstat(fullPath); err == nil {
 		if info.Mode()&os.ModeSymlink != 0 {
 			return fmt.Errorf("access denied: path resolves to a symlink")
 		}
@@ -184,17 +194,22 @@ func writeFileReplacingPath(resolvedPath string, content []byte, defaultMode os.
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	if err := os.Rename(tmpPath, resolvedPath); err != nil {
+	if err := os.Rename(tmpPath, fullPath); err != nil {
 		return err
 	}
 	cleanup = false
 	return nil
 }
 
-func appendFileReplacingPath(resolvedPath string, content []byte, maxExistingBytes int64) error {
+func appendFileReplacingPath(path safeLocalPath, content []byte, maxExistingBytes int64) error {
+	rel := path.rel
+	if !filepath.IsLocal(rel) {
+		return fmt.Errorf("access denied: path is outside the workspace")
+	}
+	fullPath := filepath.Join(path.root, rel)
 	mode := os.FileMode(0o600)
 	var existing []byte
-	if info, err := os.Lstat(resolvedPath); err == nil {
+	if info, err := os.Lstat(fullPath); err == nil {
 		if info.Mode()&os.ModeSymlink != 0 {
 			return fmt.Errorf("access denied: path resolves to a symlink")
 		}
@@ -204,7 +219,7 @@ func appendFileReplacingPath(resolvedPath string, content []byte, maxExistingByt
 		if maxExistingBytes > 0 && info.Size() > maxExistingBytes {
 			return fmt.Errorf("file too large to append safely (max %d bytes)", maxExistingBytes)
 		}
-		f, _, err := openRegularFileForRead(resolvedPath)
+		f, _, err := openRegularFileForRead(path)
 		if err != nil {
 			return err
 		}
@@ -223,7 +238,7 @@ func appendFileReplacingPath(resolvedPath string, content []byte, maxExistingByt
 	combined := make([]byte, 0, len(existing)+len(content))
 	combined = append(combined, existing...)
 	combined = append(combined, content...)
-	return writeFileReplacingPath(resolvedPath, combined, mode)
+	return writeFileReplacingPath(path, combined, mode)
 }
 
 type ReadFileTool struct {
