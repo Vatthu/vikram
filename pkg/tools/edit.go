@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 )
@@ -72,15 +73,19 @@ func (t *EditFileTool) Execute(ctx context.Context, tc ToolContext, args map[str
 		return ErrorResult(err.Error())
 	}
 
-	fi, err := os.Stat(resolvedPath)
+	const maxEditBytes = 10 * 1024 * 1024
+	f, fi, err := openRegularFileForRead(resolvedPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return ErrorResult(fmt.Sprintf("file not found: %s", path))
 		}
-		return ErrorResult(fmt.Sprintf("failed to stat file: %v", err))
+		return ErrorResult(fmt.Sprintf("failed to read file: %v", err))
 	}
-
-	content, err := os.ReadFile(resolvedPath)
+	defer f.Close()
+	if fi.Size() > maxEditBytes {
+		return ErrorResult(fmt.Sprintf("file too large to edit (max %d bytes)", maxEditBytes))
+	}
+	content, err := io.ReadAll(f)
 	if err != nil {
 		return ErrorResult(fmt.Sprintf("failed to read file: %v", err))
 	}
@@ -101,7 +106,7 @@ func (t *EditFileTool) Execute(ctx context.Context, tc ToolContext, args map[str
 	// Preserve the original file's permissions.
 	mode := fi.Mode().Perm()
 
-	if err := os.WriteFile(resolvedPath, []byte(newContent), mode); err != nil {
+	if err := writeFileReplacingPath(resolvedPath, []byte(newContent), mode); err != nil {
 		return ErrorResult(fmt.Sprintf("failed to write file: %v", err))
 	}
 
@@ -158,17 +163,11 @@ func (t *AppendFileTool) Execute(ctx context.Context, tc ToolContext, args map[s
 		return ErrorResult(err.Error())
 	}
 
-	f, err := os.OpenFile(resolvedPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
-	if err != nil {
-		return ErrorResult(fmt.Sprintf("failed to open file: %v", err))
+	const maxAppendBytes = 50 * 1024 * 1024
+	if len(content) > maxAppendBytes {
+		return ErrorResult(fmt.Sprintf("content too large to append (max %d bytes)", maxAppendBytes))
 	}
-	defer func() {
-		if cerr := f.Close(); cerr != nil && res == nil {
-			res = ErrorResult(fmt.Sprintf("failed to close file: %v", cerr))
-		}
-	}()
-
-	if _, err := f.WriteString(content); err != nil {
+	if err := appendFileReplacingPath(resolvedPath, []byte(content), maxAppendBytes); err != nil {
 		return ErrorResult(fmt.Sprintf("failed to append to file: %v", err))
 	}
 

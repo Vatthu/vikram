@@ -285,3 +285,50 @@ func TestFilesystemTool_ReadFile_RejectsSymlinkEscape(t *testing.T) {
 		t.Fatalf("expected symlink escape error, got: %s", result.ForLLM)
 	}
 }
+
+func TestFilesystemTool_WriteFile_RejectsSymlinkEscape(t *testing.T) {
+	root := t.TempDir()
+	workspace := filepath.Join(root, "workspace")
+	requireNoError(t, os.MkdirAll(workspace, 0o755))
+
+	secret := filepath.Join(root, "secret.txt")
+	requireNoError(t, os.WriteFile(secret, []byte("do not touch"), 0o644))
+	link := filepath.Join(workspace, "leak.txt")
+	if err := os.Symlink(secret, link); err != nil {
+		t.Skipf("symlink not supported in this environment: %v", err)
+	}
+
+	tool := NewWriteFileTool(workspace, true, nil)
+	result := tool.Execute(context.Background(), ToolContext{}, map[string]interface{}{
+		"path":    "leak.txt",
+		"content": "modified",
+	})
+	if !result.IsError {
+		t.Fatalf("expected symlink write escape to be blocked")
+	}
+	data, err := os.ReadFile(secret)
+	requireNoError(t, err)
+	if string(data) != "do not touch" {
+		t.Fatalf("secret file was modified: %q", string(data))
+	}
+}
+
+func TestFilesystemTool_RestrictionRequiresWorkspace(t *testing.T) {
+	tool := NewReadFileTool("", true, nil)
+	result := tool.Execute(context.Background(), ToolContext{}, map[string]interface{}{
+		"path": "anything.txt",
+	})
+	if !result.IsError {
+		t.Fatal("expected restricted filesystem tool without workspace to fail")
+	}
+	if !strings.Contains(result.ForLLM, "workspace is required") {
+		t.Fatalf("expected workspace error, got: %s", result.ForLLM)
+	}
+}
+
+func requireNoError(t *testing.T, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatal(err)
+	}
+}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net"
 	"net/http"
@@ -221,11 +222,24 @@ func (s *Server) handleProvisionWorkspace(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	taskRoot := filepath.Join(s.cfg.WorkspaceRoot, "tasks", req.TaskID)
+	tasksRoot, tasksRootReal, err := managedRootForWorkspace(s.cfg.WorkspaceRoot, "tasks")
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	taskRoot, err := resolvePathInsideRoot(tasksRoot, tasksRootReal, req.TaskID, "task_id", true)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
 	artifactsDir := filepath.Join(taskRoot, "artifacts")
 	logsDir := filepath.Join(taskRoot, "logs")
 	scratchDir := filepath.Join(taskRoot, "scratch")
-	worktreePath := filepath.Join(s.cfg.WorkspaceRoot, "worktrees", req.TaskID)
+	worktreePath, err := validatedManagedWorktreePath(s.cfg.WorkspaceRoot, req.TaskID)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
 
 	for _, path := range []string{artifactsDir, logsDir, scratchDir, filepath.Dir(worktreePath)} {
 		if err := os.MkdirAll(path, 0o755); err != nil {
@@ -264,14 +278,19 @@ func (s *Server) handleCreateWorktree(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	worktreePath, err := filepath.Abs(req.WorktreePath)
+	repoPath, err := validatedGitRepositoryPath(req.Repo.Path)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid worktree_path"})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	worktreeRoot := filepath.Join(s.cfg.WorkspaceRoot, "worktrees")
-	if !isWithinRoot(worktreePath, worktreeRoot) {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "worktree_path must remain inside the managed worktree root"})
+	worktreePath, err := validatedManagedWorktreePath(s.cfg.WorkspaceRoot, req.WorktreePath)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	branch := strings.TrimSpace(req.Branch)
+	if err := validateGitRefName(branch, "branch", false); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 
@@ -281,6 +300,10 @@ func (s *Server) handleCreateWorktree(w http.ResponseWriter, r *http.Request) {
 	}
 	if strings.TrimSpace(baseRef) == "" {
 		baseRef = "main"
+	}
+	if err := validateGitRefName(baseRef, "base_ref", true); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
 	}
 
 	if err := os.MkdirAll(filepath.Dir(worktreePath), 0o755); err != nil {
@@ -296,9 +319,9 @@ func (s *Server) handleCreateWorktree(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, orchestrator.GitWorktreeCreateResponse{
 			TaskID:       req.TaskID,
-			RepoPath:     req.Repo.Path,
+			RepoPath:     repoPath,
 			WorktreePath: worktreePath,
-			Branch:       req.Branch,
+			Branch:       branch,
 			BaseRef:      baseRef,
 			HeadRef:      headRef,
 			Created:      false,
@@ -306,7 +329,7 @@ func (s *Server) handleCreateWorktree(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	output, err := runGit(r.Context(), req.Repo.Path, "worktree", "add", "-b", req.Branch, worktreePath, baseRef)
+	output, err := runGit(r.Context(), repoPath, "worktree", "add", "-b", branch, worktreePath, baseRef)
 	if err != nil {
 		writeJSON(w, http.StatusBadGateway, map[string]string{"error": fmt.Sprintf("failed to create worktree: %v: %s", err, strings.TrimSpace(output))})
 		return
@@ -320,9 +343,9 @@ func (s *Server) handleCreateWorktree(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, orchestrator.GitWorktreeCreateResponse{
 		TaskID:       req.TaskID,
-		RepoPath:     req.Repo.Path,
+		RepoPath:     repoPath,
 		WorktreePath: worktreePath,
-		Branch:       req.Branch,
+		Branch:       branch,
 		BaseRef:      baseRef,
 		HeadRef:      headRef,
 		Created:      true,
@@ -349,14 +372,9 @@ func (s *Server) handleRemoveWorktree(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	worktreePath, err := filepath.Abs(req.WorktreePath)
+	worktreePath, err := validatedManagedWorktreePath(s.cfg.WorkspaceRoot, req.WorktreePath)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid worktree_path"})
-		return
-	}
-	worktreeRoot := filepath.Join(s.cfg.WorkspaceRoot, "worktrees")
-	if !isWithinRoot(worktreePath, worktreeRoot) {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "worktree_path must remain inside the managed worktree root"})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 	if _, err := os.Stat(worktreePath); os.IsNotExist(err) {
@@ -406,14 +424,9 @@ func (s *Server) handleInspectRepo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	worktreePath, err := filepath.Abs(req.WorktreePath)
+	worktreePath, err := validatedManagedWorktreePath(s.cfg.WorkspaceRoot, req.WorktreePath)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid worktree_path"})
-		return
-	}
-	worktreeRoot := filepath.Join(s.cfg.WorkspaceRoot, "worktrees")
-	if !isWithinRoot(worktreePath, worktreeRoot) {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "worktree_path must remain inside the managed worktree root"})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 
@@ -599,11 +612,7 @@ func (s *Server) handleWriteFile(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("failed to verify rollback base: %v", err)})
 		return
 	}
-	if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("failed to create parent directory: %v", err)})
-		return
-	}
-	if err := os.WriteFile(fullPath, []byte(req.Content), 0o644); err != nil {
+	if err := writeFileAtomically(fullPath, []byte(req.Content), 0o644); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("failed to write file: %v", err)})
 		return
 	}
@@ -737,14 +746,20 @@ func (s *Server) handleWriteArtifact(w http.ResponseWriter, r *http.Request) {
 	}
 
 	format := normalizedArtifactFormat(req.Format)
-	artifactsDir := filepath.Join(s.cfg.WorkspaceRoot, "tasks", req.Artifact.TaskID, "artifacts")
-	if err := os.MkdirAll(artifactsDir, 0o755); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("failed to prepare artifacts directory: %v", err)})
+	tasksRoot, tasksRootReal, err := managedRootForWorkspace(s.cfg.WorkspaceRoot, "tasks")
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
+	taskRoot, err := resolvePathInsideRoot(tasksRoot, tasksRootReal, req.Artifact.TaskID, "task_id", true)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	artifactsDir := filepath.Join(taskRoot, "artifacts")
 
 	artifactPath := filepath.Join(artifactsDir, req.Artifact.ArtifactID+"."+format)
-	if err := os.WriteFile(artifactPath, []byte(req.Content), 0o644); err != nil {
+	if err := writeFileAtomically(artifactPath, []byte(req.Content), 0o644); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("failed to write artifact: %v", err)})
 		return
 	}
@@ -778,7 +793,17 @@ func (s *Server) handleReadArtifact(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	artifactsRoot := filepath.Join(s.cfg.WorkspaceRoot, "tasks", req.TaskID, "artifacts")
+	tasksRoot, tasksRootReal, err := managedRootForWorkspace(s.cfg.WorkspaceRoot, "tasks")
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	taskRoot, err := resolvePathInsideRoot(tasksRoot, tasksRootReal, req.TaskID, "task_id", false)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	artifactsRoot := filepath.Join(taskRoot, "artifacts")
 	artifactPath, err := resolveArtifactPath(artifactsRoot, req.Path)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
@@ -1285,11 +1310,165 @@ func isWithinRoot(candidate, root string) bool {
 	if err != nil {
 		return false
 	}
-	return rel == "." || (!strings.HasPrefix(rel, "..") && rel != "..")
+	return rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator)))
+}
+
+func managedRootForWorkspace(workspaceRoot, child string) (string, string, error) {
+	if strings.TrimSpace(workspaceRoot) == "" {
+		return "", "", fmt.Errorf("workspace root is required")
+	}
+	if strings.Contains(workspaceRoot, "\x00") || strings.Contains(child, "\x00") {
+		return "", "", fmt.Errorf("path contains unsupported characters")
+	}
+	absWorkspace, err := filepath.Abs(workspaceRoot)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid workspace root: %w", err)
+	}
+	workspaceReal, err := filepath.EvalSymlinks(absWorkspace)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to resolve workspace root: %w", err)
+	}
+	rootAbs := filepath.Join(absWorkspace, child)
+	rootReal := filepath.Join(workspaceReal, child)
+	if resolved, err := filepath.EvalSymlinks(rootAbs); err == nil {
+		rootReal = resolved
+	} else if !os.IsNotExist(err) {
+		return "", "", fmt.Errorf("failed to resolve managed root: %w", err)
+	}
+	if !isWithinRoot(rootReal, workspaceReal) {
+		return "", "", fmt.Errorf("managed root must remain inside workspace root")
+	}
+	return rootAbs, rootReal, nil
+}
+
+func resolvePathInsideRoot(rootAbs, rootReal, candidate, label string, allowMissing bool) (string, error) {
+	candidate = strings.TrimSpace(candidate)
+	if candidate == "" {
+		return "", fmt.Errorf("%s is required", label)
+	}
+	if strings.Contains(candidate, "\x00") {
+		return "", fmt.Errorf("%s contains unsupported characters", label)
+	}
+	var fullPath string
+	if filepath.IsAbs(candidate) {
+		fullPath = filepath.Clean(candidate)
+	} else {
+		fullPath = filepath.Join(rootAbs, candidate)
+	}
+	absPath, err := filepath.Abs(fullPath)
+	if err != nil {
+		return "", fmt.Errorf("invalid %s", label)
+	}
+
+	pathReal, err := resolvePathForRootContainment(absPath, allowMissing)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve %s: %w", label, err)
+	}
+	if !isWithinRoot(pathReal, rootReal) {
+		return "", fmt.Errorf("%s must remain inside the managed root", label)
+	}
+	return absPath, nil
+}
+
+func resolvePathForRootContainment(absPath string, allowMissing bool) (string, error) {
+	if resolved, err := filepath.EvalSymlinks(absPath); err == nil {
+		return resolved, nil
+	} else if !os.IsNotExist(err) || !allowMissing {
+		return "", err
+	}
+
+	absDir := filepath.Dir(absPath)
+	suffix := filepath.Base(absPath)
+	for {
+		if resolved, err := filepath.EvalSymlinks(absDir); err == nil {
+			return filepath.Join(resolved, suffix), nil
+		} else if !os.IsNotExist(err) {
+			return "", err
+		}
+		parent := filepath.Dir(absDir)
+		if parent == absDir {
+			return "", os.ErrNotExist
+		}
+		suffix = filepath.Join(filepath.Base(absDir), suffix)
+		absDir = parent
+	}
+}
+
+func validatedGitRepositoryPath(candidate string) (string, error) {
+	candidate = strings.TrimSpace(candidate)
+	if candidate == "" {
+		return "", fmt.Errorf("repo.path is required")
+	}
+	if strings.Contains(candidate, "\x00") {
+		return "", fmt.Errorf("repo.path contains unsupported characters")
+	}
+	absPath, err := filepath.Abs(candidate)
+	if err != nil {
+		return "", fmt.Errorf("invalid repo.path")
+	}
+	realPath, err := filepath.EvalSymlinks(absPath)
+	if err != nil {
+		return "", fmt.Errorf("repo.path must be an existing local git worktree: %w", err)
+	}
+	info, err := os.Stat(realPath)
+	if err != nil {
+		return "", fmt.Errorf("repo.path must be an existing local git worktree: %w", err)
+	}
+	if !info.IsDir() {
+		return "", fmt.Errorf("repo.path must be a directory")
+	}
+	if !hasGitMetadata(realPath) {
+		return "", fmt.Errorf("repo.path must be an existing local git worktree")
+	}
+	return realPath, nil
+}
+
+func hasGitMetadata(repoPath string) bool {
+	info, err := os.Stat(filepath.Join(repoPath, ".git"))
+	return err == nil && (info.IsDir() || info.Mode().IsRegular())
+}
+
+func validateGitRefName(ref, field string, allowHEAD bool) error {
+	ref = strings.TrimSpace(ref)
+	if ref == "" {
+		return fmt.Errorf("%s is required", field)
+	}
+	if strings.EqualFold(ref, "HEAD") {
+		if allowHEAD {
+			return nil
+		}
+		return fmt.Errorf("%s must not be HEAD", field)
+	}
+	if strings.HasPrefix(ref, "-") || strings.HasPrefix(ref, "/") || strings.HasSuffix(ref, "/") || strings.HasSuffix(ref, ".") {
+		return fmt.Errorf("%s is not a safe git ref", field)
+	}
+	if strings.Contains(ref, "..") || strings.Contains(ref, "//") || strings.Contains(ref, "@{") {
+		return fmt.Errorf("%s is not a safe git ref", field)
+	}
+	for _, r := range ref {
+		if unicode.IsControl(r) || unicode.IsSpace(r) || strings.ContainsRune(`~^:?*[\`, r) {
+			return fmt.Errorf("%s is not a safe git ref", field)
+		}
+	}
+	for _, part := range strings.Split(ref, "/") {
+		if part == "" || part == "." || part == ".." || strings.HasPrefix(part, ".") || strings.HasSuffix(part, ".lock") {
+			return fmt.Errorf("%s is not a safe git ref", field)
+		}
+	}
+	return nil
 }
 
 func runGit(ctx context.Context, repoPath string, args ...string) (string, error) {
-	commandArgs := append([]string{"-C", repoPath}, args...)
+	safeRepoPath, err := validatedGitRepositoryPath(repoPath)
+	if err != nil {
+		return "", err
+	}
+	for _, arg := range args {
+		if strings.Contains(arg, "\x00") {
+			return "", fmt.Errorf("git argument contains unsupported characters")
+		}
+	}
+	commandArgs := append([]string{"-C", safeRepoPath}, args...)
 	cmd := exec.CommandContext(ctx, "git", commandArgs...)
 	output, err := cmd.CombinedOutput()
 	return string(output), err
@@ -1436,7 +1615,11 @@ func normalizeGitPath(path string) string {
 }
 
 func topLevelEntries(worktreePath string) ([]string, error) {
-	entries, err := os.ReadDir(worktreePath)
+	worktreeReal, err := filepath.EvalSymlinks(worktreePath)
+	if err != nil {
+		return nil, err
+	}
+	entries, err := os.ReadDir(worktreeReal)
 	if err != nil {
 		return nil, err
 	}
@@ -1473,23 +1656,26 @@ func inspectKeyFiles(worktreePath string) ([]orchestrator.RepoFileSummary, error
 	}
 	keyFiles := make([]orchestrator.RepoFileSummary, 0, len(candidates))
 	for _, relativePath := range candidates {
-		fullPath := filepath.Join(worktreePath, relativePath)
-		info, err := os.Stat(fullPath)
+		fullPath, err := resolveWorktreeFilePath(worktreePath, relativePath)
+		if err != nil {
+			return nil, err
+		}
+		info, err := os.Lstat(fullPath)
 		if err != nil {
 			if os.IsNotExist(err) {
 				continue
 			}
 			return nil, err
 		}
-		if info.IsDir() {
+		if info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
 			continue
 		}
-		data, err := os.ReadFile(fullPath)
+		data, _, truncated, err := readBoundedFile(fullPath, maxRepoPreviewBytes+1)
 		if err != nil {
 			return nil, err
 		}
 		preview := string(data)
-		if len(preview) > maxRepoPreviewBytes {
+		if truncated || len(preview) > maxRepoPreviewBytes {
 			preview = preview[:maxRepoPreviewBytes] + "\n... (truncated)"
 		}
 		keyFiles = append(keyFiles, orchestrator.RepoFileSummary{
@@ -1515,35 +1701,31 @@ func normalizedArtifactFormat(format string) string {
 }
 
 func validatedManagedWorktreePath(workspaceRoot, candidate string) (string, error) {
-	if strings.TrimSpace(candidate) == "" {
-		return "", fmt.Errorf("worktree_path is required")
-	}
-	worktreePath, err := filepath.Abs(candidate)
+	worktreeRoot, worktreeRootReal, err := managedRootForWorkspace(workspaceRoot, "worktrees")
 	if err != nil {
-		return "", fmt.Errorf("invalid worktree_path")
+		return "", err
 	}
-	worktreeRoot := filepath.Join(workspaceRoot, "worktrees")
-	if !isWithinRoot(worktreePath, worktreeRoot) {
-		return "", fmt.Errorf("worktree_path must remain inside the managed worktree root")
+	worktreePath, err := resolvePathInsideRoot(worktreeRoot, worktreeRootReal, candidate, "worktree_path", true)
+	if err != nil {
+		return "", err
 	}
 	return worktreePath, nil
 }
 
 func resolveWorktreeFilePath(worktreePath, candidate string) (string, error) {
-	var fullPath string
-	if filepath.IsAbs(candidate) {
-		fullPath = filepath.Clean(candidate)
-	} else {
-		fullPath = filepath.Join(worktreePath, candidate)
-	}
-	if !isWithinRoot(fullPath, worktreePath) {
-		return "", fmt.Errorf("path must remain inside the managed worktree")
-	}
-	absPath, err := filepath.Abs(fullPath)
+	worktreeAbs, err := filepath.Abs(worktreePath)
 	if err != nil {
 		return "", err
 	}
-	rel, relErr := filepath.Rel(worktreePath, absPath)
+	worktreeReal, err := filepath.EvalSymlinks(worktreeAbs)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve worktree_path: %w", err)
+	}
+	absPath, err := resolvePathInsideRoot(worktreeAbs, worktreeReal, candidate, "path", true)
+	if err != nil {
+		return "", fmt.Errorf("path must remain inside the managed worktree: %w", err)
+	}
+	rel, relErr := filepath.Rel(worktreeAbs, absPath)
 	if relErr == nil {
 		parts := strings.Split(filepath.ToSlash(rel), "/")
 		for _, part := range parts {
@@ -1556,34 +1738,58 @@ func resolveWorktreeFilePath(worktreePath, candidate string) (string, error) {
 }
 
 func resolveArtifactPath(artifactsRoot, candidate string) (string, error) {
-	var fullPath string
-	if filepath.IsAbs(candidate) {
-		fullPath = filepath.Clean(candidate)
-	} else {
-		fullPath = filepath.Join(artifactsRoot, candidate)
-	}
-	if !isWithinRoot(fullPath, artifactsRoot) {
-		return "", fmt.Errorf("path must remain inside the managed artifact root")
-	}
-	absPath, err := filepath.Abs(fullPath)
+	artifactsAbs, err := filepath.Abs(artifactsRoot)
 	if err != nil {
 		return "", err
 	}
-	info, err := os.Stat(absPath)
+	artifactsReal, err := filepath.EvalSymlinks(artifactsAbs)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", fmt.Errorf("artifact not found")
 		}
 		return "", err
 	}
-	if info.IsDir() {
+	absPath, err := resolvePathInsideRoot(artifactsAbs, artifactsReal, candidate, "path", false)
+	if err != nil {
+		return "", fmt.Errorf("path must remain inside the managed artifact root: %w", err)
+	}
+	info, err := os.Lstat(absPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", fmt.Errorf("artifact not found")
+		}
+		return "", err
+	}
+	if info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
 		return "", fmt.Errorf("path must be an artifact file")
 	}
 	return absPath, nil
 }
 
 func readBoundedFile(fullPath string, maxBytes int) (string, int, bool, error) {
-	data, err := os.ReadFile(fullPath)
+	if maxBytes <= 0 {
+		return "", 0, false, fmt.Errorf("maxBytes must be positive")
+	}
+	f, err := os.Open(fullPath)
+	if err != nil {
+		return "", 0, false, err
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		return "", 0, false, err
+	}
+	if info.IsDir() {
+		return "", 0, false, fmt.Errorf("path must be a file")
+	}
+	linkInfo, err := os.Lstat(fullPath)
+	if err != nil {
+		return "", 0, false, err
+	}
+	if linkInfo.Mode()&os.ModeSymlink != 0 || !os.SameFile(info, linkInfo) {
+		return "", 0, false, fmt.Errorf("access denied: symlink race detected")
+	}
+	data, err := io.ReadAll(io.LimitReader(f, int64(maxBytes)+1))
 	if err != nil {
 		return "", 0, false, err
 	}
@@ -1595,8 +1801,57 @@ func readBoundedFile(fullPath string, maxBytes int) (string, int, bool, error) {
 	return string(data), len(data), truncated, nil
 }
 
+func writeFileAtomically(fullPath string, content []byte, defaultMode os.FileMode) error {
+	dir := filepath.Dir(fullPath)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+
+	mode := defaultMode
+	if info, err := os.Lstat(fullPath); err == nil {
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("path must not be a symlink")
+		}
+		if info.IsDir() {
+			return fmt.Errorf("path must be a file")
+		}
+		mode = info.Mode().Perm()
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	tmp, err := os.CreateTemp(dir, ".levik-write-*")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmp.Name()
+	cleanup := true
+	defer func() {
+		if cleanup {
+			_ = os.Remove(tmpPath)
+		}
+	}()
+
+	if err := tmp.Chmod(mode); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if _, err := tmp.Write(content); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(tmpPath, fullPath); err != nil {
+		return err
+	}
+	cleanup = false
+	return nil
+}
+
 func replaceUniqueText(fullPath, oldText, newText string) (int, error) {
-	info, err := os.Stat(fullPath)
+	info, err := os.Lstat(fullPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return 0, fmt.Errorf("file not found")
@@ -1606,10 +1861,16 @@ func replaceUniqueText(fullPath, oldText, newText string) (int, error) {
 	if info.IsDir() {
 		return 0, fmt.Errorf("path must be a file")
 	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return 0, fmt.Errorf("path must not be a symlink")
+	}
 
-	content, err := os.ReadFile(fullPath)
+	content, _, truncated, err := readBoundedFile(fullPath, maxTargetFileBytes+1)
 	if err != nil {
 		return 0, fmt.Errorf("failed to read file: %w", err)
+	}
+	if truncated {
+		return 0, fmt.Errorf("file too large to replace safely")
 	}
 	contentStr := string(content)
 	if !strings.Contains(contentStr, oldText) {
@@ -1620,13 +1881,17 @@ func replaceUniqueText(fullPath, oldText, newText string) (int, error) {
 	}
 
 	updated := strings.Replace(contentStr, oldText, newText, 1)
-	if err := os.WriteFile(fullPath, []byte(updated), info.Mode().Perm()); err != nil {
+	if err := writeFileAtomically(fullPath, []byte(updated), info.Mode().Perm()); err != nil {
 		return 0, fmt.Errorf("failed to write file: %w", err)
 	}
 	return len(updated), nil
 }
 
 func discoverRepoTargets(worktreePath, objective string, limit int) ([]orchestrator.RepoTargetCandidate, error) {
+	worktreeReal, err := filepath.EvalSymlinks(worktreePath)
+	if err != nil {
+		return nil, err
+	}
 	tokens := objectiveTokens(objective)
 	type candidate struct {
 		path    string
@@ -1637,7 +1902,7 @@ func discoverRepoTargets(worktreePath, objective string, limit int) ([]orchestra
 	inspectedFiles := 0
 	stopWalk := fmt.Errorf("stop-walk")
 
-	err := filepath.WalkDir(worktreePath, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(worktreeReal, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -1652,7 +1917,7 @@ func discoverRepoTargets(worktreePath, objective string, limit int) ([]orchestra
 		}
 		inspectedFiles++
 
-		relPath, err := filepath.Rel(worktreePath, path)
+		relPath, err := filepath.Rel(worktreeReal, path)
 		if err != nil {
 			return nil
 		}
@@ -1854,8 +2119,8 @@ func goTestPackageForPath(target string) string {
 }
 
 func fileExists(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && !info.IsDir()
+	info, err := os.Lstat(path)
+	return err == nil && !info.IsDir() && info.Mode()&os.ModeSymlink == 0
 }
 
 func shouldSkipRepoDir(name string) bool {

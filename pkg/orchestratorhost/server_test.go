@@ -206,6 +206,53 @@ func TestCreateWorktreeCreatesManagedWorktree(t *testing.T) {
 	require.FileExists(t, filepath.Join(resp.WorktreePath, "README.md"))
 }
 
+func TestCreateWorktreeRejectsUnsafeGitRef(t *testing.T) {
+	root := t.TempDir()
+	repoPath := filepath.Join(root, "repo")
+	require.NoError(t, os.MkdirAll(repoPath, 0o755))
+	runGitCommand(t, repoPath, "init")
+	runGitCommand(t, repoPath, "config", "user.name", "LeVik Test")
+	runGitCommand(t, repoPath, "config", "user.email", "levik@example.com")
+	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "README.md"), []byte("hello\n"), 0o644))
+	runGitCommand(t, repoPath, "add", "README.md")
+	runGitCommand(t, repoPath, "commit", "-m", "initial")
+	runGitCommand(t, repoPath, "branch", "-M", "main")
+
+	server := NewServer(Config{
+		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		WorkspaceRoot: root,
+	}, nil)
+
+	reqBody, err := json.Marshal(orchestrator.GitWorktreeCreateRequest{
+		TaskID:       "task_123",
+		Repo:         orchestrator.RepoRef{Path: repoPath, DefaultBranch: "main"},
+		WorktreePath: filepath.Join(root, "worktrees", "task_123"),
+		Branch:       "-upload-pack=malicious",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/v1/git/worktrees/create", bytes.NewReader(reqBody))
+	rec := httptest.NewRecorder()
+	server.handler().ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	require.Contains(t, rec.Body.String(), "branch")
+}
+
+func TestManagedWorktreePathRejectsSymlinkEscape(t *testing.T) {
+	root := t.TempDir()
+	worktreeRoot := filepath.Join(root, "worktrees")
+	require.NoError(t, os.MkdirAll(worktreeRoot, 0o755))
+	outside := t.TempDir()
+	if err := os.Symlink(outside, filepath.Join(worktreeRoot, "link")); err != nil {
+		t.Skipf("symlink not supported in this environment: %v", err)
+	}
+
+	_, err := validatedManagedWorktreePath(root, filepath.Join(worktreeRoot, "link", "task_123"))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "managed root")
+}
+
 func TestWriteArtifactPersistsContent(t *testing.T) {
 	root := t.TempDir()
 	server := NewServer(Config{
@@ -273,6 +320,34 @@ func TestReadArtifactReturnsBoundedContent(t *testing.T) {
 	require.True(t, resp.Truncated)
 	require.Equal(t, 18, resp.BytesRead)
 	require.Equal(t, "# Merge Readiness\n", resp.Content)
+}
+
+func TestReadArtifactRejectsSymlinkEscape(t *testing.T) {
+	root := t.TempDir()
+	artifactsRoot := filepath.Join(root, "tasks", "task_123", "artifacts")
+	require.NoError(t, os.MkdirAll(artifactsRoot, 0o755))
+	secret := filepath.Join(root, "secret.txt")
+	require.NoError(t, os.WriteFile(secret, []byte("secret"), 0o644))
+	if err := os.Symlink(secret, filepath.Join(artifactsRoot, "leak.md")); err != nil {
+		t.Skipf("symlink not supported in this environment: %v", err)
+	}
+
+	server := NewServer(Config{
+		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		WorkspaceRoot: root,
+	}, nil)
+	reqBody, err := json.Marshal(orchestrator.ArtifactReadRequest{
+		TaskID: "task_123",
+		Path:   filepath.Join(artifactsRoot, "leak.md"),
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/v1/artifacts/read", bytes.NewReader(reqBody))
+	rec := httptest.NewRecorder()
+	server.handler().ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	require.Contains(t, rec.Body.String(), "managed artifact root")
 }
 
 func TestRemoveWorktreeRemovesManagedWorktree(t *testing.T) {
@@ -498,6 +573,20 @@ func TestWriteFileWritesInsideManagedWorktree(t *testing.T) {
 	data, readErr := os.ReadFile(filepath.Join(worktreePath, "notes", "edit.txt"))
 	require.NoError(t, readErr)
 	require.Equal(t, "bounded write", string(data))
+}
+
+func TestResolveWorktreeFilePathRejectsSymlinkEscape(t *testing.T) {
+	root := t.TempDir()
+	worktreePath := filepath.Join(root, "worktrees", "task_123")
+	require.NoError(t, os.MkdirAll(worktreePath, 0o755))
+	outside := t.TempDir()
+	if err := os.Symlink(outside, filepath.Join(worktreePath, "link")); err != nil {
+		t.Skipf("symlink not supported in this environment: %v", err)
+	}
+
+	_, err := resolveWorktreeFilePath(worktreePath, "link/secret.txt")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "managed worktree")
 }
 
 func TestReplaceFileUpdatesUniqueSpanInsideManagedWorktree(t *testing.T) {

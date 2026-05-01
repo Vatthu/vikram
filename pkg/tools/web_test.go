@@ -264,6 +264,30 @@ func TestWebFetch_BuildResultIncludesFetchedTextForLLM(t *testing.T) {
 	}
 }
 
+func TestWebFetch_RejectsUserinfoAndNonDefaultPorts(t *testing.T) {
+	cases := []string{
+		"https://user:pass@example.com/",
+		"https://example.com:444/",
+		"http://example.com:8080/",
+	}
+	for _, raw := range cases {
+		err := validateFetchURL(context.Background(), mustParseURL(t, raw))
+		if err == nil {
+			t.Fatalf("expected %s to be rejected", raw)
+		}
+	}
+}
+
+func TestWebFetch_HostResolutionBlocksLiteralPrivateIP(t *testing.T) {
+	err := validateFetchHostResolution(context.Background(), "127.0.0.1")
+	if err == nil {
+		t.Fatal("expected private loopback address to be rejected")
+	}
+	if !strings.Contains(err.Error(), "URL blocked") {
+		t.Fatalf("expected URL blocked error, got: %v", err)
+	}
+}
+
 // TestWebTool_WebFetch_MissingDomain verifies error handling for URL without domain
 func TestWebTool_WebFetch_MissingDomain(t *testing.T) {
 	tool := NewWebFetchTool(50000)

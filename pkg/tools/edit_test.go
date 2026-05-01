@@ -287,3 +287,35 @@ func TestEditTool_AppendFile_MissingContent(t *testing.T) {
 		t.Errorf("Expected error when content is missing")
 	}
 }
+
+func TestEditTool_AppendFile_RejectsSymlinkEscape(t *testing.T) {
+	root := t.TempDir()
+	workspace := filepath.Join(root, "workspace")
+	if err := os.MkdirAll(workspace, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	secret := filepath.Join(root, "secret.txt")
+	if err := os.WriteFile(secret, []byte("original"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(workspace, "leak.txt")
+	if err := os.Symlink(secret, link); err != nil {
+		t.Skipf("symlink not supported in this environment: %v", err)
+	}
+
+	tool := NewAppendFileTool(workspace, true)
+	result := tool.Execute(context.Background(), ToolContext{}, map[string]interface{}{
+		"path":    "leak.txt",
+		"content": " appended",
+	})
+	if !result.IsError {
+		t.Fatal("expected append through symlink to be blocked")
+	}
+	data, err := os.ReadFile(secret)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != "original" {
+		t.Fatalf("secret file was modified: %q", string(data))
+	}
+}

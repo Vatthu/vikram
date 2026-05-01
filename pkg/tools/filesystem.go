@@ -11,73 +11,219 @@ import (
 	"github.com/v1claw/levik/pkg/bus"
 )
 
-// validatePath ensures the given path is within the workspace if restrict is true.
+// validatePath normalizes an agent-provided path and, when restrict is enabled,
+// proves the resolved path stays inside the configured workspace. It resolves
+// existing symlinks and existing ancestors for files that are about to be
+// created, which prevents "../" and symlink escape variants from reaching the
+// filesystem sinks below.
 func validatePath(path, workspace string, restrict bool) (string, error) {
-	if workspace == "" {
-		return path, nil
+	path = strings.TrimSpace(path)
+	workspace = strings.TrimSpace(workspace)
+	if path == "" {
+		return "", fmt.Errorf("path is required")
+	}
+	if strings.Contains(path, "\x00") || strings.Contains(workspace, "\x00") {
+		return "", fmt.Errorf("path contains unsupported characters")
+	}
+	if restrict && workspace == "" {
+		return "", fmt.Errorf("workspace is required when filesystem restriction is enabled")
 	}
 
-	absWorkspace, err := filepath.Abs(workspace)
-	if err != nil {
-		return "", fmt.Errorf("failed to resolve workspace path: %w", err)
+	var absWorkspace string
+	var err error
+	if workspace != "" {
+		absWorkspace, err = filepath.Abs(workspace)
+		if err != nil {
+			return "", fmt.Errorf("failed to resolve workspace path: %w", err)
+		}
 	}
 
 	var absPath string
 	if filepath.IsAbs(path) {
 		absPath = filepath.Clean(path)
-	} else {
+	} else if absWorkspace != "" {
 		absPath, err = filepath.Abs(filepath.Join(absWorkspace, path))
+		if err != nil {
+			return "", fmt.Errorf("failed to resolve file path: %w", err)
+		}
+	} else {
+		absPath, err = filepath.Abs(path)
 		if err != nil {
 			return "", fmt.Errorf("failed to resolve file path: %w", err)
 		}
 	}
 
-	if restrict {
-		// Resolve the real path of the workspace to prevent symlink traversal
-		workspaceReal := absWorkspace
-		if resolved, err := filepath.EvalSymlinks(absWorkspace); err == nil {
-			workspaceReal = resolved
-		} else if !os.IsNotExist(err) {
-			return "", fmt.Errorf("failed to resolve workspace symlink: %w", err)
-		}
-
-		// Resolve the real path of the given path. For non-existent paths (e.g. a
-		// file about to be created), EvalSymlinks fails with IsNotExist. In that
-		// case we walk up the ancestor chain until we find an existing directory and
-		// resolve from there, so that platform symlinks (macOS /var→/private/var)
-		// don't cause false "outside workspace" rejections for new nested paths.
-		pathReal := absPath
-		if resolved, err := filepath.EvalSymlinks(absPath); err == nil {
-			pathReal = resolved
-		} else if os.IsNotExist(err) {
-			// Walk up ancestors until we find one that can be resolved.
-			absDir := filepath.Dir(absPath)
-			suffix := filepath.Base(absPath)
-			for absDir != filepath.Dir(absDir) { // stop at filesystem root
-				if resolved, rerr := filepath.EvalSymlinks(absDir); rerr == nil {
-					pathReal = filepath.Join(resolved, suffix)
-					break
-				} else if !os.IsNotExist(rerr) {
-					break // unexpected error, leave pathReal as absPath
-				}
-				suffix = filepath.Join(filepath.Base(absDir), suffix)
-				absDir = filepath.Dir(absDir)
-			}
-		} else {
-			return "", fmt.Errorf("failed to resolve path symlink: %w", err)
-		}
-
-		if !isWithinWorkspace(pathReal, workspaceReal) {
-			return "", fmt.Errorf("access denied: path is outside the workspace or resolves outside via symlink")
-		}
+	if !restrict {
+		return absPath, nil
 	}
 
+	workspaceReal, err := filepath.EvalSymlinks(absWorkspace)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve workspace symlink: %w", err)
+	}
+
+	pathReal, err := resolvePathForContainment(absPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve path symlink: %w", err)
+	}
+	if !isWithinWorkspace(pathReal, workspaceReal) {
+		return "", fmt.Errorf("access denied: path is outside the workspace or resolves outside via symlink")
+	}
 	return absPath, nil
+}
+
+func resolvePathForContainment(absPath string) (string, error) {
+	if resolved, err := filepath.EvalSymlinks(absPath); err == nil {
+		return resolved, nil
+	} else if !os.IsNotExist(err) {
+		return "", err
+	}
+
+	absDir := filepath.Dir(absPath)
+	suffix := filepath.Base(absPath)
+	for {
+		if resolved, err := filepath.EvalSymlinks(absDir); err == nil {
+			return filepath.Join(resolved, suffix), nil
+		} else if !os.IsNotExist(err) {
+			return "", err
+		}
+
+		parent := filepath.Dir(absDir)
+		if parent == absDir {
+			return "", os.ErrNotExist
+		}
+		suffix = filepath.Join(filepath.Base(absDir), suffix)
+		absDir = parent
+	}
 }
 
 func isWithinWorkspace(candidate, workspace string) bool {
 	rel, err := filepath.Rel(filepath.Clean(workspace), filepath.Clean(candidate))
-	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator))
+	return err == nil && (rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator))))
+}
+
+func openRegularFileForRead(resolvedPath string) (*os.File, os.FileInfo, error) {
+	f, err := os.Open(resolvedPath)
+	if err != nil {
+		return nil, nil, err
+	}
+	info, err := f.Stat()
+	if err != nil {
+		_ = f.Close()
+		return nil, nil, err
+	}
+	if info.IsDir() {
+		_ = f.Close()
+		return nil, nil, fmt.Errorf("path must be a file")
+	}
+	linkInfo, err := os.Lstat(resolvedPath)
+	if err != nil {
+		_ = f.Close()
+		return nil, nil, err
+	}
+	if linkInfo.Mode()&os.ModeSymlink != 0 || !os.SameFile(info, linkInfo) {
+		_ = f.Close()
+		return nil, nil, fmt.Errorf("access denied: symlink race detected")
+	}
+	return f, info, nil
+}
+
+func readDirectoryEntries(resolvedPath string) ([]os.DirEntry, error) {
+	info, err := os.Lstat(resolvedPath)
+	if err != nil {
+		return nil, err
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return nil, fmt.Errorf("access denied: path resolves to a symlink")
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("path must be a directory")
+	}
+	return os.ReadDir(resolvedPath)
+}
+
+func writeFileReplacingPath(resolvedPath string, content []byte, defaultMode os.FileMode) error {
+	dir := filepath.Dir(resolvedPath)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	mode := defaultMode
+	if info, err := os.Lstat(resolvedPath); err == nil {
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("access denied: path resolves to a symlink")
+		}
+		if info.IsDir() {
+			return fmt.Errorf("path must be a file")
+		}
+		mode = info.Mode().Perm()
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	tmp, err := os.CreateTemp(dir, ".levik-write-*")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmp.Name()
+	cleanup := true
+	defer func() {
+		if cleanup {
+			_ = os.Remove(tmpPath)
+		}
+	}()
+
+	if err := tmp.Chmod(mode); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if _, err := tmp.Write(content); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(tmpPath, resolvedPath); err != nil {
+		return err
+	}
+	cleanup = false
+	return nil
+}
+
+func appendFileReplacingPath(resolvedPath string, content []byte, maxExistingBytes int64) error {
+	mode := os.FileMode(0o600)
+	var existing []byte
+	if info, err := os.Lstat(resolvedPath); err == nil {
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("access denied: path resolves to a symlink")
+		}
+		if info.IsDir() {
+			return fmt.Errorf("path must be a file")
+		}
+		if maxExistingBytes > 0 && info.Size() > maxExistingBytes {
+			return fmt.Errorf("file too large to append safely (max %d bytes)", maxExistingBytes)
+		}
+		f, _, err := openRegularFileForRead(resolvedPath)
+		if err != nil {
+			return err
+		}
+		existing, err = io.ReadAll(f)
+		closeErr := f.Close()
+		if err != nil {
+			return err
+		}
+		if closeErr != nil {
+			return closeErr
+		}
+		mode = info.Mode().Perm()
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	combined := make([]byte, 0, len(existing)+len(content))
+	combined = append(combined, existing...)
+	combined = append(combined, content...)
+	return writeFileReplacingPath(resolvedPath, combined, mode)
 }
 
 type ReadFileTool struct {
@@ -133,29 +279,12 @@ func (t *ReadFileTool) Execute(ctx context.Context, tc ToolContext, args map[str
 		return ErrorResult(err.Error())
 	}
 
-	// Open file first to tie the check to the actual file descriptor
-	f, err := os.Open(resolvedPath)
+	f, info, err := openRegularFileForRead(resolvedPath)
 	if err != nil {
 		return ErrorResult(fmt.Sprintf("failed to open file: %v", err))
 	}
 	defer f.Close()
 
-	if t.restrict {
-		// TOCTOU mitigation: verify the opened file matches the resolved path's Lstat
-		// This prevents swapping the file with a symlink after validatePath
-		fi, err := f.Stat()
-		if err == nil {
-			li, lerr := os.Lstat(resolvedPath)
-			if lerr == nil && !os.SameFile(fi, li) {
-				return ErrorResult("access denied: symlink race detected (TOCTOU)")
-			}
-		}
-	}
-
-	info, err := f.Stat()
-	if err != nil {
-		return ErrorResult(fmt.Sprintf("failed to stat file: %v", err))
-	}
 	if info.Size() > maxReadBytes {
 		return ErrorResult(fmt.Sprintf("file too large to read (max %d bytes)", maxReadBytes))
 	}
@@ -231,26 +360,7 @@ func (t *WriteFileTool) Execute(ctx context.Context, tc ToolContext, args map[st
 		return ErrorResult(err.Error())
 	}
 
-	dir := filepath.Dir(resolvedPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return ErrorResult(fmt.Sprintf("failed to create directory: %v", err))
-	}
-
-	// V1: Symlink check BEFORE open — prevents TOCTOU where O_TRUNC would
-	// destroy the target before the check runs.
-	if t.restrict {
-		if li, lerr := os.Lstat(resolvedPath); lerr == nil && (li.Mode()&os.ModeSymlink != 0) {
-			return ErrorResult("access denied: path resolves to a symlink")
-		}
-	}
-
-	f, err := os.OpenFile(resolvedPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		return ErrorResult(fmt.Sprintf("failed to open file for writing: %v", err))
-	}
-	defer f.Close()
-
-	if _, err := f.Write([]byte(content)); err != nil {
+	if err := writeFileReplacingPath(resolvedPath, []byte(content), 0o600); err != nil {
 		return ErrorResult(fmt.Sprintf("failed to write file: %v", err))
 	}
 
@@ -306,7 +416,7 @@ func (t *ListDirTool) Execute(ctx context.Context, tc ToolContext, args map[stri
 		return ErrorResult(err.Error())
 	}
 
-	entries, err := os.ReadDir(resolvedPath)
+	entries, err := readDirectoryEntries(resolvedPath)
 	if err != nil {
 		return ErrorResult(fmt.Sprintf("failed to read directory: %v", err))
 	}

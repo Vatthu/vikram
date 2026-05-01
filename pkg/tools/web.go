@@ -363,9 +363,8 @@ func newWebFetchHTTPClient() *http.Client {
 			if err != nil {
 				host = address
 			}
-			ip := net.ParseIP(host)
-			if ip != nil && isBlockedIP(ip) {
-				return nil, fmt.Errorf("URL blocked: resolved to internal/private address %s", ip.String())
+			if err := validateFetchHostResolution(ctx, host); err != nil {
+				return nil, err
 			}
 			return dialer.DialContext(ctx, network, address)
 		},
@@ -378,7 +377,7 @@ func newWebFetchHTTPClient() *http.Client {
 			if len(via) >= 5 {
 				return fmt.Errorf("stopped after 5 redirects")
 			}
-			if err := validateFetchURL(req.URL); err != nil {
+			if err := validateFetchURL(req.Context(), req.URL); err != nil {
 				return err
 			}
 			return nil
@@ -386,7 +385,7 @@ func newWebFetchHTTPClient() *http.Client {
 	}
 }
 
-func validateFetchURL(parsedURL *url.URL) error {
+func validateFetchURL(ctx context.Context, parsedURL *url.URL) error {
 	if parsedURL == nil {
 		return fmt.Errorf("missing URL")
 	}
@@ -394,16 +393,57 @@ func validateFetchURL(parsedURL *url.URL) error {
 	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
 		return fmt.Errorf("only http/https URLs are allowed")
 	}
+	if parsedURL.User != nil {
+		return fmt.Errorf("URL userinfo is not allowed")
+	}
 
 	hostname := parsedURL.Hostname()
 	if hostname == "" {
 		return fmt.Errorf("missing domain in URL")
 	}
+	if strings.ContainsAny(hostname, "\x00\r\n\t ") {
+		return fmt.Errorf("URL host contains unsupported characters")
+	}
 
 	if isBlockedHost(hostname) {
 		return fmt.Errorf("URL blocked: access to internal/private networks is not allowed")
 	}
+	if port := parsedURL.Port(); port != "" && port != "80" && port != "443" {
+		return fmt.Errorf("URL blocked: only default http/https ports are allowed")
+	}
+	if err := validateFetchHostResolution(ctx, hostname); err != nil {
+		return err
+	}
 
+	return nil
+}
+
+func validateFetchHostResolution(ctx context.Context, host string) error {
+	hostname := strings.Trim(strings.ToLower(host), "[]")
+	if hostname == "" {
+		return fmt.Errorf("URL blocked: empty host")
+	}
+	if ip := net.ParseIP(hostname); ip != nil {
+		if isBlockedIP(ip) {
+			return fmt.Errorf("URL blocked: resolved to internal/private address %s", ip.String())
+		}
+		return nil
+	}
+
+	resolveCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	addrs, err := net.DefaultResolver.LookupIPAddr(resolveCtx, hostname)
+	if err != nil {
+		return fmt.Errorf("failed to resolve URL host: %w", err)
+	}
+	if len(addrs) == 0 {
+		return fmt.Errorf("failed to resolve URL host: no addresses")
+	}
+	for _, addr := range addrs {
+		if isBlockedIP(addr.IP) {
+			return fmt.Errorf("URL blocked: resolved to internal/private address %s", addr.IP.String())
+		}
+	}
 	return nil
 }
 
@@ -458,7 +498,7 @@ func (t *WebFetchTool) Execute(ctx context.Context, tc ToolContext, args map[str
 		return ErrorResult(fmt.Sprintf("invalid URL: %v", err))
 	}
 
-	if err := validateFetchURL(parsedURL); err != nil {
+	if err := validateFetchURL(ctx, parsedURL); err != nil {
 		return ErrorResult(err.Error())
 	}
 
@@ -469,7 +509,8 @@ func (t *WebFetchTool) Execute(ctx context.Context, tc ToolContext, args map[str
 		}
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", urlStr, nil)
+	safeURL := parsedURL.String()
+	req, err := http.NewRequestWithContext(ctx, "GET", safeURL, nil)
 	if err != nil {
 		return ErrorResult(fmt.Sprintf("failed to create request: %v", err))
 	}
@@ -520,7 +561,7 @@ func (t *WebFetchTool) Execute(ctx context.Context, tc ToolContext, args map[str
 		text = text[:maxChars]
 	}
 
-	resultJSON := buildFetchResult(urlStr, resp.StatusCode, extractor, truncated, text)
+	resultJSON := buildFetchResult(safeURL, resp.StatusCode, extractor, truncated, text)
 
 	return &ToolResult{
 		ForLLM:  resultJSON,
