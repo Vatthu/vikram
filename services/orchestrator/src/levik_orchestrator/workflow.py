@@ -23,6 +23,7 @@ from .models import (
     Artifact,
     ArtifactPreview,
     ArtifactWriteRequest,
+    BrowserTestRequest,
     ChannelNotificationRequest,
     FileReadRequest,
     FileReplaceRequest,
