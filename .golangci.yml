@@ -1,8 +1,9 @@
 linters:
+  # TODO: Re-enable errcheck after fixing ~30 unchecked error returns across
+  #       pkg/state, pkg/health, pkg/auth, pkg/dashboard, pkg/api, pkg/cron.
+  disable:
+    - errcheck
   enable:
-    # TODO: Re-enable errcheck after fixing ~30 unchecked error returns across
-    #       pkg/state, pkg/health, pkg/auth, pkg/dashboard, pkg/api, pkg/cron.
-    # - errcheck
     - gosimple
     - govet
     - ineffassign
