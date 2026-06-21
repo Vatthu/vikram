@@ -1,90 +1,145 @@
+<div align="center">
+
 # Vikram
 
-An autonomous AI engineering team that plans, implements, verifies, and reviews code on a dedicated machine. Go host layer for execution and safety. Python LangGraph orchestrator for workflow intelligence. Config-driven multi-agent team with per-role model assignment.
+**Your AI engineering team that runs on your machine, with your keys, on your terms.**
+
+[![CI](https://github.com/Vatthu/vikram/actions/workflows/ci.yml/badge.svg)](https://github.com/Vatthu/vikram/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Vatthu/vikram)](https://goreportcard.com/report/github.com/Vatthu/vikram)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/Vatthu/vikram)](go.mod)
+
+[Install](#install) · [Quick Start](#quick-start) · [Why Vikram?](#why-vikram) · [Privacy](PRIVACY.md) · [Contributing](CONTRIBUTING.md)
+
+</div>
+
+---
+
+## Why Vikram?
+
+Every other AI coding tool either **sends your code to a cloud** or **locks you into one provider**. Vikram gives you full sovereignty:
+
+| | Vikram | Cloud AI IDEs | Hosted AI Agents |
+|---|:---:|:---:|:---:|
+| 🔒 Code stays on your machine | ✅ | ❌ | ❌ |
+| 🔑 Your own API keys (20+ providers) | ✅ | ❌ | Partial |
+| 📡 Zero telemetry | ✅ | ❌ | ❌ |
+| 💬 Multi-channel (CLI, Telegram, WhatsApp, REST API) | ✅ | ❌ | ❌ |
+| 🛡️ Automatic provider fallback | ✅ | ❌ | ❌ |
+| ⚡ Compiled binary — zero runtime deps | ✅ | ❌ | ❌ |
+| 🧑‍💻 Fully open source | ✅ | Partial | Partial |
+
+**[Read our Privacy Promise →](PRIVACY.md)**
+
+## Install
+
+```bash
+# One-command install (macOS / Linux)
+curl -sSL https://raw.githubusercontent.com/Vatthu/vikram/main/install.sh | sh
+
+# Or build from source
+git clone https://github.com/Vatthu/vikram.git
+cd vikram && make build
+```
 
 ## Quick Start
 
 ```bash
-make build          # Build for current platform
-make test           # Run all tests
-make run ARGS="agent -m 'your question'"  # Quick chat
+# First-time setup (2 minutes)
+vikram onboard
+
+# Verify everything works
+vikram doctor
+
+# Start chatting
+vikram agent
+
+# Or send a single message
+vikram agent -m "explain this codebase"
+
+# Start the full gateway daemon
+vikram gateway
 ```
 
-```bash
-vikram onboard       # Setup wizard
-vikram doctor        # Health check
-vikram agent         # Interactive chat
-vikram gateway       # Start the full daemon
-```
+## Features
 
-## Architecture
-
-```
-Gateway (Go daemon)              Orchestrator (Python)
-├── Agent loop                   ├── LangGraph workflow (31 nodes)
-├── Message bus                   ├── Adversarial spec validation
-├── Channel adapters              ├── Lint → test → LLM judge pipeline
-├── Tool execution (allowlisted)  ├── Git worktree isolation
-├── Event router                  ├── Approval gates (Telegram)
-├── Cron + Heartbeat              └── SQLite checkpointing
-├── Subagent manager (multi-agent)
-├── Orchestrator host (Unix socket)
-├── API server (REST + WebSocket)
-├── Management console (opt-in, 127.0.0.1:18793)
-└── Dashboard (opt-in, 127.0.0.1:18792)
-```
-
-**Go owns the machine.** Shell execution, filesystem access, git operations, and notifications go through a security-allowlisted host daemon over a Unix socket.
-
-**Python owns the workflow.** LangGraph state machine with checkpointing, adversarial spec validation, three-layer verification, and config-driven multi-agent routing.
-
-## Team Configuration
+### 🤖 Multi-Agent Team
+Config-driven role assignment with per-role models. Each agent gets its own provider, model, workspace, and token budget:
 
 ```json
 {
   "agents": {
     "list": [
-      {"id": "lead", "role": "lead", "provider": "zhipu", "model": "glm-5.1", "max_tokens_per_day": 200000},
-      {"id": "engineer", "role": "engineer", "provider": "deepseek", "model": "deepseek-chat", "max_tokens_per_day": 500000},
-      {"id": "reviewer", "role": "reviewer", "provider": "mistral", "model": "mistral-small-latest", "max_tokens_per_day": 100000},
-      {"id": "runner", "role": "runner", "provider": "nvidia", "model": "meta/llama-3.3-70b-instruct"}
-    ]
-  },
-  "mcp": {
-    "enabled": true,
-    "servers": [
-      {"name": "playwright", "command": "npx", "args": ["-y", "@anthropic/mcp-playwright"], "prefix": "mcp_pw_"}
+      {"id": "lead", "role": "lead", "provider": "gemini", "model": "gemini-2.5-flash"},
+      {"id": "engineer", "role": "engineer", "provider": "deepseek", "model": "deepseek-chat"},
+      {"id": "reviewer", "role": "reviewer", "provider": "anthropic", "model": "claude-sonnet-4-20250514"}
     ]
   }
 }
 ```
 
-Each role gets its own provider and model. Config-driven, not hardcoded. Roles are assigned per workflow phase: lead plans, engineer implements, reviewer validates, runner tests.
+### 🔗 20+ LLM Providers
+OpenAI, Anthropic, Google Gemini, Google Vertex AI, DeepSeek, Mistral, NVIDIA, OpenRouter, Groq, Zhipu, Ollama, Cerebras, SambaNova, Azure OpenAI, AWS Bedrock, GitHub Models, vLLM, Moonshot, xAI, and more.
 
-## Provider Support
+### 📡 Multi-Channel Communication
+Talk to Vikram from anywhere:
+- **CLI** — interactive terminal or single-shot commands
+- **Telegram** — message your agent from your phone
+- **WhatsApp** — via bridge adapter
+- **REST API** — integrate with any system
+- **WebSocket** — real-time streaming
 
-DeepSeek, Mistral, NVIDIA, OpenAI, Anthropic, Google Vertex AI, Gemini, OpenRouter, Groq, Zhipu (GLM), Ollama, Cerebras, SambaNova, Azure OpenAI, AWS Bedrock, GitHub Models, vLLM, Moonshot (Kimi), xAI (Grok), and more. GitHub Copilot config fields exist, but the provider is intentionally unsupported until a safe bridge is designed.
+### 🛡️ Council Fallback System
+If your primary provider rate-limits or goes down, Vikram automatically falls back to your configured secondary provider. Zero downtime, zero manual intervention.
 
-## Key Features
+### 🔍 Adversarial Spec Validation
+Before code is written, a Devil's Advocate attacks the plan. Three-layer verification catches issues: lint guard → test execution → independent LLM review.
 
-- **Multi-agent team** — config-driven role assignment with per-role models
-- **Adversarial spec validation** — Devil's Advocate attacks the plan before code is written
-- **Three-layer verification** — lint guard → test execution → independent LLM review
-- **Transactional rollback** — managed task worktrees reset and clean back to HEAD on rejection
-- **Cost enforcement** — per-agent daily token budgets with Telegram notifications
-- **History compression** — context window management for long-running sessions
-- **Observation shaping** — structured output templates guide model behavior
-- **MCP client support** — experimental external MCP tool consumption with allowlist filtering
-- **Management console** — opt-in local browser-based agent and provider management
-- **Crash recovery** — checkpoint state before every LLM call, resume on restart
+### 💰 Token Budget Enforcement
+Per-agent daily token budgets with real-time tracking. Configurable actions: notify via Telegram or hard-stop when budget is exceeded.
 
-## Repository
+### 🧩 Skills & Tools
+Extensible skill system for custom capabilities. Built-in tools for shell, filesystem, web search, code editing, and more. MCP client support for external tool servers.
+
+## Architecture
 
 ```
-cmd/vikram/          Go CLI entrypoints
-pkg/                Go packages (agent, bus, providers, tools, orchestrator, ...)
-services/           Python orchestrator (LangGraph)
-docs/architecture/  Design documents and audit reports
-research/           Upstream framework studies
-contrib/            Launchd daemon config, channel adapters
+Go Host (compiled binary)           Python Orchestrator (optional)
+├── Agent Loop                      ├── LangGraph workflow
+├── Message Bus                     ├── Adversarial validation
+├── Channel Adapters                ├── Git worktree isolation
+├── Tool Execution (sandboxed)      ├── Approval gates
+├── Provider Router (20+)           └── SQLite checkpointing
+├── Council Fallback
+├── Cron + Heartbeat
+├── Subagent Manager
+├── REST API + WebSocket
+└── Management Console
 ```
+
+**Go owns the machine.** Shell execution, filesystem access, git operations — all through a security-sandboxed host daemon.
+
+**Python owns the workflow.** LangGraph state machine with checkpointing, adversarial validation, and multi-agent routing.
+
+## Project Structure
+
+```
+cmd/vikram/          CLI and gateway binary
+pkg/                 Go packages (agent, tools, providers, bus, channels, ...)
+services/            Python orchestrator (LangGraph)
+docs/                Architecture and design documents
+web/                 Web dashboard
+workspace/           Default workspace templates
+```
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, architecture overview, and PR workflow.
+
+## Security
+
+**Do not open public issues for security vulnerabilities.** See [SECURITY.md](SECURITY.md) for responsible disclosure.
+
+## License
+
+[MIT](LICENSE)

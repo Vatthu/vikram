@@ -71,6 +71,13 @@ type AgentLoop struct {
 	// May be nil if initialization fails (non-critical).
 	proactiveEngine *proactive.Engine
 
+	// budget enforces per-role daily token limits.
+	// May be nil (budget enforcement is silently skipped).
+	budget BudgetChecker
+
+	// agentRole identifies this agent's role for budget tracking.
+	agentRole string
+
 	// SubagentManager routes tasks to registered team agents with per-role models.
 	SubagentManager *tools.SubagentManager
 }
@@ -357,6 +364,13 @@ func NewAgentLoop(cfg *config.Config, msgBus *bus.MessageBus, provider providers
 	}
 
 	return al
+}
+
+// SetBudget injects a BudgetChecker for daily token limit enforcement.
+// Safe to call before Run(). When nil, budget enforcement is skipped.
+func (al *AgentLoop) SetBudget(b BudgetChecker, role string) {
+	al.budget = b
+	al.agentRole = role
 }
 
 // ProactiveEngine returns the proactive engine instance (may be nil).
@@ -704,6 +718,13 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 		var response *providers.LLMResponse
 		var err error
 
+		// Budget enforcement — check before making the LLM call.
+		if al.budget != nil && al.agentRole != "" {
+			if budgetErr := al.budget.Check(al.agentRole); budgetErr != nil {
+				return "", iteration, false, fmt.Errorf("budget exceeded: %w", budgetErr)
+			}
+		}
+
 		// Read current model once per iteration — never mutate al.model from goroutines.
 		// callModel may be overridden to the fallback during council recovery.
 		currentModel := al.getModel()
@@ -796,6 +817,10 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 			// --- End Council Implementation ---
 
 			if err == nil {
+				// Budget recording — track actual tokens used after a successful call.
+				if al.budget != nil && al.agentRole != "" && response != nil && response.Usage != nil {
+					al.budget.Record(al.agentRole, response.Usage.TotalTokens)
+				}
 				break // Success
 			}
 
@@ -815,11 +840,9 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 				continue
 			}
 
-			// Check for context window errors (provider specific, but usually contain "token" or "invalid")
-			isContextError := strings.Contains(errMsg, "token") ||
-				strings.Contains(errMsg, "context") ||
-				strings.Contains(errMsg, "invalidparameter") ||
-				strings.Contains(errMsg, "length")
+			// Check for context window errors using compound pattern matching.
+			// See error_classify.go for the full classification logic.
+			isContextError := isContextWindowError(errMsg)
 
 			if isContextError && retry < maxRetries {
 				logger.WarnCF("agent", "Context window error detected, attempting compression", map[string]interface{}{

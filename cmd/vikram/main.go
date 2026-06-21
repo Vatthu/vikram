@@ -138,6 +138,12 @@ func (b *agentBudget) record(role string, tokens int) {
 	b.dailyTokens[role] += tokens
 }
 
+// Check implements agent.BudgetChecker.
+func (b *agentBudget) Check(role string) error { return b.check(role) }
+
+// Record implements agent.BudgetChecker.
+func (b *agentBudget) Record(role string, tokens int) { b.record(role, tokens) }
+
 const (
 	clientWSWriteWait = 10 * time.Second
 	clientHTTPTimeout = 15 * time.Second
@@ -750,6 +756,10 @@ func agentCmd() {
 
 	msgBus := bus.NewMessageBus()
 	agentLoop := agent.NewAgentLoop(cfg, msgBus, provider)
+
+	// Wire budget enforcement into the agent loop.
+	budget := newAgentBudget(cfg)
+	agentLoop.SetBudget(budget, "default")
 
 	// Print agent startup info (only for interactive mode)
 	startupInfo := agentLoop.GetStartupInfo()
@@ -1720,6 +1730,7 @@ func gatewayCmd() {
 	msgBus := bus.NewMessageBus()
 	agentLoop := agent.NewAgentLoop(cfg, msgBus, provider)
 
+
 	// Print agent startup info
 	fmt.Println("\n📦 Agent Status:")
 	startupInfo := agentLoop.GetStartupInfo()
@@ -1876,6 +1887,9 @@ func gatewayCmd() {
 			Content: fmt.Sprintf("⚠️ Budget alert: %s has used %d/%d tokens today", role, used, limit),
 		})
 	})
+
+	// Wire the same budget into the agent loop for per-LLM-call enforcement.
+	agentLoop.SetBudget(budget, "default")
 
 	// Wire the reviewer agent so /v1/review/change uses a different model
 	// than the implementer -- the core of independent review.

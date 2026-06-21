@@ -1,0 +1,16 @@
+# Go core
+/pkg/                @Vatthu
+/cmd/                @Vatthu
+
+# Python orchestrator
+/services/           @Vatthu
+
+# Build and CI
+/.github/            @Vatthu
+/Makefile            @Vatthu
+/.goreleaser.yaml    @Vatthu
+
+# Documentation
+/docs/               @Vatthu
+README.md            @Vatthu
+CONTRIBUTING.md      @Vatthu
