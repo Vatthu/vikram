@@ -37,9 +37,6 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Advisory: ~30 pre-existing errcheck issues in codebase.
-    # Once cleaned up, remove continue-on-error to enforce lint.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
