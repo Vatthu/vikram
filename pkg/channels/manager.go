@@ -8,10 +8,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/constants"
-	"github.com/v1claw/levik/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/constants"
+	"github.com/Vatthu/vikram/pkg/logger"
 )
 
 type Manager struct {

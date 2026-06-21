@@ -1,11 +1,11 @@
-# Releasing LeVik
+# Releasing Vikram
 
 This project is released through the `Create Tag and Release` GitHub Actions workflow in `.github/workflows/release.yml`.
 
 ## Preconditions
 
 - `main` contains the release commits you want to publish.
-- You have GitHub push access to `amit-vikramaditya/levik`.
+- You have GitHub push access to `amit-vikramaditya/vikram`.
 - GitHub Actions is enabled for the repository.
 - Optional: Docker Hub secrets/vars are configured if you want Docker Hub publishing in addition to GHCR.
 
@@ -60,17 +60,17 @@ The workflow will:
 After the GitHub release is live, verify the published installer path:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/amit-vikramaditya/levik/main/install.sh | bash -s -- --version vX.Y.Z
-levik version
+curl -fsSL https://raw.githubusercontent.com/amit-vikramaditya/vikram/main/install.sh | bash -s -- --version vX.Y.Z
+vikram version
 ```
 
 On Windows:
 
 ```powershell
-$installer = Join-Path $env:TEMP "levik-install.ps1"
-Invoke-WebRequest "https://raw.githubusercontent.com/amit-vikramaditya/levik/main/install.ps1" -OutFile $installer
+$installer = Join-Path $env:TEMP "vikram-install.ps1"
+Invoke-WebRequest "https://raw.githubusercontent.com/amit-vikramaditya/vikram/main/install.ps1" -OutFile $installer
 powershell -ExecutionPolicy Bypass -File $installer -Version vX.Y.Z
-levik.exe version
+vikram.exe version
 ```
 
 ## If Publish Fails

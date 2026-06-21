@@ -23,11 +23,11 @@ The paper frames workflow design as a search problem over code-represented workf
 - combining execution feedback with workflow optimization
 - making workflow structure itself a tunable object
 
-## Why It Matters For LeVik
+## Why It Matters For Vikram
 
-LeVik v1 should not self-modify its orchestration logic automatically. That would be premature and difficult to trust.
+Vikram v1 should not self-modify its orchestration logic automatically. That would be premature and difficult to trust.
 
-But AFlow is important for LeVik v2 or v3 because it suggests a disciplined future direction:
+But AFlow is important for Vikram v2 or v3 because it suggests a disciplined future direction:
 
 - keep workflow definitions explicit and code-represented
 - keep evaluation artifacts structured
@@ -35,7 +35,7 @@ But AFlow is important for LeVik v2 or v3 because it suggests a disciplined futu
 
 ## First Extraction Decision
 
-- reject automatic workflow search for LeVik v1
+- reject automatic workflow search for Vikram v1
 - borrow the idea that workflows should be explicit, evaluable, and versionable
 - adapt evaluation hooks so future workflow optimization is possible without rewriting the system
 
@@ -43,7 +43,7 @@ But AFlow is important for LeVik v2 or v3 because it suggests a disciplined futu
 
 - AFlow is an optimization layer, not a substitute for a stable baseline architecture.
 - Automatic workflow search without strong evals is noise.
-- LeVik needs high-quality human-designed workflow baselines before it should attempt workflow self-optimization.
+- Vikram needs high-quality human-designed workflow baselines before it should attempt workflow self-optimization.
 
 ## Next Inspection Targets
 

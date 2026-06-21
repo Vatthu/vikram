@@ -10,7 +10,7 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 type onboardMode string
@@ -199,7 +199,7 @@ func collectSetupWarnings(cfg *config.Config) []string {
 
 func onboardSecurityAcknowledgement() bool {
 	securityLines := []string{
-		"LeVik can read files, browse the web, and run actions if you enable those capabilities.",
+		"Vikram can read files, browse the web, and run actions if you enable those capabilities.",
 		"By default it is a personal assistant with one trusted operator boundary, not a hardened multi-tenant system.",
 		"If you expose it to other users, shared channels, or the public internet, keep sandboxing on and use allowlists plus API auth.",
 		"Keep secrets out of the agent workspace, and prefer the strongest model you have for any tool-enabled setup.",
@@ -253,7 +253,7 @@ func onboardChooseMode() onboardMode {
 			huh.NewSelect[string]().
 				Title("Onboarding mode").
 				Options(
-					huh.NewOption("Quick Start  "+stepStyle.Render("(get a working assistant first; tune details later with levik configure)"), string(onboardModeQuick)),
+					huh.NewOption("Quick Start  "+stepStyle.Render("(get a working assistant first; tune details later with vikram configure)"), string(onboardModeQuick)),
 					huh.NewOption("Manual  "+stepStyle.Render("(workspace security, gateway, permissions, channels)"), string(onboardModeManual)),
 				).
 				Value(&choice),
@@ -343,5 +343,5 @@ func defaultOnboardIdentity() (string, string) {
 	if userName == "" {
 		userName = "User"
 	}
-	return "LeVik", sanitizeOnboardingField(userName, false)
+	return "Vikram", sanitizeOnboardingField(userName, false)
 }

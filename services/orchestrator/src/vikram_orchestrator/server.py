@@ -50,7 +50,7 @@ def build_app(
             close_graph(graph)
             managed_host_client.close()
 
-    app = FastAPI(title="LeVik Orchestrator", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="Vikram Orchestrator", version="0.1.0", lifespan=lifespan)
     app.mount(
         "/console/static",
         StaticFiles(directory=console_static_dir),

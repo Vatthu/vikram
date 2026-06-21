@@ -82,31 +82,31 @@ func TestHomeDir_UsesEnvOverride(t *testing.T) {
 		t.Fatalf("UserHomeDir failed: %v", err)
 	}
 
-	t.Setenv(HomeEnvVar, "~/custom-levik-home")
-	want := filepath.Join(home, "custom-levik-home")
+	t.Setenv(HomeEnvVar, "~/custom-vikram-home")
+	want := filepath.Join(home, "custom-vikram-home")
 	if got := HomeDir(); got != want {
 		t.Fatalf("HomeDir() = %q, want %q", got, want)
 	}
 }
 
 func TestConfigPath_UsesHomeDir(t *testing.T) {
-	t.Setenv(HomeEnvVar, "/tmp/levik-home")
-	want := filepath.Join("/tmp/levik-home", "config.json")
+	t.Setenv(HomeEnvVar, "/tmp/vikram-home")
+	want := filepath.Join("/tmp/vikram-home", "config.json")
 	if got := ConfigPath(); got != want {
 		t.Fatalf("ConfigPath() = %q, want %q", got, want)
 	}
 }
 
 func TestResolveHomeDir_WindowsPrefersUserConfigDir(t *testing.T) {
-	got := resolveHomeDir("windows", `C:\Users\Amit\.levik`, false, `C:\Users\Amit\AppData\Roaming`)
-	want := filepath.Join(`C:\Users\Amit\AppData\Roaming`, "LeVik")
+	got := resolveHomeDir("windows", `C:\Users\Amit\.vikram`, false, `C:\Users\Amit\AppData\Roaming`)
+	want := filepath.Join(`C:\Users\Amit\AppData\Roaming`, "Vikram")
 	if got != want {
 		t.Fatalf("resolveHomeDir() = %q, want %q", got, want)
 	}
 }
 
 func TestResolveHomeDir_WindowsKeepsLegacyHomeIfPresent(t *testing.T) {
-	legacy := `C:\Users\Amit\.levik`
+	legacy := `C:\Users\Amit\.vikram`
 	got := resolveHomeDir("windows", legacy, true, `C:\Users\Amit\AppData\Roaming`)
 	if got != legacy {
 		t.Fatalf("resolveHomeDir() = %q, want %q", got, legacy)
@@ -333,13 +333,13 @@ func TestLoadConfig_PermissionsIncludeNotificationsAndScreen(t *testing.T) {
 func TestLoadConfig_ExpandsChannelEnvVars(t *testing.T) {
 	tmpDir := t.TempDir()
 	path := filepath.Join(tmpDir, "config.json")
-	t.Setenv("LEVIK_TELEGRAM_TEST_TOKEN", "telegram-secret")
+	t.Setenv("VIKRAM_TELEGRAM_TEST_TOKEN", "telegram-secret")
 
 	data := []byte(`{
   "channels": {
     "telegram": {
       "enabled": true,
-      "token": "${LEVIK_TELEGRAM_TEST_TOKEN}"
+      "token": "${VIKRAM_TELEGRAM_TEST_TOKEN}"
     }
   }
 }`)

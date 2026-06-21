@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build, Test, and Run
 
 ```bash
-make build          # Build for current platform → build/levik-{platform}-{arch}
+make build          # Build for current platform → build/vikram-{platform}-{arch}
 make run ARGS=""    # Build and run
 make test           # Run all Go tests (go test ./...)
 make vet            # Static analysis (go vet ./...)
@@ -22,15 +22,15 @@ go test ./pkg/... -run TestName -v
 
 ## Architecture
 
-LeVik is an autonomous AI engineering system with a **Go host layer** (gateway, permissions, secrets, workspace control, channels, execution) and a **Python orchestrator** (workflow graphs, model routing, approvals, artifacts). They communicate over a local Unix domain socket at `/tmp/levikd.sock` via HTTP+JSON.
+Vikram is an autonomous AI engineering system with a **Go host layer** (gateway, permissions, secrets, workspace control, channels, execution) and a **Python orchestrator** (workflow graphs, model routing, approvals, artifacts). They communicate over a local Unix domain socket at `/tmp/vikramd.sock` via HTTP+JSON.
 
-### Go CLI (cmd/levik/)
+### Go CLI (cmd/vikram/)
 
-Single binary with subcommands. Key entry points in `cmd/levik/main.go`:
-- `levik agent` — interactive or one-shot chat with an LLM
-- `levik gateway` — starts the full daemon (agent loop, channels, cron, heartbeat, API server, orchestrator host, event router, job queue, device registry)
-- `levik client` — connects to a remote gateway via WebSocket
-- `levik onboard` / `levik configure` / `levik doctor` — setup and diagnostics
+Single binary with subcommands. Key entry points in `cmd/vikram/main.go`:
+- `vikram agent` — interactive or one-shot chat with an LLM
+- `vikram gateway` — starts the full daemon (agent loop, channels, cron, heartbeat, API server, orchestrator host, event router, job queue, device registry)
+- `vikram client` — connects to a remote gateway via WebSocket
+- `vikram onboard` / `vikram configure` / `vikram doctor` — setup and diagnostics
 
 ### Go Packages (pkg/)
 
@@ -40,7 +40,7 @@ Single binary with subcommands. Key entry points in `cmd/levik/main.go`:
 | `bus` | Internal message bus — `InboundMessage`/`OutboundMessage` channels between agent, channels, and tools |
 | `providers` | LLM provider abstraction (`LLMProvider` interface) with implementations for Anthropic, OpenAI, OpenRouter, Groq, Vertex, Bedrock, Azure, Ollama, and others. GitHub Copilot config fields exist but the provider is intentionally unsupported until a safe bridge exists. |
 | `channels` | Telegram and WhatsApp integrations. Inbound messages are published to the bus; outbound dispatcher reads bus subscriptions |
-| `config` | JSON config file (~/.levik/config.json) with env var overrides. Central `Config` struct covers workspace, agents, providers, channels, tools, heartbeat, permissions, V1 API, voice |
+| `config` | JSON config file (~/.vikram/config.json) with env var overrides. Central `Config` struct covers workspace, agents, providers, channels, tools, heartbeat, permissions, V1 API, voice |
 | `tools` | Tool implementations: shell exec, filesystem, web search, edit, notify, cron, delegate, spawn subagents. Registered in `ToolRegistry` |
 | `orchestrator` / `orchestratorhost` | Shared types and Go-side HTTP server exposing host capabilities (workspace provision, git worktrees, file read/write/replace, exec, artifact store, Telegram notify) over Unix socket |
 | `api` | V1 REST/WebSocket API server with auth, rate limiting, chat, status, events, device registration |
@@ -84,9 +84,9 @@ For orchestrated tasks (Python orchestrator path):
 
 ### Configuration
 
-- Config file: `~/.levik/config.json`
-- Env var prefix: `LEVIK_` (e.g., `LEVIK_PROVIDERS_OPENAI_API_KEY`)
-- `$LEVIK_HOME` overrides the config directory
+- Config file: `~/.vikram/config.json`
+- Env var prefix: `VIKRAM_` (e.g., `VIKRAM_PROVIDERS_OPENAI_API_KEY`)
+- `$VIKRAM_HOME` overrides the config directory
 - `${VAR_NAME}` expansion supported in config JSON values
 - Workspaces are sandboxed by default (`workspace.sandboxed: true`)
 

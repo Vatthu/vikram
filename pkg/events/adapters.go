@@ -3,7 +3,7 @@ package events
 import (
 	"context"
 
-	"github.com/v1claw/levik/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/bus"
 )
 
 // BusAdapter wraps the existing MessageBus as an EventSource,

@@ -2,7 +2,7 @@
 
 ## Problem
 
-LeVik had repository inspection, but it still lacked a strong answer to:
+Vikram had repository inspection, but it still lacked a strong answer to:
 
 - where should the agent look next
 - how should it narrow candidate files before editing
@@ -25,7 +25,7 @@ Agentless argues that a simple explicit workflow can beat more complex agent loo
 - repair
 - patch validation
 
-The important lesson for LeVik is not “remove agents”.
+The important lesson for Vikram is not “remove agents”.
 The lesson is “do not skip localization”.
 
 ### AgentFL
@@ -42,7 +42,7 @@ This reinforces that codebase navigation should be a first-class stage, not an i
 
 LingmaAgent shows that repository-level understanding matters.
 
-The strongest relevant lesson for LeVik is:
+The strongest relevant lesson for Vikram is:
 
 - repository exploration must be broader than local-file guessing
 - planning quality improves when the agent has structured repo context before patching
@@ -56,7 +56,7 @@ The 2025 repository-memory work points at the next weakness after localization:
 
 This is not a v1 requirement, but it is a strong v2 direction.
 
-## LeVik Decision
+## Vikram Decision
 
 Borrow now:
 
@@ -77,7 +77,7 @@ Reject for now:
 - knowledge-graph heavy repo modeling
 - chat-heavy navigation loops
 
-## Concrete Impact On LeVik
+## Concrete Impact On Vikram
 
 This note justifies the addition of:
 
@@ -90,7 +90,7 @@ And the workflow transition:
 
 ## Why This Matters
 
-LeVik is trying to become an engineering team, not a demo agent.
+Vikram is trying to become an engineering team, not a demo agent.
 
 That means it should:
 

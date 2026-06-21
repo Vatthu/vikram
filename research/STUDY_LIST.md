@@ -30,15 +30,15 @@
 
 1. Verify the local clone in `research/upstream/MANIFEST.md`.
 2. Read the upstream root `README.md` and inspect the actual top-level structure.
-3. Identify the specific module or docs area that matters for LeVik.
+3. Identify the specific module or docs area that matters for Vikram.
 4. Write a note under `research/notes/` before proposing a design change.
-5. Decide whether LeVik should adopt the pattern, adapt it, or reject it.
+5. Decide whether Vikram should adopt the pattern, adapt it, or reject it.
 
 ## Output Standard For Research
 
 Every study note should answer:
 
 1. What problem does this source solve well?
-2. Is that problem real for LeVik v1 or only later?
+2. Is that problem real for Vikram v1 or only later?
 3. Do we borrow the pattern, clone the idea, or ignore it?
-4. What is the concrete impact on LeVik’s architecture?
+4. What is the concrete impact on Vikram’s architecture?

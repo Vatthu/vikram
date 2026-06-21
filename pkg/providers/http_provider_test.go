@@ -3,7 +3,7 @@ package providers
 import (
 	"testing"
 
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 func TestCreateProvider_MoonshotExplicitProvider(t *testing.T) {
@@ -103,7 +103,7 @@ func TestCreateProvider_GitHubCopilotIsExplicitlyUnsupported(t *testing.T) {
 	if err == nil {
 		t.Fatalf("CreateProvider(github_copilot) returned provider %T, want unsupported-provider error", provider)
 	}
-	if got := err.Error(); got != "github_copilot provider is not supported in levik" {
+	if got := err.Error(); got != "github_copilot provider is not supported in vikram" {
 		t.Fatalf("error = %q, want explicit unsupported-provider error", got)
 	}
 }

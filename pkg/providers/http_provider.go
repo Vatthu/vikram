@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/v1claw/levik/pkg/auth"
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/auth"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 type HTTPProvider struct {
@@ -152,7 +152,7 @@ func formatAPIError(statusCode int, body []byte) error {
 		case 429:
 			return fmt.Errorf("rate limit exceeded: %s\n\n  Your free tier quota is used up. Wait a few minutes, or upgrade your plan.\n  Check usage at your provider's dashboard.", msg)
 		case 401:
-			return fmt.Errorf("invalid API key: Your API key was rejected.\n  Check your key in %s or re-run: levik onboard", config.ConfigPath())
+			return fmt.Errorf("invalid API key: Your API key was rejected.\n  Check your key in %s or re-run: vikram onboard", config.ConfigPath())
 		case 403:
 			return fmt.Errorf("access denied: %s\n  Your API key may not have access to this model.", msg)
 		case 404:
@@ -266,7 +266,7 @@ func createClaudeAuthProvider() (LLMProvider, error) {
 		return nil, fmt.Errorf("loading auth credentials: %w", err)
 	}
 	if cred == nil {
-		return nil, fmt.Errorf("no credentials for anthropic. Run: levik auth login --provider anthropic")
+		return nil, fmt.Errorf("no credentials for anthropic. Run: vikram auth login --provider anthropic")
 	}
 	return NewClaudeProviderWithTokenSource(cred.AccessToken, createClaudeTokenSource()), nil
 }
@@ -277,7 +277,7 @@ func createCodexAuthProvider() (LLMProvider, error) {
 		return nil, fmt.Errorf("loading auth credentials: %w", err)
 	}
 	if cred == nil {
-		return nil, fmt.Errorf("no credentials for openai. Run: levik auth login --provider openai")
+		return nil, fmt.Errorf("no credentials for openai. Run: vikram auth login --provider openai")
 	}
 	return NewCodexProviderWithTokenSource(cred.AccessToken, cred.AccountID, createCodexTokenSource()), nil
 }
@@ -419,9 +419,9 @@ func CreateProviderForFallback(cfg *config.Config, providerName, model string) (
 			return NewHTTPProvider(cfg.Providers.GitHubModels.APIKey, apiBase, cfg.Providers.GitHubModels.Proxy), nil
 		}
 	case "claude-cli", "claude-code", "claudecode":
-		return nil, fmt.Errorf("council fallback: claude-cli provider is not supported in levik")
+		return nil, fmt.Errorf("council fallback: claude-cli provider is not supported in vikram")
 	case "codex-cli", "codex-code":
-		return nil, fmt.Errorf("council fallback: codex-cli provider is not supported in levik")
+		return nil, fmt.Errorf("council fallback: codex-cli provider is not supported in vikram")
 	}
 
 	return nil, fmt.Errorf("council fallback: no API key configured for provider %q (model: %s)", providerName, model)
@@ -449,7 +449,7 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 		case "openai", "gpt":
 			if cfg.Providers.OpenAI.APIKey != "" || cfg.Providers.OpenAI.AuthMethod != "" {
 				if cfg.Providers.OpenAI.AuthMethod == "codex-cli" {
-					return nil, fmt.Errorf("codex-cli auth method is not supported in levik")
+					return nil, fmt.Errorf("codex-cli auth method is not supported in vikram")
 				}
 				if cfg.Providers.OpenAI.AuthMethod == "oauth" || cfg.Providers.OpenAI.AuthMethod == "token" {
 					return createCodexAuthProvider()
@@ -519,9 +519,9 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 				}
 			}
 		case "claude-cli", "claudecode", "claude-code":
-			return nil, fmt.Errorf("claude-cli provider is not supported in levik")
+			return nil, fmt.Errorf("claude-cli provider is not supported in vikram")
 		case "codex-cli", "codex-code":
-			return nil, fmt.Errorf("codex-cli provider is not supported in levik")
+			return nil, fmt.Errorf("codex-cli provider is not supported in vikram")
 
 		// ── Enterprise / cloud-native providers ──────────────────────────
 		case "vertex", "vertex_ai", "vertexai":
@@ -564,7 +564,7 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 				apiBase = "http://localhost:11434/v1"
 			}
 		case "github_copilot", "copilot":
-			return nil, fmt.Errorf("github_copilot provider is not supported in levik")
+			return nil, fmt.Errorf("github_copilot provider is not supported in vikram")
 
 		case "mistral":
 			if cfg.Providers.Mistral.APIKey != "" {

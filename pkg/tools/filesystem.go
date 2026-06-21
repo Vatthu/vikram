@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/v1claw/levik/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/bus"
 )
 
 type safeLocalPath struct {
@@ -171,7 +171,7 @@ func writeFileReplacingPath(path safeLocalPath, content []byte, defaultMode os.F
 		return err
 	}
 
-	tmp, err := os.CreateTemp(dir, ".levik-write-*")
+	tmp, err := os.CreateTemp(dir, ".vikram-write-*")
 	if err != nil {
 		return err
 	}

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/v1claw/levik/pkg/auth"
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/auth"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 // doctorCmd runs a series of quick health checks and prints a colour-coded report.
@@ -35,7 +35,7 @@ func runDoctor() bool {
 		fmt.Printf("%s  Config file        %s\n", pass, stepStyle.Render(configPath))
 	} else {
 		fmt.Printf("%s  Config file        not found\n", fail)
-		hint("Run  levik onboard  to create it.")
+		hint("Run  vikram onboard  to create it.")
 		fmt.Println()
 		printDoctorResult(false)
 		return false
@@ -45,7 +45,7 @@ func runDoctor() bool {
 	cfg, err := loadConfig()
 	if err != nil {
 		fmt.Printf("%s  Load config        %s\n", fail, err.Error())
-		hint("Config may be malformed. Try  levik configure  to repair it.")
+		hint("Config may be malformed. Try  vikram configure  to repair it.")
 		fmt.Println()
 		printDoctorResult(allGood)
 		return false
@@ -55,7 +55,7 @@ func runDoctor() bool {
 	ws := cfg.WorkspacePath()
 	if ws == "" {
 		fmt.Printf("%s  Workspace          not configured\n", fail)
-		hint("Run  levik onboard  or  levik configure → Home.")
+		hint("Run  vikram onboard  or  vikram configure → Home.")
 		allGood = false
 	} else if info, statErr := os.Stat(ws); statErr != nil {
 		fmt.Printf("%s  Workspace          %s  %s\n", warn, ws, stepStyle.Render("(will be created on first run)"))
@@ -63,7 +63,7 @@ func runDoctor() bool {
 		fmt.Printf("%s  Workspace          %s  (exists but is not a directory)\n", fail, ws)
 		allGood = false
 	} else {
-		testFile := filepath.Join(ws, ".levik_write_test")
+		testFile := filepath.Join(ws, ".vikram_write_test")
 		if f, wErr := os.Create(testFile); wErr != nil {
 			fmt.Printf("%s  Workspace          %s  (not writable)\n", fail, ws)
 			allGood = false
@@ -79,7 +79,7 @@ func runDoctor() bool {
 	model := cfg.Agents.Defaults.Model
 	if providerID == "" || model == "" {
 		fmt.Printf("%s  AI provider        not configured\n", fail)
-		hint("Run  levik onboard  or  levik configure → Brain.")
+		hint("Run  vikram onboard  or  vikram configure → Brain.")
 		allGood = false
 	} else {
 		fmt.Printf("%s  AI provider        %s  /  %s\n", pass, providerID, model)
@@ -131,7 +131,7 @@ func runDoctor() bool {
 		fmt.Printf("%s  Web search         %s\n", pass, strings.Join(toolList, ", "))
 	} else {
 		fmt.Printf("%s  Web search         none enabled  (optional)\n", warn)
-		hint("Enable with  levik configure → Tools.")
+		hint("Enable with  vikram configure → Tools.")
 	}
 
 	// ── 8. Messaging channels ────────────────────────────────────────────────
@@ -140,7 +140,7 @@ func runDoctor() bool {
 		fmt.Printf("%s  Channels           %s\n", pass, strings.Join(channels, ", "))
 	} else {
 		fmt.Printf("%s  Channels           none configured  (optional)\n", warn)
-		hint("Add channels with  levik configure → Channels.")
+		hint("Add channels with  vikram configure → Channels.")
 	}
 
 	fmt.Println()
@@ -150,11 +150,11 @@ func runDoctor() bool {
 
 func printDoctorResult(allGood bool) {
 	if allGood {
-		fmt.Println(successStyle.Render("  All checks passed — LeVik is ready! 🚀"))
+		fmt.Println(successStyle.Render("  All checks passed — Vikram is ready! 🚀"))
 		fmt.Println()
-		fmt.Printf("%s\n\n", stepStyle.Render("  Run  levik agent  to start chatting."))
+		fmt.Printf("%s\n\n", stepStyle.Render("  Run  vikram agent  to start chatting."))
 	} else {
-		fmt.Println(warnStyle.Render("  Some checks failed. Fix the items above and re-run  levik doctor."))
+		fmt.Println(warnStyle.Render("  Some checks failed. Fix the items above and re-run  vikram doctor."))
 		fmt.Println()
 	}
 }
@@ -205,7 +205,7 @@ func providerCredentialStatus(cfg *config.Config, providerID string) (string, bo
 		return "", false, ""
 	case "vertex", "vertex_ai", "vertexai":
 		if strings.TrimSpace(cfg.Providers.Vertex.ProjectID) == "" {
-			return "", false, "Set Vertex project_id with  levik configure → Brain."
+			return "", false, "Set Vertex project_id with  vikram configure → Brain."
 		}
 		return "gcloud / ADC credentials", true, ""
 	case "bedrock", "aws_bedrock", "aws":
@@ -248,7 +248,7 @@ func providerCredentialStatus(cfg *config.Config, providerID string) (string, bo
 		if isLocalProvider(providerID) {
 			return "local provider — no key needed", true, ""
 		}
-		return "", false, "Run  levik configure → Brain  to add the required credentials."
+		return "", false, "Run  vikram configure → Brain  to add the required credentials."
 	}
 }
 
@@ -257,21 +257,21 @@ func providerConfigCredentialStatus(providerCfg config.ProviderConfig, authProvi
 	case "oauth", "token":
 		cred, err := auth.GetCredential(authProvider)
 		if err != nil {
-			return "", false, fmt.Sprintf("Run  levik auth login --provider %s  after configuring auth storage.", authProvider)
+			return "", false, fmt.Sprintf("Run  vikram auth login --provider %s  after configuring auth storage.", authProvider)
 		}
 		if cred == nil {
-			return "", false, fmt.Sprintf("Run  levik auth login --provider %s.", authProvider)
+			return "", false, fmt.Sprintf("Run  vikram auth login --provider %s.", authProvider)
 		}
 		return fmt.Sprintf("stored auth (%s)", providerCfg.AuthMethod), true, ""
 	case "codex-cli":
-		return "", false, "Codex CLI auth method is not supported in levik."
+		return "", false, "Codex CLI auth method is not supported in vikram."
 	}
 
 	if apiKey := strings.TrimSpace(providerCfg.APIKey); apiKey != "" {
 		return maskKey(apiKey), true, ""
 	}
 
-	return "", false, "Run  levik configure → Brain  to add the required credentials."
+	return "", false, "Run  vikram configure → Brain  to add the required credentials."
 }
 
 // maskKey returns a display-safe string like "AIza…a1b2".

@@ -1,4 +1,4 @@
-# MCP Client Integration for LeVik
+# MCP Client Integration for Vikram
 
 ## Part 1 — Current Tool Flow (CODE-VERIFIED)
 
@@ -79,7 +79,7 @@ AgentLoop.runLLMIteration()                     ← loop.go:688
 
 ### Mapping
 
-| LeVik Concept | MCP Equivalent | How |
+| Vikram Concept | MCP Equivalent | How |
 |--------------|----------------|-----|
 | `Tool.Name()` | MCP tool `name` | From `tools/list` response |
 | `Tool.Description()` | MCP tool `description` | From `tools/list` response |
@@ -87,7 +87,7 @@ AgentLoop.runLLMIteration()                     ← loop.go:688
 | `Tool.Execute(ctx, tc, args)` | MCP `tools/call` | JSON-RPC request over stdin, response from stdout |
 | `ToolResult.ForLLM` | MCP `content[].text` | First text content block |
 | `ToolResult.IsError` | MCP `isError` | Boolean from response |
-| `ToolContext` | No MCP equivalent | LeVik context stays internal |
+| `ToolContext` | No MCP equivalent | Vikram context stays internal |
 
 ---
 
@@ -234,7 +234,7 @@ func NewClient(ctx context.Context, cfg ClientConfig) (*Client, error) {
     if _, err := c.call(ctx, "initialize", map[string]interface{}{
         "protocolVersion": "2024-11-05",
         "capabilities":    map[string]interface{}{},
-        "clientInfo":      map[string]string{"name": "levik", "version": "1.0"},
+        "clientInfo":      map[string]string{"name": "vikram", "version": "1.0"},
     }); err != nil {
         cmd.Process.Kill()
         readerCancel()
@@ -417,10 +417,10 @@ import (
     "fmt"
     "strings"
 
-    "github.com/vatthu/levik/pkg/tools"
+    "github.com/vatthu/vikram/pkg/tools"
 )
 
-// Adapter wraps an MCP tool as a LeVik Tool implementation.
+// Adapter wraps an MCP tool as a Vikram Tool implementation.
 type Adapter struct {
     client    *Client
     toolDef   ToolDef
@@ -429,7 +429,7 @@ type Adapter struct {
     maxOutput int
 }
 
-// NewAdapter creates a LeVik Tool from an MCP tool definition.
+// NewAdapter creates a Vikram Tool from an MCP tool definition.
 func NewAdapter(client *Client, def ToolDef, prefix string, maxOutput int) *Adapter {
     return &Adapter{
         client:    client,
@@ -518,7 +518,7 @@ type Config struct {
 }
 ```
 
-### Modify: `cmd/levik/main.go` — startup wiring
+### Modify: `cmd/vikram/main.go` — startup wiring
 
 In `gatewayCmd()`, after tool registry creation (`createToolRegistry` at loop.go line ~217), add:
 
@@ -582,7 +582,7 @@ if cfg.MCP.Enabled {
       {
         "name": "filesystem",
         "command": "npx",
-        "args": ["-y", "@anthropic/mcp-filesystem", "/tmp/levik-mcp-fs"],
+        "args": ["-y", "@anthropic/mcp-filesystem", "/tmp/vikram-mcp-fs"],
         "prefix": "mcp_fs_",
         "allowed": ["read_file", "write_file", "list_directory"]
       },
@@ -649,7 +649,7 @@ Shutdown:
 
 **Naming convention ensures clarity:**
 ```
-exec                    ← local: LeVik's shell exec (safe, allowlisted)
+exec                    ← local: Vikram's shell exec (safe, allowlisted)
 mcp_pw_browser_navigate ← MCP: Playwright browser navigation (external)
 mcp_gh_search_repos     ← MCP: GitHub repository search (external)
 mcp_fs_read_file        ← MCP: External filesystem access (external, sandboxed to /tmp)
@@ -677,7 +677,7 @@ LLM calls: mcp_pw_browser_screenshot(name="login")
 
 ```
 Agent: "Find open issues about authentication in the repo"
-LLM calls: mcp_gh_list_issues(repo="vatthu/levik", state="open", labels=["auth"])
+LLM calls: mcp_gh_list_issues(repo="vatthu/vikram", state="open", labels=["auth"])
 → ToolResult{ForLLM: "#42: OAuth token refresh fails after 1h\n#38: Add API key rotation", IsError: false}
 ```
 
@@ -743,6 +743,6 @@ LLM calls: mcp_think_sequential(thought="Thread A acquires lock L1, then waits f
 
 **Risks and mitigation summary:**
 - External processes are untrusted → marked `unsafe`, allowlist filtering at registration
-- No path containment for filesystem MCP → sandbox via MCP server's own config (e.g., `--directory /tmp/levik-mcp-fs`)
+- No path containment for filesystem MCP → sandbox via MCP server's own config (e.g., `--directory /tmp/vikram-mcp-fs`)
 - Process lifecycle tied to gateway → `Close()` kills all MCP processes
 - JSON-RPC parsing errors → wrapped as `ToolResult.IsError`, returned to LLM for retry

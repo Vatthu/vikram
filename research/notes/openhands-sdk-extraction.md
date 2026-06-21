@@ -21,13 +21,13 @@ The SDK treats `Conversation` as the unit that owns:
 - persistence behavior
 - iteration controls
 
-This is a strong pattern for LeVik. A task/session should be a first-class runtime object, not just an ad hoc request.
+This is a strong pattern for Vikram. A task/session should be a first-class runtime object, not just an ad hoc request.
 
 ### 2. Workspace is a swappable boundary
 
 The factory creates a local or remote conversation based on workspace type, while keeping the outer API stable.
 
-That is exactly the right long-term shape for LeVik:
+That is exactly the right long-term shape for Vikram:
 
 - host-native local execution first
 - remote execution later without rewriting orchestrator logic
@@ -38,30 +38,30 @@ The SDK event model uses typed events with source, timestamp, and conversion rul
 
 ### 4. Agent server is a transport and execution surface, not the whole brain
 
-The agent server exposes REST and WebSocket APIs, stores events, and manages workspace-facing operations. This separation is useful even though LeVik will not copy the whole server design.
+The agent server exposes REST and WebSocket APIs, stores events, and manages workspace-facing operations. This separation is useful even though Vikram will not copy the whole server design.
 
-## What LeVik Should Borrow
+## What Vikram Should Borrow
 
 - task/session as a first-class object
 - workspace abstraction as a stable boundary
 - typed events rather than raw chat logs
 - separation between orchestrator and execution transport
 
-## What LeVik Should Adapt
+## What Vikram Should Adapt
 
 - Replace the remote agent server with a Go host daemon plus Unix socket for v1.
 - Keep the idea of local-versus-remote workspace swapability in the interface design.
 - Use typed events for task lifecycle and observability, but keep them minimal.
 
-## What LeVik Should Reject
+## What Vikram Should Reject
 
-- depending on OpenHands transport or server packaging as LeVik’s foundation
+- depending on OpenHands transport or server packaging as Vikram’s foundation
 - Docker-first assumptions as the default control-plane model
 - copying deprecated V0 controller code from the OpenHands monorepo
 
-## Concrete LeVik Impact
+## Concrete Vikram Impact
 
-LeVik should define:
+Vikram should define:
 
 - `TaskSession`
 - `WorkspaceHandle`

@@ -286,7 +286,7 @@ func TestWebFetch_RejectsUserinfoAndNonDefaultPorts(t *testing.T) {
 }
 
 func TestWebFetch_RequiresAllowlistedTarget(t *testing.T) {
-	if !allowedFetchURL.MatchString("https://github.com/v1claw/levik") {
+	if !allowedFetchURL.MatchString("https://github.com/Vatthu/vikram") {
 		t.Fatal("expected GitHub to be allowlisted")
 	}
 	if allowedFetchURL.MatchString("https://example.com/") {

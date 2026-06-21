@@ -27,7 +27,7 @@ func TestSmokeLLMReplyRoutesRunnerPrompt(t *testing.T) {
 }
 
 func TestBuildSmokeConfigUsesLocalVLLMTeam(t *testing.T) {
-	cfg := buildSmokeConfig("/tmp/levik-smoke-workspace", "http://127.0.0.1:18080/v1", 18990)
+	cfg := buildSmokeConfig("/tmp/vikram-smoke-workspace", "http://127.0.0.1:18080/v1", 18990)
 
 	if cfg.Agents.Defaults.Provider != "vllm" {
 		t.Fatalf("provider = %q, want vllm", cfg.Agents.Defaults.Provider)

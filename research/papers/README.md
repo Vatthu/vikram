@@ -1,6 +1,6 @@
 # Papers
 
-This directory is reserved for papers and notes that directly influence LeVik.
+This directory is reserved for papers and notes that directly influence Vikram.
 
 Focus areas:
 

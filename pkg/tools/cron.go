@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/cron"
-	"github.com/v1claw/levik/pkg/utils"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/cron"
+	"github.com/Vatthu/vikram/pkg/utils"
 )
 
 // JobExecutor is the interface for executing cron jobs through the agent

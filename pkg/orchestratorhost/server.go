@@ -20,9 +20,9 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/v1claw/levik/pkg/logger"
-	"github.com/v1claw/levik/pkg/orchestrator"
-	"github.com/v1claw/levik/pkg/tools"
+	"github.com/Vatthu/vikram/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/orchestrator"
+	"github.com/Vatthu/vikram/pkg/tools"
 )
 
 const maxInboundBodyBytes = 1 << 20
@@ -81,7 +81,7 @@ type Server struct {
 	mu         sync.Mutex
 }
 
-// NewServer builds a host capability server around the current LeVik runtime.
+// NewServer builds a host capability server around the current Vikram runtime.
 func NewServer(cfg Config, notifier notifier) *Server {
 	return &Server{
 		cfg:      cfg,
@@ -980,7 +980,7 @@ func (s *Server) handleRollbackWorktree(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-// handleBrowserTest is intentionally disabled until LeVik has a constrained
+// handleBrowserTest is intentionally disabled until Vikram has a constrained
 // browser QA runner. Executing model-generated Node/Playwright scripts on the
 // host is not acceptable for the native Mac daemon threat model.
 func (s *Server) handleBrowserTest(w http.ResponseWriter, r *http.Request) {
@@ -1420,7 +1420,7 @@ func validatedGitRepositoryPath(workspaceRoot, candidate string) (string, error)
 		return "", fmt.Errorf("failed to resolve workspace root: %w", err)
 	}
 	if !isWithinRoot(realPath, workspaceReal) {
-		return "", fmt.Errorf("repo.path must remain inside the LeVik workspace root")
+		return "", fmt.Errorf("repo.path must remain inside the Vikram workspace root")
 	}
 	info, err := os.Stat(realPath)
 	if err != nil {
@@ -1894,7 +1894,7 @@ func writeFileAtomically(root, fullPath string, content []byte, defaultMode os.F
 		return err
 	}
 
-	tmp, err := os.CreateTemp(dir, ".levik-write-*")
+	tmp, err := os.CreateTemp(dir, ".vikram-write-*")
 	if err != nil {
 		return err
 	}

@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 // FeishuChannel is a stub implementation for 32-bit architectures

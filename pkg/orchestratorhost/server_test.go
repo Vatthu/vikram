@@ -12,8 +12,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/v1claw/levik/pkg/orchestrator"
-	"github.com/v1claw/levik/pkg/tools"
+	"github.com/Vatthu/vikram/pkg/orchestrator"
+	"github.com/Vatthu/vikram/pkg/tools"
 )
 
 type stubNotifier struct {
@@ -42,7 +42,7 @@ func (s *stubExecTool) Execute(ctx context.Context, tc tools.ToolContext, args m
 func TestProvisionWorkspaceCreatesTaskLayout(t *testing.T) {
 	root := t.TempDir()
 	server := NewServer(Config{
-		SocketPath:          filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:          filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot:       root,
 		RestrictToWorkspace: true,
 	}, nil)
@@ -74,7 +74,7 @@ func TestProvisionWorkspaceCreatesTaskLayout(t *testing.T) {
 func TestExecEndpointUsesConfiguredExecutor(t *testing.T) {
 	root := t.TempDir()
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 	server.execTool = &stubExecTool{
@@ -108,7 +108,7 @@ func TestNotifyTelegramUsesNotifier(t *testing.T) {
 	root := t.TempDir()
 	notifier := &stubNotifier{}
 	server := NewServer(Config{
-		SocketPath:      filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:      filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot:   root,
 		TelegramEnabled: true,
 	}, notifier)
@@ -132,7 +132,7 @@ func TestNotifyTelegramUsesNotifier(t *testing.T) {
 func TestAgentRosterEndpointReturnsNonSecretRoutingMetadata(t *testing.T) {
 	root := t.TempDir()
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 		AgentRoster: []orchestrator.AgentProfile{
 			{
@@ -173,15 +173,15 @@ func TestCreateWorktreeCreatesManagedWorktree(t *testing.T) {
 	repoPath := filepath.Join(root, "repo")
 	require.NoError(t, os.MkdirAll(repoPath, 0o755))
 	runGitCommand(t, repoPath, "init")
-	runGitCommand(t, repoPath, "config", "user.name", "LeVik Test")
-	runGitCommand(t, repoPath, "config", "user.email", "levik@example.com")
+	runGitCommand(t, repoPath, "config", "user.name", "Vikram Test")
+	runGitCommand(t, repoPath, "config", "user.email", "vikram@example.com")
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "README.md"), []byte("hello\n"), 0o644))
 	runGitCommand(t, repoPath, "add", "README.md")
 	runGitCommand(t, repoPath, "commit", "-m", "initial")
 	runGitCommand(t, repoPath, "branch", "-M", "main")
 
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 
@@ -189,7 +189,7 @@ func TestCreateWorktreeCreatesManagedWorktree(t *testing.T) {
 		TaskID:       "task_123",
 		Repo:         orchestrator.RepoRef{Path: repoPath, DefaultBranch: "main"},
 		WorktreePath: filepath.Join(root, "worktrees", "task_123"),
-		Branch:       "levik/task_123",
+		Branch:       "vikram/task_123",
 	})
 	require.NoError(t, err)
 
@@ -202,7 +202,7 @@ func TestCreateWorktreeCreatesManagedWorktree(t *testing.T) {
 	var resp orchestrator.GitWorktreeCreateResponse
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
 	require.True(t, resp.Created)
-	require.Equal(t, "levik/task_123", resp.HeadRef)
+	require.Equal(t, "vikram/task_123", resp.HeadRef)
 	require.FileExists(t, filepath.Join(resp.WorktreePath, "README.md"))
 }
 
@@ -211,15 +211,15 @@ func TestCreateWorktreeRejectsUnsafeGitRef(t *testing.T) {
 	repoPath := filepath.Join(root, "repo")
 	require.NoError(t, os.MkdirAll(repoPath, 0o755))
 	runGitCommand(t, repoPath, "init")
-	runGitCommand(t, repoPath, "config", "user.name", "LeVik Test")
-	runGitCommand(t, repoPath, "config", "user.email", "levik@example.com")
+	runGitCommand(t, repoPath, "config", "user.name", "Vikram Test")
+	runGitCommand(t, repoPath, "config", "user.email", "vikram@example.com")
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "README.md"), []byte("hello\n"), 0o644))
 	runGitCommand(t, repoPath, "add", "README.md")
 	runGitCommand(t, repoPath, "commit", "-m", "initial")
 	runGitCommand(t, repoPath, "branch", "-M", "main")
 
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 
@@ -256,7 +256,7 @@ func TestManagedWorktreePathRejectsSymlinkEscape(t *testing.T) {
 func TestWriteArtifactPersistsContent(t *testing.T) {
 	root := t.TempDir()
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 
@@ -292,7 +292,7 @@ func TestWriteArtifactPersistsContent(t *testing.T) {
 func TestReadArtifactReturnsBoundedContent(t *testing.T) {
 	root := t.TempDir()
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 
@@ -333,7 +333,7 @@ func TestReadArtifactRejectsSymlinkEscape(t *testing.T) {
 	}
 
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 	reqBody, err := json.Marshal(orchestrator.ArtifactReadRequest{
@@ -355,19 +355,19 @@ func TestRemoveWorktreeRemovesManagedWorktree(t *testing.T) {
 	repoPath := filepath.Join(root, "repo")
 	require.NoError(t, os.MkdirAll(repoPath, 0o755))
 	runGitCommand(t, repoPath, "init")
-	runGitCommand(t, repoPath, "config", "user.name", "LeVik Test")
-	runGitCommand(t, repoPath, "config", "user.email", "levik@example.com")
+	runGitCommand(t, repoPath, "config", "user.name", "Vikram Test")
+	runGitCommand(t, repoPath, "config", "user.email", "vikram@example.com")
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "README.md"), []byte("hello\n"), 0o644))
 	runGitCommand(t, repoPath, "add", "README.md")
 	runGitCommand(t, repoPath, "commit", "-m", "initial")
 	runGitCommand(t, repoPath, "branch", "-M", "main")
 
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 	worktreePath := filepath.Join(root, "worktrees", "task_123")
-	runGitCommand(t, repoPath, "worktree", "add", "-b", "levik/task_123", worktreePath, "main")
+	runGitCommand(t, repoPath, "worktree", "add", "-b", "vikram/task_123", worktreePath, "main")
 
 	reqBody, err := json.Marshal(orchestrator.GitWorktreeRemoveRequest{
 		TaskID:       "task_123",
@@ -394,8 +394,8 @@ func TestInspectRepoReturnsBoundedSummary(t *testing.T) {
 	repoPath := filepath.Join(root, "repo")
 	require.NoError(t, os.MkdirAll(repoPath, 0o755))
 	runGitCommand(t, repoPath, "init")
-	runGitCommand(t, repoPath, "config", "user.name", "LeVik Test")
-	runGitCommand(t, repoPath, "config", "user.email", "levik@example.com")
+	runGitCommand(t, repoPath, "config", "user.name", "Vikram Test")
+	runGitCommand(t, repoPath, "config", "user.email", "vikram@example.com")
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "README.md"), []byte("# Example Repo\n"), 0o644))
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "go.mod"), []byte("module example.com/repo\n"), 0o644))
 	runGitCommand(t, repoPath, "add", "README.md", "go.mod")
@@ -403,11 +403,11 @@ func TestInspectRepoReturnsBoundedSummary(t *testing.T) {
 	runGitCommand(t, repoPath, "branch", "-M", "main")
 
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 	worktreePath := filepath.Join(root, "worktrees", "task_123")
-	runGitCommand(t, repoPath, "worktree", "add", "-b", "levik/task_123", worktreePath, "main")
+	runGitCommand(t, repoPath, "worktree", "add", "-b", "vikram/task_123", worktreePath, "main")
 	require.NoError(t, os.WriteFile(filepath.Join(worktreePath, "README.md"), []byte("# Example Repo\n\nupdated\n"), 0o644))
 
 	reqBody, err := json.Marshal(orchestrator.RepoInspectRequest{
@@ -425,7 +425,7 @@ func TestInspectRepoReturnsBoundedSummary(t *testing.T) {
 
 	var resp orchestrator.RepoInspectResponse
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
-	require.Equal(t, "levik/task_123", resp.Branch)
+	require.Equal(t, "vikram/task_123", resp.Branch)
 	require.True(t, resp.Dirty)
 	require.GreaterOrEqual(t, resp.ChangedFileCount, 1)
 	require.GreaterOrEqual(t, resp.Additions, 1)
@@ -445,8 +445,8 @@ func TestDiscoverTargetsReturnsScoredCandidates(t *testing.T) {
 	repoPath := filepath.Join(root, "repo")
 	require.NoError(t, os.MkdirAll(filepath.Join(repoPath, "pkg"), 0o755))
 	runGitCommand(t, repoPath, "init")
-	runGitCommand(t, repoPath, "config", "user.name", "LeVik Test")
-	runGitCommand(t, repoPath, "config", "user.email", "levik@example.com")
+	runGitCommand(t, repoPath, "config", "user.name", "Vikram Test")
+	runGitCommand(t, repoPath, "config", "user.email", "vikram@example.com")
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "README.md"), []byte("workflow plan\n"), 0o644))
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "pkg", "workflow.go"), []byte("package pkg\n// workflow plan\n"), 0o644))
 	runGitCommand(t, repoPath, "add", "README.md", "pkg/workflow.go")
@@ -454,11 +454,11 @@ func TestDiscoverTargetsReturnsScoredCandidates(t *testing.T) {
 	runGitCommand(t, repoPath, "branch", "-M", "main")
 
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 	worktreePath := filepath.Join(root, "worktrees", "task_123")
-	runGitCommand(t, repoPath, "worktree", "add", "-b", "levik/task_123", worktreePath, "main")
+	runGitCommand(t, repoPath, "worktree", "add", "-b", "vikram/task_123", worktreePath, "main")
 
 	reqBody, err := json.Marshal(orchestrator.RepoTargetDiscoveryRequest{
 		TaskID:       "task_123",
@@ -486,19 +486,19 @@ func TestReadFileReturnsBoundedContent(t *testing.T) {
 	repoPath := filepath.Join(root, "repo")
 	require.NoError(t, os.MkdirAll(repoPath, 0o755))
 	runGitCommand(t, repoPath, "init")
-	runGitCommand(t, repoPath, "config", "user.name", "LeVik Test")
-	runGitCommand(t, repoPath, "config", "user.email", "levik@example.com")
+	runGitCommand(t, repoPath, "config", "user.name", "Vikram Test")
+	runGitCommand(t, repoPath, "config", "user.email", "vikram@example.com")
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "README.md"), []byte("1234567890"), 0o644))
 	runGitCommand(t, repoPath, "add", "README.md")
 	runGitCommand(t, repoPath, "commit", "-m", "initial")
 	runGitCommand(t, repoPath, "branch", "-M", "main")
 
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 	worktreePath := filepath.Join(root, "worktrees", "task_123")
-	runGitCommand(t, repoPath, "worktree", "add", "-b", "levik/task_123", worktreePath, "main")
+	runGitCommand(t, repoPath, "worktree", "add", "-b", "vikram/task_123", worktreePath, "main")
 
 	reqBody, err := json.Marshal(orchestrator.FileReadRequest{
 		TaskID:       "task_123",
@@ -539,19 +539,19 @@ func TestWriteFileWritesInsideManagedWorktree(t *testing.T) {
 	repoPath := filepath.Join(root, "repo")
 	require.NoError(t, os.MkdirAll(repoPath, 0o755))
 	runGitCommand(t, repoPath, "init")
-	runGitCommand(t, repoPath, "config", "user.name", "LeVik Test")
-	runGitCommand(t, repoPath, "config", "user.email", "levik@example.com")
+	runGitCommand(t, repoPath, "config", "user.name", "Vikram Test")
+	runGitCommand(t, repoPath, "config", "user.email", "vikram@example.com")
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "README.md"), []byte("hello"), 0o644))
 	runGitCommand(t, repoPath, "add", "README.md")
 	runGitCommand(t, repoPath, "commit", "-m", "initial")
 	runGitCommand(t, repoPath, "branch", "-M", "main")
 
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 	worktreePath := filepath.Join(root, "worktrees", "task_123")
-	runGitCommand(t, repoPath, "worktree", "add", "-b", "levik/task_123", worktreePath, "main")
+	runGitCommand(t, repoPath, "worktree", "add", "-b", "vikram/task_123", worktreePath, "main")
 
 	reqBody, err := json.Marshal(orchestrator.FileWriteRequest{
 		TaskID:       "task_123",
@@ -594,19 +594,19 @@ func TestReplaceFileUpdatesUniqueSpanInsideManagedWorktree(t *testing.T) {
 	repoPath := filepath.Join(root, "repo")
 	require.NoError(t, os.MkdirAll(repoPath, 0o755))
 	runGitCommand(t, repoPath, "init")
-	runGitCommand(t, repoPath, "config", "user.name", "LeVik Test")
-	runGitCommand(t, repoPath, "config", "user.email", "levik@example.com")
+	runGitCommand(t, repoPath, "config", "user.name", "Vikram Test")
+	runGitCommand(t, repoPath, "config", "user.email", "vikram@example.com")
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "README.md"), []byte("alpha\nbeta\ngamma\n"), 0o644))
 	runGitCommand(t, repoPath, "add", "README.md")
 	runGitCommand(t, repoPath, "commit", "-m", "initial")
 	runGitCommand(t, repoPath, "branch", "-M", "main")
 
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 	worktreePath := filepath.Join(root, "worktrees", "task_123")
-	runGitCommand(t, repoPath, "worktree", "add", "-b", "levik/task_123", worktreePath, "main")
+	runGitCommand(t, repoPath, "worktree", "add", "-b", "vikram/task_123", worktreePath, "main")
 
 	reqBody, err := json.Marshal(orchestrator.FileReplaceRequest{
 		TaskID:       "task_123",
@@ -637,19 +637,19 @@ func TestReplaceFileRejectsAmbiguousSpan(t *testing.T) {
 	repoPath := filepath.Join(root, "repo")
 	require.NoError(t, os.MkdirAll(repoPath, 0o755))
 	runGitCommand(t, repoPath, "init")
-	runGitCommand(t, repoPath, "config", "user.name", "LeVik Test")
-	runGitCommand(t, repoPath, "config", "user.email", "levik@example.com")
+	runGitCommand(t, repoPath, "config", "user.name", "Vikram Test")
+	runGitCommand(t, repoPath, "config", "user.email", "vikram@example.com")
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "README.md"), []byte("repeat\nrepeat\n"), 0o644))
 	runGitCommand(t, repoPath, "add", "README.md")
 	runGitCommand(t, repoPath, "commit", "-m", "initial")
 	runGitCommand(t, repoPath, "branch", "-M", "main")
 
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 	worktreePath := filepath.Join(root, "worktrees", "task_123")
-	runGitCommand(t, repoPath, "worktree", "add", "-b", "levik/task_123", worktreePath, "main")
+	runGitCommand(t, repoPath, "worktree", "add", "-b", "vikram/task_123", worktreePath, "main")
 
 	reqBody, err := json.Marshal(orchestrator.FileReplaceRequest{
 		TaskID:       "task_123",
@@ -673,8 +673,8 @@ func TestDiscoverVerificationReturnsFocusedCandidates(t *testing.T) {
 	repoPath := filepath.Join(root, "repo")
 	require.NoError(t, os.MkdirAll(filepath.Join(repoPath, "pkg", "sample"), 0o755))
 	runGitCommand(t, repoPath, "init")
-	runGitCommand(t, repoPath, "config", "user.name", "LeVik Test")
-	runGitCommand(t, repoPath, "config", "user.email", "levik@example.com")
+	runGitCommand(t, repoPath, "config", "user.name", "Vikram Test")
+	runGitCommand(t, repoPath, "config", "user.email", "vikram@example.com")
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "go.mod"), []byte("module example.com/repo\n"), 0o644))
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "pkg", "sample", "service.go"), []byte("package sample\n"), 0o644))
 	runGitCommand(t, repoPath, "add", "go.mod", "pkg/sample/service.go")
@@ -682,11 +682,11 @@ func TestDiscoverVerificationReturnsFocusedCandidates(t *testing.T) {
 	runGitCommand(t, repoPath, "branch", "-M", "main")
 
 	server := NewServer(Config{
-		SocketPath:    filepath.Join(root, "run", "levikd.sock"),
+		SocketPath:    filepath.Join(root, "run", "vikramd.sock"),
 		WorkspaceRoot: root,
 	}, nil)
 	worktreePath := filepath.Join(root, "worktrees", "task_123")
-	runGitCommand(t, repoPath, "worktree", "add", "-b", "levik/task_123", worktreePath, "main")
+	runGitCommand(t, repoPath, "worktree", "add", "-b", "vikram/task_123", worktreePath, "main")
 
 	reqBody, err := json.Marshal(orchestrator.VerificationDiscoveryRequest{
 		TaskID:       "task_123",

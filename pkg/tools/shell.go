@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/permissions"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/permissions"
 )
 
 // pathExtractPattern matches absolute paths in command strings (Windows & POSIX).

@@ -33,7 +33,7 @@ func TestHandleIndex(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	body := w.Body.String()
 	assert.Contains(t, body, "V1 Dashboard")
-	assert.Contains(t, body, "LeVik")
+	assert.Contains(t, body, "Vikram")
 }
 
 func TestHandleIndex_404(t *testing.T) {

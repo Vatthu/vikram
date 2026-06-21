@@ -9,7 +9,7 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 var (
@@ -30,10 +30,10 @@ var (
 			Padding(0, 1)
 )
 
-const telegramTokenEnvVar = "LEVIK_CHANNELS_TELEGRAM_TOKEN"
+const telegramTokenEnvVar = "VIKRAM_CHANNELS_TELEGRAM_TOKEN"
 
 func printLogo() {
-	fmt.Println(cyanStyle.Render("LeVik"))
+	fmt.Println(cyanStyle.Render("Vikram"))
 }
 
 func printCurrentState(cfg *config.Config) {
@@ -207,7 +207,7 @@ func runGuidedConfigure(cfg *config.Config, configPath string) {
 		huh.NewGroup(
 			huh.NewMultiSelect[string]().
 				Title("Select sections to configure").
-				Description("Choose one or more areas, then LeVik will walk you through them in order.").
+				Description("Choose one or more areas, then Vikram will walk you through them in order.").
 				Options(
 					huh.NewOption("Workspace & security", "workspace"),
 					huh.NewOption("Brain (provider & model)", "models"),
@@ -258,7 +258,7 @@ func runGuidedConfigure(cfg *config.Config, configPath string) {
 	healthForm := huh.NewForm(
 		huh.NewGroup(
 			huh.NewConfirm().
-				Title("Run levik doctor now?").
+				Title("Run vikram doctor now?").
 				Description("Recommended after any setup or security change.").
 				Affirmative("Yes").
 				Negative("No").
@@ -415,7 +415,7 @@ func configureModels(cfg *config.Config) {
 		}
 		printSetupSummaryBox("Detected local AI workers", append(
 			lines,
-			"These workers are auto-available for delegate/subagent tasks while LeVik is running.",
+			"These workers are auto-available for delegate/subagent tasks while Vikram is running.",
 		))
 	}
 
@@ -539,7 +539,7 @@ func configureModels(cfg *config.Config) {
 
 		if providerID == "ollama" {
 			fmt.Printf("\n--- %s ---\n", cyanStyle.Render("Ollama"))
-			fmt.Printf("%s\n\n", grayStyle.Render("Point LeVik at your local or remote Ollama server."))
+			fmt.Printf("%s\n\n", grayStyle.Render("Point Vikram at your local or remote Ollama server."))
 			apiBase := strings.TrimSpace(cfg.Providers.Ollama.APIBase)
 			if apiBase == "" {
 				apiBase = defaultProviderAPIBase("ollama")
@@ -870,7 +870,7 @@ func configureGateway(cfg *config.Config) {
 	huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
-				Title("Where will LeVik accept connections?").
+				Title("Where will Vikram accept connections?").
 				Options(
 					huh.NewOption("Local only — this machine only", "local"),
 					huh.NewOption("Gateway — this machine plus phones/laptops", "gateway"),
@@ -912,7 +912,7 @@ func configureGateway(cfg *config.Config) {
 			huh.NewGroup(
 				huh.NewConfirm().
 					Title("Enable the remote V1 API?").
-					Description("Required for levik client and other devices.").
+					Description("Required for vikram client and other devices.").
 					Value(&apiEnabled),
 			),
 		).Run()
@@ -973,7 +973,7 @@ func configureTelegramChannel(cfg *config.Config) {
 	huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
-				Title("How should LeVik load the Telegram bot token?").
+				Title("How should Vikram load the Telegram bot token?").
 				Description("Use env-backed mode for long-lived machines. Raw config storage is fine for quick local testing.").
 				Options(
 					huh.NewOption("Environment variable  "+grayStyle.Render("(recommended)"), "env"),
@@ -987,7 +987,7 @@ func configureTelegramChannel(cfg *config.Config) {
 	case "env":
 		cfg.Channels.Telegram.Token = "${" + telegramTokenEnvVar + "}"
 		fmt.Printf("  %s Telegram will read %s at startup.\n", successStyle.Render("✓"), telegramTokenEnvVar)
-		fmt.Printf("    %s Set it in your shell or launchd environment before starting LeVik.\n", grayStyle.Render("Tip:"))
+		fmt.Printf("    %s Set it in your shell or launchd environment before starting Vikram.\n", grayStyle.Render("Tip:"))
 	default:
 		token := strings.TrimSpace(cfg.Channels.Telegram.Token)
 		if looksLikeEnvReference(token) {
@@ -1103,7 +1103,7 @@ func saveConfiguredState(cfg *config.Config, configPath string) bool {
 	}
 	createWorkspaceTemplates(cfg.WorkspacePath())
 	fmt.Println(greenStyle.Bold(true).Render("\n✓ Configuration saved securely to: ") + configPath)
-	fmt.Println(grayStyle.Render("⚠️  IMPORTANT: You MUST restart any running levik gateway for changes to take effect."))
+	fmt.Println(grayStyle.Render("⚠️  IMPORTANT: You MUST restart any running vikram gateway for changes to take effect."))
 	return true
 }
 
@@ -1151,7 +1151,7 @@ func promptChannelInt(title string, description string, value *int) {
 func configureIdentity(cfg *config.Config) {
 	fmt.Println(headerStyle.Render("┌  Identity (Who are we?)"))
 
-	var aiName string = "LeVik"
+	var aiName string = "Vikram"
 	var aiRole string = "helpful personal assistant"
 	var userName string
 	var userPrefs string

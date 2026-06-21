@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 func TestTelegramPollUpdates(t *testing.T) {

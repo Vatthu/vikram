@@ -3,13 +3,13 @@
 Copy any of the prompts below and run:
 
 ```
-levik agent -m "YOUR PROMPT HERE"
+vikram agent -m "YOUR PROMPT HERE"
 ```
 
 Or start an interactive session and type them directly:
 
 ```
-levik agent
+vikram agent
 ```
 
 ---
@@ -28,7 +28,7 @@ What tools do you have available?
 
 ## 🌐 Web Search
 
-*(Requires DuckDuckGo enabled — run `levik configure` → Tools if not done yet)*
+*(Requires DuckDuckGo enabled — run `vikram configure` → Tools if not done yet)*
 
 ```
 Search the web: what are the top AI assistants available today?
@@ -131,5 +131,5 @@ What do you remember about me?
 ---
 
 > **Tip:** The AI remembers things across sessions.
-> Run `levik doctor` to check your setup.
-> Run `levik configure` to change settings.
+> Run `vikram doctor` to check your setup.
+> Run `vikram configure` to change settings.

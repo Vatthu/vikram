@@ -2,7 +2,7 @@
 
 ## Problem
 
-After localization, LeVik still had a gap:
+After localization, Vikram still had a gap:
 
 - it could identify likely change targets
 - it could not yet prepare edits and verification in a disciplined way
@@ -29,7 +29,7 @@ Agentless reinforces the value of explicit stage boundaries:
 - repair
 - validation
 
-For LeVik, the useful lesson is to keep repair and validation separate in artifacts and in runtime control.
+For Vikram, the useful lesson is to keep repair and validation separate in artifacts and in runtime control.
 
 ### SWE-Search
 
@@ -44,12 +44,12 @@ The relevant v1 lesson is smaller:
 
 USEagent pushes the idea of a unified software engineer that spans multiple SE tasks.
 
-The practical lesson for LeVik is:
+The practical lesson for Vikram is:
 
 - preparation artifacts matter
 - implementation and verification should be modeled as distinct competencies
 
-## LeVik Decision
+## Vikram Decision
 
 Borrow now:
 
@@ -70,7 +70,7 @@ Reject for now:
 - hiding validation inside the same step as editing
 - adding search-heavy agent loops before the first edit-execute-review path is reliable
 
-## Concrete Impact On LeVik
+## Concrete Impact On Vikram
 
 This note justifies the addition of:
 
@@ -98,7 +98,7 @@ But not yet:
 
 An enterprise-grade engineering team cannot blur planning, editing, and verification into one opaque step.
 
-LeVik is moving toward:
+Vikram is moving toward:
 
 - explicit preparation
 - bounded edits

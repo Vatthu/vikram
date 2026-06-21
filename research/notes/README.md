@@ -13,7 +13,7 @@ Each note should be grounded in a real source:
 Every note should answer:
 
 1. What problem does this source solve well?
-2. Is that problem real for LeVik v1 or only later?
+2. Is that problem real for Vikram v1 or only later?
 3. Do we borrow the pattern, adapt it, or reject it?
-4. What is the concrete impact on LeVik’s architecture?
+4. What is the concrete impact on Vikram’s architecture?
 5. What files, modules, or docs should we inspect next?

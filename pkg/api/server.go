@@ -13,11 +13,11 @@ import (
 
 	"golang.org/x/time/rate"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/events"
-	"github.com/v1claw/levik/pkg/logger"
-	"github.com/v1claw/levik/pkg/state"
-	devsync "github.com/v1claw/levik/pkg/sync"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/events"
+	"github.com/Vatthu/vikram/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/state"
+	devsync "github.com/Vatthu/vikram/pkg/sync"
 )
 
 const (
@@ -26,7 +26,7 @@ const (
 	maxSessionKeyChars  = 256
 )
 
-// Server provides HTTP and WebSocket API endpoints for LeVik.
+// Server provides HTTP and WebSocket API endpoints for Vikram.
 type Server struct {
 	mu          sync.RWMutex
 	addr        string

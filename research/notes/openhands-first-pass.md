@@ -26,9 +26,9 @@ The local `openhands/README.md` describes the core event model clearly: agent, c
 
 Official docs reinforce an important architectural split: the same agent code can run locally or against remote workspaces by swapping workspace types, while the agent server handles HTTP, WebSocket streaming, and workspace operations.
 
-## Why It Matters For LeVik
+## Why It Matters For Vikram
 
-This is highly relevant to LeVik’s execution side even if LeVik stays host-native:
+This is highly relevant to Vikram’s execution side even if Vikram stays host-native:
 
 - keep the orchestrator separate from the execution environment
 - standardize actions and observations
@@ -38,15 +38,15 @@ This is highly relevant to LeVik’s execution side even if LeVik stays host-nat
 ## First Extraction Decision
 
 - borrow the action/observation and workspace-boundary ideas
-- adapt the agent-server concepts into LeVik’s Go host executor API
-- reject Docker-first assumptions as LeVik’s primary control-plane design
+- adapt the agent-server concepts into Vikram’s Go host executor API
+- reject Docker-first assumptions as Vikram’s primary control-plane design
 
-LeVik does not need to become OpenHands, but it should copy the discipline of separating orchestration from runtime and normalizing host actions behind a stable interface.
+Vikram does not need to become OpenHands, but it should copy the discipline of separating orchestration from runtime and normalizing host actions behind a stable interface.
 
 ## Immediate Cautions
 
 - A lot of OpenHands value is tied to Docker or remote runtime assumptions.
-- The repo is broader than what LeVik needs for v1.
+- The repo is broader than what Vikram needs for v1.
 - Enterprise and UI layers are not where the architectural signal is highest for us.
 
 ## Next Inspection Targets

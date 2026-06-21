@@ -10,8 +10,8 @@ import (
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
 	"github.com/openai/openai-go/v3/responses"
-	"github.com/v1claw/levik/pkg/auth"
-	"github.com/v1claw/levik/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/auth"
+	"github.com/Vatthu/vikram/pkg/logger"
 )
 
 const codexDefaultModel = "gpt-5.2"
@@ -370,7 +370,7 @@ func createCodexTokenSource() func() (string, string, error) {
 			return "", "", fmt.Errorf("loading auth credentials: %w", err)
 		}
 		if cred == nil {
-			return "", "", fmt.Errorf("no credentials for openai. Run: levik auth login --provider openai")
+			return "", "", fmt.Errorf("no credentials for openai. Run: vikram auth login --provider openai")
 		}
 
 		if cred.AuthMethod == "oauth" && cred.NeedsRefresh() && cred.RefreshToken != "" {

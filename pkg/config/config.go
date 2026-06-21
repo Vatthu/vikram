@@ -13,7 +13,7 @@ import (
 	"github.com/caarlos0/env/v11"
 )
 
-const HomeEnvVar = "LEVIK_HOME"
+const HomeEnvVar = "VIKRAM_HOME"
 
 // FlexibleStringSlice is a []string that also accepts JSON numbers,
 // so allow_from can contain both "123" and 123.
@@ -73,46 +73,46 @@ type WorkspaceConfig struct {
 
 // CouncilConfig controls the dynamic multi-agent fallback routing system.
 type CouncilConfig struct {
-	Enabled       bool   `json:"enabled" env:"LEVIK_COUNCIL_ENABLED"`
-	Persona       string `json:"persona" env:"LEVIK_COUNCIL_PERSONA"` // coder, writer, speed
-	Primary       string `json:"primary_provider" env:"LEVIK_COUNCIL_PRIMARY"`
-	PrimaryModel  string `json:"primary_model" env:"LEVIK_COUNCIL_PRIMARY_MODEL"`
-	Fallback      string `json:"fallback_provider" env:"LEVIK_COUNCIL_FALLBACK"`
-	FallbackModel string `json:"fallback_model" env:"LEVIK_COUNCIL_FALLBACK_MODEL"`
+	Enabled       bool   `json:"enabled" env:"VIKRAM_COUNCIL_ENABLED"`
+	Persona       string `json:"persona" env:"VIKRAM_COUNCIL_PERSONA"` // coder, writer, speed
+	Primary       string `json:"primary_provider" env:"VIKRAM_COUNCIL_PRIMARY"`
+	PrimaryModel  string `json:"primary_model" env:"VIKRAM_COUNCIL_PRIMARY_MODEL"`
+	Fallback      string `json:"fallback_provider" env:"VIKRAM_COUNCIL_FALLBACK"`
+	FallbackModel string `json:"fallback_model" env:"VIKRAM_COUNCIL_FALLBACK_MODEL"`
 }
 
 // PermissionsConfig controls access to sensitive hardware and system features.
 // All permissions default to false (blocked) for security. Users must
 // explicitly enable features they need via config.json or env vars.
 type PermissionsConfig struct {
-	Camera        bool `json:"camera" env:"LEVIK_PERMISSIONS_CAMERA"`                 // Allow camera capture
-	Microphone    bool `json:"microphone" env:"LEVIK_PERMISSIONS_MICROPHONE"`         // Allow mic recording
-	SMS           bool `json:"sms" env:"LEVIK_PERMISSIONS_SMS"`                       // Allow reading/sending SMS
-	PhoneCalls    bool `json:"phone_calls" env:"LEVIK_PERMISSIONS_PHONE_CALLS"`       // Allow making phone calls
-	Location      bool `json:"location" env:"LEVIK_PERMISSIONS_LOCATION"`             // Allow GPS/location access
-	Clipboard     bool `json:"clipboard" env:"LEVIK_PERMISSIONS_CLIPBOARD"`           // Allow clipboard read/write
-	Sensors       bool `json:"sensors" env:"LEVIK_PERMISSIONS_SENSORS"`               // Allow sensor access
-	ShellHardware bool `json:"shell_hardware" env:"LEVIK_PERMISSIONS_SHELL_HARDWARE"` // Allow shell exec of hardware commands (termux-*)
-	Notifications bool `json:"notifications" env:"LEVIK_PERMISSIONS_NOTIFICATIONS"`   // Allow toast/notification APIs
-	Screen        bool `json:"screen" env:"LEVIK_PERMISSIONS_SCREEN"`                 // Allow screenshot capture
+	Camera        bool `json:"camera" env:"VIKRAM_PERMISSIONS_CAMERA"`                 // Allow camera capture
+	Microphone    bool `json:"microphone" env:"VIKRAM_PERMISSIONS_MICROPHONE"`         // Allow mic recording
+	SMS           bool `json:"sms" env:"VIKRAM_PERMISSIONS_SMS"`                       // Allow reading/sending SMS
+	PhoneCalls    bool `json:"phone_calls" env:"VIKRAM_PERMISSIONS_PHONE_CALLS"`       // Allow making phone calls
+	Location      bool `json:"location" env:"VIKRAM_PERMISSIONS_LOCATION"`             // Allow GPS/location access
+	Clipboard     bool `json:"clipboard" env:"VIKRAM_PERMISSIONS_CLIPBOARD"`           // Allow clipboard read/write
+	Sensors       bool `json:"sensors" env:"VIKRAM_PERMISSIONS_SENSORS"`               // Allow sensor access
+	ShellHardware bool `json:"shell_hardware" env:"VIKRAM_PERMISSIONS_SHELL_HARDWARE"` // Allow shell exec of hardware commands (termux-*)
+	Notifications bool `json:"notifications" env:"VIKRAM_PERMISSIONS_NOTIFICATIONS"`   // Allow toast/notification APIs
+	Screen        bool `json:"screen" env:"VIKRAM_PERMISSIONS_SCREEN"`                 // Allow screenshot capture
 }
 
 // VoiceConfig configures the voice I/O pipeline.
 type VoiceConfig struct {
-	Enabled         bool     `json:"enabled" env:"LEVIK_VOICE_ENABLED"`
-	Mode            string   `json:"mode" env:"LEVIK_VOICE_MODE"`                       // "wake-word", "push-to-talk", "always-on"
-	RecordDuration  int      `json:"record_duration" env:"LEVIK_VOICE_RECORD_DURATION"` // Seconds per chunk (default: 5)
-	RecorderBackend string   `json:"recorder_backend" env:"LEVIK_VOICE_RECORDER"`       // "auto", "termux", "system"
-	PlayerBackend   string   `json:"player_backend" env:"LEVIK_VOICE_PLAYER"`           // "auto", "termux", "system"
-	TTSProvider     string   `json:"tts_provider" env:"LEVIK_VOICE_TTS_PROVIDER"`       // "openai", "edge", "auto"
+	Enabled         bool     `json:"enabled" env:"VIKRAM_VOICE_ENABLED"`
+	Mode            string   `json:"mode" env:"VIKRAM_VOICE_MODE"`                       // "wake-word", "push-to-talk", "always-on"
+	RecordDuration  int      `json:"record_duration" env:"VIKRAM_VOICE_RECORD_DURATION"` // Seconds per chunk (default: 5)
+	RecorderBackend string   `json:"recorder_backend" env:"VIKRAM_VOICE_RECORDER"`       // "auto", "termux", "system"
+	PlayerBackend   string   `json:"player_backend" env:"VIKRAM_VOICE_PLAYER"`           // "auto", "termux", "system"
+	TTSProvider     string   `json:"tts_provider" env:"VIKRAM_VOICE_TTS_PROVIDER"`       // "openai", "edge", "auto"
 	WakeWordPhrases []string `json:"wake_word_phrases"`                                 // e.g., ["hello v1", "hey v1"]
 }
 
 // V1APIConfig configures the V1 assistant REST/WebSocket API.
 type V1APIConfig struct {
-	Enabled bool   `json:"enabled" env:"LEVIK_V1_API_ENABLED"`
-	Addr    string `json:"addr" env:"LEVIK_V1_API_ADDR"`
-	APIKey  string `json:"api_key" env:"LEVIK_V1_API_KEY"`
+	Enabled bool   `json:"enabled" env:"VIKRAM_V1_API_ENABLED"`
+	Addr    string `json:"addr" env:"VIKRAM_V1_API_ADDR"`
+	APIKey  string `json:"api_key" env:"VIKRAM_V1_API_KEY"`
 }
 
 type AgentConfig struct {
@@ -133,13 +133,13 @@ type AgentsConfig struct {
 }
 
 type AgentDefaults struct {
-	Workspace           string  `json:"workspace" env:"LEVIK_AGENTS_DEFAULTS_WORKSPACE"`
-	RestrictToWorkspace bool    `json:"restrict_to_workspace" env:"LEVIK_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE"`
-	Provider            string  `json:"provider" env:"LEVIK_AGENTS_DEFAULTS_PROVIDER"`
-	Model               string  `json:"model" env:"LEVIK_AGENTS_DEFAULTS_MODEL"`
-	MaxTokens           int     `json:"max_tokens" env:"LEVIK_AGENTS_DEFAULTS_MAX_TOKENS"`
-	Temperature         float64 `json:"temperature" env:"LEVIK_AGENTS_DEFAULTS_TEMPERATURE"`
-	MaxToolIterations   int     `json:"max_tool_iterations" env:"LEVIK_AGENTS_DEFAULTS_MAX_TOOL_ITERATIONS"`
+	Workspace           string  `json:"workspace" env:"VIKRAM_AGENTS_DEFAULTS_WORKSPACE"`
+	RestrictToWorkspace bool    `json:"restrict_to_workspace" env:"VIKRAM_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE"`
+	Provider            string  `json:"provider" env:"VIKRAM_AGENTS_DEFAULTS_PROVIDER"`
+	Model               string  `json:"model" env:"VIKRAM_AGENTS_DEFAULTS_MODEL"`
+	MaxTokens           int     `json:"max_tokens" env:"VIKRAM_AGENTS_DEFAULTS_MAX_TOKENS"`
+	Temperature         float64 `json:"temperature" env:"VIKRAM_AGENTS_DEFAULTS_TEMPERATURE"`
+	MaxToolIterations   int     `json:"max_tool_iterations" env:"VIKRAM_AGENTS_DEFAULTS_MAX_TOOL_ITERATIONS"`
 }
 
 type ChannelsConfig struct {
@@ -148,27 +148,27 @@ type ChannelsConfig struct {
 }
 
 type WhatsAppConfig struct {
-	Enabled     bool                `json:"enabled" env:"LEVIK_CHANNELS_WHATSAPP_ENABLED"`
-	BridgeURL   string              `json:"bridge_url" env:"LEVIK_CHANNELS_WHATSAPP_BRIDGE_URL"`
-	BridgeToken string              `json:"bridge_token" env:"LEVIK_CHANNELS_WHATSAPP_BRIDGE_TOKEN"`
-	AllowFrom   FlexibleStringSlice `json:"allow_from" env:"LEVIK_CHANNELS_WHATSAPP_ALLOW_FROM"`
+	Enabled     bool                `json:"enabled" env:"VIKRAM_CHANNELS_WHATSAPP_ENABLED"`
+	BridgeURL   string              `json:"bridge_url" env:"VIKRAM_CHANNELS_WHATSAPP_BRIDGE_URL"`
+	BridgeToken string              `json:"bridge_token" env:"VIKRAM_CHANNELS_WHATSAPP_BRIDGE_TOKEN"`
+	AllowFrom   FlexibleStringSlice `json:"allow_from" env:"VIKRAM_CHANNELS_WHATSAPP_ALLOW_FROM"`
 }
 
 type TelegramConfig struct {
-	Enabled   bool                `json:"enabled" env:"LEVIK_CHANNELS_TELEGRAM_ENABLED"`
-	Token     string              `json:"token" env:"LEVIK_CHANNELS_TELEGRAM_TOKEN"`
-	Proxy     string              `json:"proxy" env:"LEVIK_CHANNELS_TELEGRAM_PROXY"`
-	AllowFrom FlexibleStringSlice `json:"allow_from" env:"LEVIK_CHANNELS_TELEGRAM_ALLOW_FROM"`
+	Enabled   bool                `json:"enabled" env:"VIKRAM_CHANNELS_TELEGRAM_ENABLED"`
+	Token     string              `json:"token" env:"VIKRAM_CHANNELS_TELEGRAM_TOKEN"`
+	Proxy     string              `json:"proxy" env:"VIKRAM_CHANNELS_TELEGRAM_PROXY"`
+	AllowFrom FlexibleStringSlice `json:"allow_from" env:"VIKRAM_CHANNELS_TELEGRAM_ALLOW_FROM"`
 }
 
 type HeartbeatConfig struct {
-	Enabled  bool `json:"enabled" env:"LEVIK_HEARTBEAT_ENABLED"`
-	Interval int  `json:"interval" env:"LEVIK_HEARTBEAT_INTERVAL"` // minutes, min 5
+	Enabled  bool `json:"enabled" env:"VIKRAM_HEARTBEAT_ENABLED"`
+	Interval int  `json:"interval" env:"VIKRAM_HEARTBEAT_INTERVAL"` // minutes, min 5
 }
 
 type DevicesConfig struct {
-	Enabled    bool `json:"enabled" env:"LEVIK_DEVICES_ENABLED"`
-	MonitorUSB bool `json:"monitor_usb" env:"LEVIK_DEVICES_MONITOR_USB"`
+	Enabled    bool `json:"enabled" env:"VIKRAM_DEVICES_ENABLED"`
+	MonitorUSB bool `json:"monitor_usb" env:"VIKRAM_DEVICES_MONITOR_USB"`
 }
 
 type ProvidersConfig struct {
@@ -232,25 +232,25 @@ type AzureOpenAIConfig struct {
 }
 
 type GatewayConfig struct {
-	Host string `json:"host" env:"LEVIK_GATEWAY_HOST"`
-	Port int    `json:"port" env:"LEVIK_GATEWAY_PORT"`
+	Host string `json:"host" env:"VIKRAM_GATEWAY_HOST"`
+	Port int    `json:"port" env:"VIKRAM_GATEWAY_PORT"`
 }
 
 type BraveConfig struct {
-	Enabled    bool   `json:"enabled" env:"LEVIK_TOOLS_WEB_BRAVE_ENABLED"`
-	APIKey     string `json:"api_key" env:"LEVIK_TOOLS_WEB_BRAVE_API_KEY"`
-	MaxResults int    `json:"max_results" env:"LEVIK_TOOLS_WEB_BRAVE_MAX_RESULTS"`
+	Enabled    bool   `json:"enabled" env:"VIKRAM_TOOLS_WEB_BRAVE_ENABLED"`
+	APIKey     string `json:"api_key" env:"VIKRAM_TOOLS_WEB_BRAVE_API_KEY"`
+	MaxResults int    `json:"max_results" env:"VIKRAM_TOOLS_WEB_BRAVE_MAX_RESULTS"`
 }
 
 type DuckDuckGoConfig struct {
-	Enabled    bool `json:"enabled" env:"LEVIK_TOOLS_WEB_DUCKDUCKGO_ENABLED"`
-	MaxResults int  `json:"max_results" env:"LEVIK_TOOLS_WEB_DUCKDUCKGO_MAX_RESULTS"`
+	Enabled    bool `json:"enabled" env:"VIKRAM_TOOLS_WEB_DUCKDUCKGO_ENABLED"`
+	MaxResults int  `json:"max_results" env:"VIKRAM_TOOLS_WEB_DUCKDUCKGO_MAX_RESULTS"`
 }
 
 type PerplexityConfig struct {
-	Enabled    bool   `json:"enabled" env:"LEVIK_TOOLS_WEB_PERPLEXITY_ENABLED"`
-	APIKey     string `json:"api_key" env:"LEVIK_TOOLS_WEB_PERPLEXITY_API_KEY"`
-	MaxResults int    `json:"max_results" env:"LEVIK_TOOLS_WEB_PERPLEXITY_MAX_RESULTS"`
+	Enabled    bool   `json:"enabled" env:"VIKRAM_TOOLS_WEB_PERPLEXITY_ENABLED"`
+	APIKey     string `json:"api_key" env:"VIKRAM_TOOLS_WEB_PERPLEXITY_API_KEY"`
+	MaxResults int    `json:"max_results" env:"VIKRAM_TOOLS_WEB_PERPLEXITY_MAX_RESULTS"`
 }
 
 type WebToolsConfig struct {
@@ -260,7 +260,7 @@ type WebToolsConfig struct {
 }
 
 type CronToolsConfig struct {
-	ExecTimeoutMinutes int `json:"exec_timeout_minutes" env:"LEVIK_TOOLS_CRON_EXEC_TIMEOUT_MINUTES"` // 0 means no timeout
+	ExecTimeoutMinutes int `json:"exec_timeout_minutes" env:"VIKRAM_TOOLS_CRON_EXEC_TIMEOUT_MINUTES"` // 0 means no timeout
 }
 
 type ToolsConfig struct {
@@ -321,7 +321,7 @@ func legacyHomeDir() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".levik")
+	return filepath.Join(home, ".vikram")
 }
 
 func resolveHomeDir(goos string, legacyHome string, legacyExists bool, userConfigDir string) string {
@@ -330,7 +330,7 @@ func resolveHomeDir(goos string, legacyHome string, legacyExists bool, userConfi
 			return legacyHome
 		}
 		if userConfigDir != "" {
-			return filepath.Join(userConfigDir, "LeVik")
+			return filepath.Join(userConfigDir, "Vikram")
 		}
 	}
 
@@ -339,10 +339,10 @@ func resolveHomeDir(goos string, legacyHome string, legacyExists bool, userConfi
 	}
 
 	if userConfigDir != "" {
-		return filepath.Join(userConfigDir, "levik")
+		return filepath.Join(userConfigDir, "vikram")
 	}
 
-	return ".levik"
+	return ".vikram"
 }
 
 func DefaultConfig() *Config {
@@ -575,7 +575,7 @@ func applyProviderEnvOverrides(cfg *Config) {
 		{"GITHUB_MODELS", &cfg.Providers.GitHubModels},
 	}
 	for _, pe := range providers {
-		prefix := "LEVIK_PROVIDERS_" + pe.name + "_"
+		prefix := "VIKRAM_PROVIDERS_" + pe.name + "_"
 		if v := os.Getenv(prefix + "API_KEY"); v != "" {
 			pe.p.APIKey = v
 		}

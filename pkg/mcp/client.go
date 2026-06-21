@@ -70,7 +70,7 @@ func NewClient(ctx context.Context, cfg ClientConfig) (*Client, error) {
 	if _, err := c.call(ctx, "initialize", map[string]interface{}{
 		"protocolVersion": "2024-11-05",
 		"capabilities":    map[string]interface{}{},
-		"clientInfo":      map[string]string{"name": "levik", "version": "1.0"},
+		"clientInfo":      map[string]string{"name": "vikram", "version": "1.0"},
 	}); err != nil {
 		cmd.Process.Kill()
 		readerCancel()

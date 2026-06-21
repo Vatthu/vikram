@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/logger"
-	"github.com/v1claw/levik/pkg/tools"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/tools"
 )
 
 // orchHealthOK returns true when the Python orchestrator's LangGraph
@@ -19,7 +19,7 @@ func orchHealthOK(ctx context.Context) bool {
 	client := &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.DialTimeout("unix", "/tmp/levik-orchestrator.sock", 500*time.Millisecond)
+				return net.DialTimeout("unix", "/tmp/vikram-orchestrator.sock", 500*time.Millisecond)
 			},
 		},
 		Timeout: 1 * time.Second,

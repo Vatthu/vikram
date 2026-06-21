@@ -1,12 +1,12 @@
 # Framework Gap Analysis
 
-This is a decision record for how LeVik compares to the major frameworks and papers we are using as inputs.
+This is a decision record for how Vikram compares to the major frameworks and papers we are using as inputs.
 
 ## Measurement Rule
 
 The percentages below are not benchmark claims.
 
-They are heuristic estimates of useful capability coverage for LeVik's target system:
+They are heuristic estimates of useful capability coverage for Vikram's target system:
 
 - host-native engineering execution
 - durable orchestration
@@ -18,7 +18,7 @@ They are heuristic estimates of useful capability coverage for LeVik's target sy
 
 ## Current Score
 
-Current LeVik after the native host, worktree, and first-plan-artifact step:
+Current Vikram after the native host, worktree, and first-plan-artifact step:
 
 - `~30%` of end-state system power
 - `~65%` of the correct architectural direction
@@ -34,7 +34,7 @@ Reason:
 ### LangGraph
 
 - `~80%` of the orchestration problem
-- `~55%` of total LeVik target fit by itself
+- `~55%` of total Vikram target fit by itself
 
 What it gives:
 
@@ -53,7 +53,7 @@ What it does not give by itself:
 ### OpenHands SDK
 
 - `~75%` of the software-agent runtime pattern problem
-- `~45%` of total LeVik target fit by itself
+- `~45%` of total Vikram target fit by itself
 
 What it gives:
 
@@ -67,12 +67,12 @@ What it does not give by itself:
 - founder-first operating model
 - host-native Mac control plane
 - strict Go-owned host execution boundary
-- LeVik-specific artifact and approval policy
+- Vikram-specific artifact and approval policy
 
 ### Microsoft Agent Framework
 
 - `~75%` of enterprise orchestration surface area
-- `~50%` of total LeVik target fit by itself
+- `~50%` of total Vikram target fit by itself
 
 What it gives:
 
@@ -90,7 +90,7 @@ What it risks:
 ### MetaGPT
 
 - `~70%` of the workflow-discipline lesson
-- `~40%` of total LeVik target fit by itself
+- `~40%` of total Vikram target fit by itself
 
 What it gives:
 
@@ -107,7 +107,7 @@ What it does not give:
 ### OpenClaw
 
 - `~70%` of the operator gateway and channel-routing lesson
-- `~40%` of total LeVik target fit by itself
+- `~40%` of total Vikram target fit by itself
 
 What it gives:
 
@@ -117,13 +117,13 @@ What it gives:
 
 What it does not give:
 
-- LeVik's typed workflow brain
+- Vikram's typed workflow brain
 - artifact-first engineering loop
 - our exact host-native execution model
 
-## Why LeVik Is Not Lower Than This
+## Why Vikram Is Not Lower Than This
 
-LeVik is still early, but the hard architectural mistakes are being avoided:
+Vikram is still early, but the hard architectural mistakes are being avoided:
 
 - we did not let Python own host execution
 - we did not let agents free-chat by default
@@ -136,7 +136,7 @@ That means the current system is weaker than the big frameworks in raw feature c
 
 ### SWE-agent
 
-LeVik should borrow the ACI lesson more aggressively than most frameworks do:
+Vikram should borrow the ACI lesson more aggressively than most frameworks do:
 
 - LM-friendly interfaces matter as much as model intelligence
 - post-action state probes matter
@@ -176,7 +176,7 @@ This is the biggest future-facing gap:
 Most current frameworks help you define workflows.
 They do not help you search for better workflows in a principled way.
 
-## LeVik Adoption Rule
+## Vikram Adoption Rule
 
 Use now:
 

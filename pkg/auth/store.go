@@ -14,13 +14,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/logger"
 	"golang.org/x/crypto/pbkdf2"
 )
 
 // MasterKeyEnvVar is the environment variable where the master encryption key is expected.
-const MasterKeyEnvVar = "LEVIK_AUTH_MASTER_KEY"
+const MasterKeyEnvVar = "VIKRAM_AUTH_MASTER_KEY"
 
 // storeMu protects concurrent access to the auth store file.
 var storeMu sync.Mutex
@@ -240,11 +240,11 @@ func DeleteAllCredentials() error {
 
 // authKDFSalt is the application-level PBKDF2 salt.
 // NOTE: Changing this value invalidates all previously encrypted credentials.
-const authKDFSalt = "levik-auth-kdf-v1"
+const authKDFSalt = "vikram-auth-kdf-v1"
 
 // getMasterKey derives a 32-byte AES-256 key from the master passphrase using
 // PBKDF2-SHA256 (100 000 iterations).  The passphrase is read from the
-// LEVIK_AUTH_MASTER_KEY environment variable and can be any non-empty string.
+// VIKRAM_AUTH_MASTER_KEY environment variable and can be any non-empty string.
 // Using PBKDF2 provides two guarantees over raw key material:
 //   - Any length passphrase is accepted — no awkward "must be 32 bytes" constraint.
 //   - An attacker who steals auth.json must run 100 000 SHA-256 rounds per guess,

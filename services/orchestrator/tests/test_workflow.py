@@ -6,7 +6,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from levik_orchestrator.models import (
+from vikram_orchestrator.models import (
     ApprovalDecision,
     ArtifactReadRequest,
     ArtifactReadResponse,
@@ -37,9 +37,9 @@ from levik_orchestrator.models import (
     WorkspaceProvisionRequest,
     WorkspaceProvisionResponse,
 )
-from levik_orchestrator.server import build_app
-from levik_orchestrator.store import TaskStore
-from levik_orchestrator.workflow import (
+from vikram_orchestrator.server import build_app
+from vikram_orchestrator.store import TaskStore
+from vikram_orchestrator.workflow import (
     build_graph,
     close_graph,
     initial_state_from_request,
@@ -66,8 +66,8 @@ class StubHostClient:
         self.health_calls += 1
         return SystemHealthResponse(
             status="ok",
-            workspace_root="/tmp/levik-workspaces",
-            socket_path="/tmp/levikd.sock",
+            workspace_root="/tmp/vikram-workspaces",
+            socket_path="/tmp/vikramd.sock",
             restrict_to_workspace=True,
             sandboxed=False,
             telegram_enabled=True,
@@ -79,11 +79,11 @@ class StubHostClient:
         self.workspace_requests.append(request)
         return WorkspaceProvisionResponse(
             task_id=request.task_id,
-            task_root=f"/tmp/levik-workspaces/tasks/{request.task_id}",
-            artifacts_dir=f"/tmp/levik-workspaces/tasks/{request.task_id}/artifacts",
-            logs_dir=f"/tmp/levik-workspaces/tasks/{request.task_id}/logs",
-            scratch_dir=f"/tmp/levik-workspaces/tasks/{request.task_id}/scratch",
-            worktree_path=f"/tmp/levik-workspaces/worktrees/{request.task_id}",
+            task_root=f"/tmp/vikram-workspaces/tasks/{request.task_id}",
+            artifacts_dir=f"/tmp/vikram-workspaces/tasks/{request.task_id}/artifacts",
+            logs_dir=f"/tmp/vikram-workspaces/tasks/{request.task_id}/logs",
+            scratch_dir=f"/tmp/vikram-workspaces/tasks/{request.task_id}/scratch",
+            worktree_path=f"/tmp/vikram-workspaces/worktrees/{request.task_id}",
         )
 
     def create_worktree(
@@ -104,7 +104,7 @@ class StubHostClient:
         self.artifact_requests.append(request)
         artifact = request.artifact.model_copy(
             update={
-                "path": f"/tmp/levik-workspaces/tasks/{request.artifact.task_id}/artifacts/{request.artifact.artifact_id}.md"
+                "path": f"/tmp/vikram-workspaces/tasks/{request.artifact.task_id}/artifacts/{request.artifact.artifact_id}.md"
             }
         )
         return ArtifactWriteResponse(
@@ -116,7 +116,7 @@ class StubHostClient:
     def read_artifact(self, request: ArtifactReadRequest) -> ArtifactReadResponse:
         for artifact_request in self.artifact_requests:
             path = (
-                f"/tmp/levik-workspaces/tasks/{artifact_request.artifact.task_id}/artifacts/"
+                f"/tmp/vikram-workspaces/tasks/{artifact_request.artifact.task_id}/artifacts/"
                 f"{artifact_request.artifact.artifact_id}.md"
             )
             if (
@@ -157,7 +157,7 @@ class StubHostClient:
             task_id=request.task_id,
             repo_path=request.repo_path,
             worktree_path=request.worktree_path,
-            branch=f"levik/{request.task_id}",
+            branch=f"vikram/{request.task_id}",
             head_ref="0123456789abcdef0123456789abcdef01234567",
             dirty=bool(changed_paths),
             changed_file_count=len(changed_files),
@@ -175,12 +175,12 @@ class StubHostClient:
             key_files=[
                 {
                     "path": "README.md",
-                    "preview": "# LeVik\n",
+                    "preview": "# Vikram\n",
                     "bytes": 8,
                 },
                 {
                     "path": "go.mod",
-                    "preview": "module github.com/vatthu/levik\n",
+                    "preview": "module github.com/vatthu/vikram\n",
                     "bytes": 31,
                 },
             ],
@@ -200,7 +200,7 @@ class StubHostClient:
                     "reason": "path matched `workflow`; content matched `plan`",
                 },
                 {
-                    "path": "services/orchestrator/src/levik_orchestrator/workflow.py",
+                    "path": "services/orchestrator/src/vikram_orchestrator/workflow.py",
                     "score": 7,
                     "reason": "fallback to key repository file",
                 },
@@ -291,8 +291,8 @@ class WorkflowTests(unittest.TestCase):
             task_id="task-001",
             source="telegram",
             requested_by="founder",
-            objective="Create the first LeVik workflow",
-            repo=RepoRef(path="/repos/levik", default_branch="main"),
+            objective="Create the first Vikram workflow",
+            repo=RepoRef(path="/repos/vikram", default_branch="main"),
         )
         host_client = StubHostClient()
 
@@ -316,13 +316,13 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(1, len(host_client.verification_requests))
         self.assertEqual(2, len(host_client.file_read_requests))
         self.assertEqual(3, len(host_client.artifact_requests))
-        self.assertEqual("/repos/levik", host_client.workspace_requests[0].repo.path)
+        self.assertEqual("/repos/vikram", host_client.workspace_requests[0].repo.path)
         self.assertEqual("change_ready", result["phase"])
         self.assertEqual(
-            "/tmp/levik-workspaces/worktrees/task-001", result["worktree_path"]
+            "/tmp/vikram-workspaces/worktrees/task-001", result["worktree_path"]
         )
-        self.assertEqual("levik/task-001", result["worktree_branch"])
-        self.assertEqual("levik/task-001", result["repo_branch"])
+        self.assertEqual("vikram/task-001", result["worktree_branch"])
+        self.assertEqual("vikram/task-001", result["repo_branch"])
         self.assertTrue(result["plan_artifact_path"].endswith("plan-initial.md"))
         self.assertEqual(["README.md", "go.mod", "pkg/"], result["repo_top_level_entries"])
         self.assertTrue(
@@ -361,7 +361,7 @@ class WorkflowTests(unittest.TestCase):
                         "requested_by": "founder",
                         "objective": "Verify the API path",
                         "repo": {
-                            "path": "/repos/levik",
+                            "path": "/repos/vikram",
                             "default_branch": "main",
                         },
                     },
@@ -396,7 +396,7 @@ class WorkflowTests(unittest.TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertIn("text/html", response.headers.get("content-type", ""))
-        self.assertIn("LeVik Founder Console", response.text)
+        self.assertIn("Vikram Founder Console", response.text)
 
     def test_apply_change_endpoint_requests_founder_review_for_risky_change(self) -> None:
         host_client = StubHostClient()
@@ -417,7 +417,7 @@ class WorkflowTests(unittest.TestCase):
                         "requested_by": "founder",
                         "objective": "Tighten workflow verification",
                         "repo": {
-                            "path": "/repos/levik",
+                            "path": "/repos/vikram",
                             "default_branch": "main",
                         },
                         "operator_channel": "telegram",
@@ -455,7 +455,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(1, len(host_client.exec_requests))
         self.assertEqual(1, len(host_client.notification_requests))
         self.assertIn(
-            "LeVik operator state: `awaiting_approval`",
+            "Vikram operator state: `awaiting_approval`",
             host_client.notification_requests[0].content,
         )
         self.assertEqual(
@@ -499,7 +499,7 @@ class WorkflowTests(unittest.TestCase):
                         "requested_by": "founder",
                         "objective": "Tighten workflow verification",
                         "repo": {
-                            "path": "/repos/levik",
+                            "path": "/repos/vikram",
                             "default_branch": "main",
                         },
                         "operator_channel": "telegram",
@@ -584,7 +584,7 @@ class WorkflowTests(unittest.TestCase):
                         "requested_by": "founder",
                         "objective": "Tighten workflow verification",
                         "repo": {
-                            "path": "/repos/levik",
+                            "path": "/repos/vikram",
                             "default_branch": "main",
                         },
                         "operator_channel": "telegram",
@@ -639,7 +639,7 @@ class WorkflowTests(unittest.TestCase):
                         "requested_by": "founder",
                         "objective": "Refresh the founder guide",
                         "repo": {
-                            "path": "/repos/levik",
+                            "path": "/repos/vikram",
                             "default_branch": "main",
                         },
                     },
@@ -654,8 +654,8 @@ class WorkflowTests(unittest.TestCase):
                         edits=[
                             {
                                 "path": "README.md",
-                                "old_text": "# LeVik",
-                                "new_text": "# LeVik\nFounder guide refresh",
+                                "old_text": "# Vikram",
+                                "new_text": "# Vikram\nFounder guide refresh",
                                 "rationale": "Bounded documentation replacement for merge-readiness test",
                             }
                         ],
@@ -696,7 +696,7 @@ class WorkflowTests(unittest.TestCase):
                         "requested_by": "founder",
                         "objective": "Force a failing verification path",
                         "repo": {
-                            "path": "/repos/levik",
+                            "path": "/repos/vikram",
                             "default_branch": "main",
                         },
                         "operator_channel": "telegram",
@@ -762,7 +762,7 @@ class WorkflowTests(unittest.TestCase):
                         "requested_by": "founder",
                         "objective": "Refine a bounded workflow change",
                         "repo": {
-                            "path": "/repos/levik",
+                            "path": "/repos/vikram",
                             "default_branch": "main",
                         },
                         "operator_channel": "telegram",
@@ -869,7 +869,7 @@ class WorkflowTests(unittest.TestCase):
                         "requested_by": "founder",
                         "objective": "Retry after a blocked merge handoff",
                         "repo": {
-                            "path": "/repos/levik",
+                            "path": "/repos/vikram",
                             "default_branch": "main",
                         },
                         "operator_channel": "telegram",
@@ -930,7 +930,7 @@ class WorkflowTests(unittest.TestCase):
                 )
                 self.assertTrue(
                     any(
-                        "LeVik operator state: `blocked`" in request.content
+                        "Vikram operator state: `blocked`" in request.content
                         for request in host_client.notification_requests
                     )
                 )
@@ -984,7 +984,7 @@ class WorkflowTests(unittest.TestCase):
                         "requested_by": "founder",
                         "objective": "Tighten workflow verification",
                         "repo": {
-                            "path": "/repos/levik",
+                            "path": "/repos/vikram",
                             "default_branch": "main",
                         },
                         "operator_channel": "telegram",
@@ -1033,10 +1033,10 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("merge-readiness-1.md", payload["summary"])
         self.assertEqual(9, len(host_client.artifact_requests))
         self.assertEqual("archive", host_client.artifact_requests[8].artifact.kind)
-        self.assertIn("Subject: [LeVik] task-006 merge-ready handoff", host_client.artifact_requests[8].content)
+        self.assertIn("Subject: [Vikram] task-006 merge-ready handoff", host_client.artifact_requests[8].content)
         self.assertTrue(
             any(
-                "LeVik operator state: `merge_ready`" in request.content
+                "Vikram operator state: `merge_ready`" in request.content
                 for request in host_client.notification_requests
             )
         )
@@ -1075,7 +1075,7 @@ class WorkflowTests(unittest.TestCase):
                         "requested_by": "founder",
                         "objective": "Keep retry flows on the founder-review path",
                         "repo": {
-                            "path": "/repos/levik",
+                            "path": "/repos/vikram",
                             "default_branch": "main",
                         },
                         "operator_channel": "telegram",
@@ -1120,8 +1120,8 @@ class WorkflowTests(unittest.TestCase):
                         edits=[
                             {
                                 "path": "README.md",
-                                "old_text": "# LeVik",
-                                "new_text": "# LeVik\nRetry follow-up still requires founder review",
+                                "old_text": "# Vikram",
+                                "new_text": "# Vikram\nRetry follow-up still requires founder review",
                                 "rationale": "Exercise the hardened retry policy on a low-risk edit",
                             }
                         ],
@@ -1137,7 +1137,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertTrue(second_payload["requires_founder_review"])
         self.assertTrue(
             any(
-                "LeVik operator state: `retryable`" in request.content
+                "Vikram operator state: `retryable`" in request.content
                 for request in host_client.notification_requests
             )
         )

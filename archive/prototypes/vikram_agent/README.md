@@ -24,7 +24,7 @@ The earlier Python pipeline prototype that was previously referenced as `vikram_
 
 This archive should therefore be treated as historical context, not as an implementation source.
 
-## Importance For LeVik
+## Importance For Vikram
 
 This material is low to medium importance.
 
@@ -32,7 +32,7 @@ It is useful for:
 
 - understanding early assistant identity and memory experiments
 - preserving context around the older Vikram-style agent concept
-- comparing personal-assistant workspace ideas against LeVik's current founder-operated engineering-system direction
+- comparing personal-assistant workspace ideas against Vikram's current founder-operated engineering-system direction
 
 It is not required for:
 
@@ -40,6 +40,6 @@ It is not required for:
 - the Python LangGraph orchestrator
 - founder approval flow
 - merge-readiness workflow
-- current LeVik v1 architecture
+- current Vikram v1 architecture
 
-If the old Python prototype is needed again, it should be recreated from the current LeVik architecture and historical notes rather than treated as a production base.
+If the old Python prototype is needed again, it should be recreated from the current Vikram architecture and historical notes rather than treated as a production base.

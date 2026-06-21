@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/v1claw/levik/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/logger"
 )
 
 // SecurityMiddleware defines the interface for vetting shell commands.

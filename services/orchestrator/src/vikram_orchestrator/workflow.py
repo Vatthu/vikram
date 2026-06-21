@@ -665,7 +665,7 @@ def build_graph(
         }
 
     def create_worktree(state: OrchestratorState) -> OrchestratorState:
-        branch = f"levik/{state['task_id']}"
+        branch = f"vikram/{state['task_id']}"
         worktree = host_client.create_worktree(
             GitWorktreeCreateRequest(
                 task_id=state["task_id"],
@@ -1977,16 +1977,16 @@ Return ONLY the JavaScript code, no explanation."""
     builder.add_edge("write_archive_email_draft", "finalize_merge_readiness")
     builder.add_edge("finalize_merge_readiness", END)
     graph = builder.compile(checkpointer=checkpointer)
-    setattr(graph, "_levik_checkpoint_conn", checkpoint_conn)
+    setattr(graph, "_vikram_checkpoint_conn", checkpoint_conn)
     return graph
 
 
 def close_graph(graph) -> None:
-    checkpoint_conn = getattr(graph, "_levik_checkpoint_conn", None)
+    checkpoint_conn = getattr(graph, "_vikram_checkpoint_conn", None)
     if checkpoint_conn is None:
         return
     checkpoint_conn.close()
-    setattr(graph, "_levik_checkpoint_conn", None)
+    setattr(graph, "_vikram_checkpoint_conn", None)
 
 
 def apply_change_request(graph, task: TaskSession, request: TaskChangeRequest) -> TaskSession:
@@ -2155,7 +2155,7 @@ def merge_readiness_artifact_content(state: OrchestratorState) -> str:
 
 def archive_email_draft_content(state: OrchestratorState) -> str:
     task_id = state["task_id"]
-    subject = f"[LeVik] {task_id} merge-ready handoff"
+    subject = f"[Vikram] {task_id} merge-ready handoff"
     branch = str(state.get("post_change_branch", "") or state.get("worktree_branch", ""))
     head = str(state.get("post_change_head_ref", "") or state.get("repo_head_ref", ""))
     artifact_paths = [
@@ -2168,14 +2168,14 @@ def archive_email_draft_content(state: OrchestratorState) -> str:
     artifact_paths = [item for item in artifact_paths if item]
     return "\n".join(
         [
-            "To: founder-archive@levik.local",
+            "To: founder-archive@vikram.local",
             f"Subject: {subject}",
             "Content-Type: text/plain; charset=utf-8",
-            f"X-LeVik-Task-ID: {task_id}",
-            f"X-LeVik-Phase: {state.get('phase', '')}",
-            f"X-LeVik-Merge-Readiness: {state.get('merge_readiness', 'unknown')}",
+            f"X-Vikram-Task-ID: {task_id}",
+            f"X-Vikram-Phase: {state.get('phase', '')}",
+            f"X-Vikram-Merge-Readiness: {state.get('merge_readiness', 'unknown')}",
             "",
-            "LeVik prepared a merge-ready engineering handoff.",
+            "Vikram prepared a merge-ready engineering handoff.",
             "",
             "Task",
             f"- Objective: {state.get('objective', '')}",
@@ -2481,7 +2481,7 @@ def format_approval_request_artifact(
 def format_founder_notification(state: OrchestratorState) -> str:
     approval_request = state.get("approval_request", {})
     lines = [
-        f"LeVik operator state: `awaiting_approval` for `{state['task_id']}`.",
+        f"Vikram operator state: `awaiting_approval` for `{state['task_id']}`.",
         "",
         f"Risk class: `{approval_request.get('risk_class', 'unknown')}`",
         "",
@@ -2501,7 +2501,7 @@ def format_operator_state_notification(
     state: OrchestratorState, operator_state: str
 ) -> str:
     lines = [
-        f"LeVik operator state: `{operator_state}` for `{state['task_id']}`.",
+        f"Vikram operator state: `{operator_state}` for `{state['task_id']}`.",
         "",
         str(state.get("summary") or state.get("merge_summary") or "State updated."),
     ]

@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/v1claw/levik/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/logger"
 )
 
 //go:embed templates/*.html
@@ -23,7 +23,7 @@ type Config struct {
 	Enabled bool   `json:"enabled"`
 	Addr    string `json:"addr"` // Default ":18792"
 	Title   string `json:"title"`
-	APIKey  string `json:"api_key" env:"LEVIK_DASHBOARD_API_KEY"`
+	APIKey  string `json:"api_key" env:"VIKRAM_DASHBOARD_API_KEY"`
 }
 
 // StatusData provides real-time status for the dashboard.

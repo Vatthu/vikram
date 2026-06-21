@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# LeVik installer
+# Vikram installer
 # Downloads a pre-built binary from GitHub Releases — no Go required.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/vatthu/levik/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/vatthu/vikram/main/install.sh | bash
 #
 # Or with a specific version:
 #   curl -fsSL .../install.sh | bash -s -- --version v1.2.0
 
 set -euo pipefail
 
-REPO="vatthu/levik"
-BINARY="levik"
+REPO="vatthu/vikram"
+BINARY="vikram"
 INSTALL_DIR="${INSTALL_DIR:-}"   # can be overridden by environment
 INSTALL_DIR_EXPLICIT=0
 if [ -n "$INSTALL_DIR" ]; then
@@ -64,7 +64,7 @@ bootstrap_go_toolchain() {
   local bootstrap_goos bootstrap_arch goversion archive url go_bin
 
   goversion="$(fetch_required_go_version "$tempdir" || true)"
-  [ -n "$goversion" ] || fail "Could not determine the Go version required to build LeVik."
+  [ -n "$goversion" ] || fail "Could not determine the Go version required to build Vikram."
 
   case "$OS" in
     Darwin) bootstrap_goos="darwin" ;;
@@ -122,13 +122,13 @@ for arg in "$@"; do
   esac
 done
 
-if [ "$FORCE_SOURCE" -ne 1 ] && [ "${LEVIK_INSTALL_MODE:-}" != "source" ] && [ -z "$VERSION" ]; then
+if [ "$FORCE_SOURCE" -ne 1 ] && [ "${VIKRAM_INSTALL_MODE:-}" != "source" ] && [ -z "$VERSION" ]; then
   info "Fetching latest release version…"
   VERSION="$(fetch_latest_release_version || true)"
 fi
 
 INSTALL_MODE="release"
-if [ "$FORCE_SOURCE" -eq 1 ] || [ "${LEVIK_INSTALL_MODE:-}" = "source" ]; then
+if [ "$FORCE_SOURCE" -eq 1 ] || [ "${VIKRAM_INSTALL_MODE:-}" = "source" ]; then
   INSTALL_MODE="source"
 elif [ -z "$VERSION" ]; then
   INSTALL_MODE="source"
@@ -191,7 +191,7 @@ else
     info "Extracting source archive…"
     tar -xzf "$SOURCE_ARCHIVE" -C "$TMP"
 
-    SOURCE_DIR="$(find "$TMP" -maxdepth 1 -type d -name 'levik-*' | head -n 1)"
+    SOURCE_DIR="$(find "$TMP" -maxdepth 1 -type d -name 'vikram-*' | head -n 1)"
     [ -n "$SOURCE_DIR" ] || fail "Could not locate extracted source directory."
   fi
 
@@ -219,7 +219,7 @@ if [ "$PATH_HAS_INSTALL_DIR" -ne 1 ]; then
 
   if [ "$INSTALL_DIR_EXPLICIT" -eq 1 ]; then
     warn "INSTALL_DIR was set explicitly, so your shell profile was not modified."
-    warn "Add it to PATH manually if you want to run 'levik' without the full path."
+    warn "Add it to PATH manually if you want to run 'vikram' without the full path."
   else
 
     SHELL_RC=""
@@ -234,7 +234,7 @@ if [ "$PATH_HAS_INSTALL_DIR" -ne 1 ]; then
 
     if [ -n "$SHELL_RC" ]; then
       if ! grep -Fq "$INSTALL_DIR" "$SHELL_RC" 2>/dev/null; then
-        printf '\n# LeVik\nexport PATH="$PATH:%s"\n' "$INSTALL_DIR" >> "$SHELL_RC"
+        printf '\n# Vikram\nexport PATH="$PATH:%s"\n' "$INSTALL_DIR" >> "$SHELL_RC"
         ok "Added $INSTALL_DIR to PATH in $SHELL_RC"
       else
         ok "$INSTALL_DIR already exists in $SHELL_RC"
@@ -250,22 +250,22 @@ fi
 # ── done ─────────────────────────────────────────────────────────────────────
 echo ""
 if [ "$INSTALL_MODE" = "release" ]; then
-  echo "  ✅  LeVik $VERSION is installed!"
+  echo "  ✅  Vikram $VERSION is installed!"
 else
-  echo "  ✅  LeVik ($SOURCE_DESC) is installed!"
+  echo "  ✅  Vikram ($SOURCE_DESC) is installed!"
 fi
 echo ""
 echo "  Next step — run the 2-minute setup wizard:"
 echo ""
-echo "    levik onboard"
+echo "    vikram onboard"
 echo ""
 echo "  Or silent cloud setup (replace YOUR_KEY):"
 echo ""
-echo "    levik onboard --auto --provider gemini --api-key YOUR_KEY"
+echo "    vikram onboard --auto --provider gemini --api-key YOUR_KEY"
 echo ""
 echo "  Local setup example:"
 echo ""
-echo "    levik onboard --auto --provider ollama --model llama3.2"
+echo "    vikram onboard --auto --provider ollama --model llama3.2"
 echo ""
 echo "  For CI or offline setup, add:"
 echo ""

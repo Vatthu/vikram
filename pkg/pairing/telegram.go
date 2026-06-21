@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 const telegramPairingTTL = 15 * time.Minute

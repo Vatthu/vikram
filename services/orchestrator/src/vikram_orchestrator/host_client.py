@@ -50,7 +50,7 @@ class HostClient:
     def __init__(self, socket_path: str) -> None:
         self.socket_path = socket_path
         transport = httpx.HTTPTransport(uds=socket_path)
-        self._client = httpx.Client(transport=transport, base_url="http://levikd")
+        self._client = httpx.Client(transport=transport, base_url="http://vikramd")
 
     def _raise_for_status(self, response: httpx.Response) -> None:
         try:

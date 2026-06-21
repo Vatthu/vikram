@@ -54,7 +54,7 @@ func (info SkillInfo) validate() error {
 type SkillsLoader struct {
 	workspace       string
 	workspaceSkills string // workspace skills (项目级别)
-	globalSkills    string // 全局 skills (~/.levik/skills)
+	globalSkills    string // 全局 skills (~/.vikram/skills)
 	builtinSkills   string // 内置 skills
 }
 
@@ -62,7 +62,7 @@ func NewSkillsLoader(workspace string, globalSkills string, builtinSkills string
 	return &SkillsLoader{
 		workspace:       workspace,
 		workspaceSkills: filepath.Join(workspace, "skills"),
-		globalSkills:    globalSkills, // ~/.levik/skills
+		globalSkills:    globalSkills, // ~/.vikram/skills
 		builtinSkills:   builtinSkills,
 	}
 }
@@ -97,7 +97,7 @@ func (sl *SkillsLoader) ListSkills() []SkillInfo {
 		}
 	}
 
-	// 全局 skills (~/.levik/skills) - 被 workspace skills 覆盖
+	// 全局 skills (~/.vikram/skills) - 被 workspace skills 覆盖
 	if sl.globalSkills != "" {
 		if dirs, err := os.ReadDir(sl.globalSkills); err == nil {
 			for _, dir := range dirs {
@@ -193,7 +193,7 @@ func (sl *SkillsLoader) LoadSkill(name string) (string, bool) {
 		}
 	}
 
-	// 2. Then try global skills (~/.levik/skills)
+	// 2. Then try global skills (~/.vikram/skills)
 	if sl.globalSkills != "" {
 		skillFile := filepath.Join(sl.globalSkills, name, "SKILL.md")
 		if content, err := os.ReadFile(skillFile); err == nil {

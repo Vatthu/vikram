@@ -10,7 +10,7 @@ import (
 // TestMain sets required environment variables before running auth store tests.
 func TestMain(m *testing.M) {
 	// Auth store tests require a 32-byte AES master key.
-	os.Setenv("LEVIK_AUTH_MASTER_KEY", "levik-test-master-key-32chars!!")
+	os.Setenv("VIKRAM_AUTH_MASTER_KEY", "vikram-test-master-key-32chars!!")
 	os.Exit(m.Run())
 }
 
@@ -109,7 +109,7 @@ func TestStoreFilePermissions(t *testing.T) {
 		t.Fatalf("SetCredential() error: %v", err)
 	}
 
-	path := filepath.Join(tmpDir, ".levik", "auth.json")
+	path := filepath.Join(tmpDir, ".vikram", "auth.json")
 	info, err := os.Stat(path)
 	if err != nil {
 		t.Fatalf("Stat() error: %v", err)

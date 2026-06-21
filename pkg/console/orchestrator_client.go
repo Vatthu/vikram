@@ -77,7 +77,7 @@ func (s *Server) orchestratorBaseURL() string {
 	if s.orchBaseURL != "" {
 		return strings.TrimRight(s.orchBaseURL, "/")
 	}
-	return "http://levik-orchestrator"
+	return "http://vikram-orchestrator"
 }
 
 func (s *Server) orchestratorHTTPClient() *http.Client {

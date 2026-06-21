@@ -24,9 +24,9 @@ The local `software_company.py` confirms the core pattern: create a `Team`, hire
 - artifact production across planning, architecture, and implementation stages
 - treating software creation as a staged pipeline instead of a single long conversation
 
-## Why It Matters For LeVik
+## Why It Matters For Vikram
 
-MetaGPT is one of the clearest references for LeVik’s team semantics:
+MetaGPT is one of the clearest references for Vikram’s team semantics:
 
 - roles should exist at the workflow layer, not only as prompt flavor
 - intermediate artifacts matter
@@ -37,16 +37,16 @@ The paper also supports the same point: it explicitly argues that naive chained 
 ## First Extraction Decision
 
 - borrow the SOP and artifact discipline
-- reject the idea of baking a fixed static org chart into LeVik
+- reject the idea of baking a fixed static org chart into Vikram
 - adapt the team concept into capability-based role assignment
 
-LeVik should keep stable logical roles such as planner, implementer, reviewer, verifier, and integrator, but select actual models dynamically based on capability and policy rather than hardcoding one vendor to one job.
+Vikram should keep stable logical roles such as planner, implementer, reviewer, verifier, and integrator, but select actual models dynamically based on capability and policy rather than hardcoding one vendor to one job.
 
 ## Immediate Cautions
 
 - MetaGPT is opinionated and productized around its own abstractions.
 - The “software company” metaphor is useful, but too literal if copied directly.
-- Its startup flow is still closer to a research framework than to the host-native operator system LeVik needs.
+- Its startup flow is still closer to a research framework than to the host-native operator system Vikram needs.
 
 ## Next Inspection Targets
 

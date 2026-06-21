@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/logger"
-	"github.com/v1claw/levik/pkg/providers"
-	"github.com/v1claw/levik/pkg/utils"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/providers"
+	"github.com/Vatthu/vikram/pkg/utils"
 )
 
 // ToolLoopConfig configures the tool execution loop.

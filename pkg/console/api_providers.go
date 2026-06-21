@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/providers"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/providers"
 )
 
 type provInfo struct {

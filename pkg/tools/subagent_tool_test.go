@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/providers"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/providers"
 )
 
 // MockLLMProvider is a test implementation of LLMProvider

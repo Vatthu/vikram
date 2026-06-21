@@ -1,4 +1,4 @@
-// LeVik — AWS Bedrock provider
+// Vikram — AWS Bedrock provider
 // Uses the Bedrock Converse API for a unified interface across Claude, Llama, Titan, and more.
 // Auth: AWS credential chain — config file → env vars → ~/.aws/credentials → IAM role.
 

@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/v1claw/levik/pkg/events"
-	"github.com/v1claw/levik/pkg/state"
-	devsync "github.com/v1claw/levik/pkg/sync"
+	"github.com/Vatthu/vikram/pkg/events"
+	"github.com/Vatthu/vikram/pkg/state"
+	devsync "github.com/Vatthu/vikram/pkg/sync"
 )
 
 func newTestServer(t *testing.T) (*Server, *state.Manager) {

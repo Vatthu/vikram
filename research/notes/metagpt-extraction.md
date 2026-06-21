@@ -19,7 +19,7 @@ MetaGPT does not hide collaboration in one agent. It makes the structure visible
 - `Action`
 - `Message`
 
-That explicitness is valuable even if LeVik does not copy the same classes.
+That explicitness is valuable even if Vikram does not copy the same classes.
 
 ### 2. Roles have memory, state, and subscriptions
 
@@ -40,30 +40,30 @@ This is more useful than the “software company” marketing layer. The real si
 
 ### 4. Cost and budget are first-class
 
-The `Team` tracks investment and checks budget during the run loop. That is directly relevant to LeVik, where model choice and autonomy should be budget-aware.
+The `Team` tracks investment and checks budget during the run loop. That is directly relevant to Vikram, where model choice and autonomy should be budget-aware.
 
-## What LeVik Should Borrow
+## What Vikram Should Borrow
 
 - explicit logical roles
 - role-local state and working memory
 - artifact/message routing through a structured coordination layer
 - budget-aware execution
 
-## What LeVik Should Adapt
+## What Vikram Should Adapt
 
 - Replace MetaGPT’s fixed org chart with stable logical roles and dynamic model assignment.
 - Replace broad publish/subscribe chat with bounded artifact routing.
 - Keep role state, but make artifacts the main contract between phases.
 
-## What LeVik Should Reject
+## What Vikram Should Reject
 
 - literal “software company simulation” as the product architecture
 - free-form multi-round role chatter as the default collaboration mode
 - fixed vendor-to-role binding
 
-## Concrete LeVik Impact
+## Concrete Vikram Impact
 
-LeVik should define stable workflow roles such as:
+Vikram should define stable workflow roles such as:
 
 - `planner`
 - `implementer`

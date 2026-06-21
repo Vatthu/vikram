@@ -6,8 +6,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$Repo = 'vatthu/levik'
-$Binary = 'levik.exe'
+$Repo = 'vatthu/vikram'
+$Binary = 'vikram.exe'
 
 function Write-Info {
     param([string]$Message)
@@ -50,7 +50,7 @@ function Get-LatestReleaseVersion {
 function Get-RequiredGoVersion {
     param([string]$TempDir)
 
-    if ((Test-Path '.\go.mod') -and (Test-Path '.\cmd\levik')) {
+    if ((Test-Path '.\go.mod') -and (Test-Path '.\cmd\vikram')) {
         $match = Select-String -Path '.\go.mod' -Pattern '^go\s+([0-9.]+)' | Select-Object -First 1
         if ($match -and $match.Matches.Count -gt 0) {
             return [string]$match.Matches[0].Groups[1].Value
@@ -64,7 +64,7 @@ function Get-RequiredGoVersion {
         return [string]$remoteMatch.Matches[0].Groups[1].Value
     }
 
-    Fail 'Could not determine the Go version required to build LeVik.'
+    Fail 'Could not determine the Go version required to build Vikram.'
 }
 
 function Get-ArchiveArch {
@@ -125,7 +125,7 @@ function Ensure-InstallDir {
     if (-not $localAppData) {
         $localAppData = Join-Path $HOME 'AppData\Local'
     }
-    return Join-Path $localAppData 'Programs\LeVik\bin'
+    return Join-Path $localAppData 'Programs\Vikram\bin'
 }
 
 function Add-InstallDirToPath {
@@ -179,7 +179,7 @@ function Test-PathContainsDir {
 function Get-SourceDir {
     param([string]$TempDir)
 
-    if ((Test-Path '.\go.mod') -and (Test-Path '.\cmd\levik')) {
+    if ((Test-Path '.\go.mod') -and (Test-Path '.\cmd\vikram')) {
         Write-Info "Using local source checkout at $(Get-Location)"
         return @{
             Path = (Get-Location).Path
@@ -206,7 +206,7 @@ function Get-SourceDir {
 }
 
 $ArchiveArch = Get-ArchiveArch
-$forceSource = $Source -or ($env:LEVIK_INSTALL_MODE -eq 'source')
+$forceSource = $Source -or ($env:VIKRAM_INSTALL_MODE -eq 'source')
 if ((-not $forceSource) -and (-not $Version)) {
     Write-Info 'Fetching latest release version...'
     $Version = Get-LatestReleaseVersion
@@ -231,7 +231,7 @@ $installDirExplicit = [bool]($InstallDir -or $env:INSTALL_DIR)
 $resolvedInstallDir = Ensure-InstallDir
 New-Item -ItemType Directory -Force -Path $resolvedInstallDir | Out-Null
 
-$tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("levik-install-" + [System.Guid]::NewGuid().ToString('N'))
+$tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("vikram-install-" + [System.Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
 
 try {
@@ -243,7 +243,7 @@ try {
     }
 
     if ($InstallMode -eq 'release') {
-        $archive = "levik_Windows_${ArchiveArch}.zip"
+        $archive = "vikram_Windows_${ArchiveArch}.zip"
         $url = "https://github.com/$Repo/releases/download/$Version/$archive"
         $archivePath = Join-Path $tempDir $archive
 
@@ -262,7 +262,7 @@ try {
         Write-Info "Building from source with $(& $goSource version)..."
         Push-Location $sourceInfo.Path
         try {
-            & $goSource build -o $binaryPath ./cmd/levik
+            & $goSource build -o $binaryPath ./cmd/vikram
         } finally {
             Pop-Location
         }
@@ -279,7 +279,7 @@ try {
     if ($installDirExplicit) {
         if (-not (Test-PathContainsDir -PathValue $env:Path -Dir $resolvedInstallDir)) {
             Write-Warn "$resolvedInstallDir is not managed automatically because InstallDir was set explicitly."
-            Write-Warn "Add it to PATH manually if you want to run 'levik' without the full path."
+            Write-Warn "Add it to PATH manually if you want to run 'vikram' without the full path."
         }
     } else {
         Add-InstallDirToPath -Dir $resolvedInstallDir
@@ -287,22 +287,22 @@ try {
 
     Write-Host ''
     if ($InstallMode -eq 'release') {
-        Write-Host "  LeVik $Version is installed." -ForegroundColor Green
+        Write-Host "  Vikram $Version is installed." -ForegroundColor Green
     } else {
-        Write-Host "  LeVik ($SourceDescription) is installed." -ForegroundColor Green
+        Write-Host "  Vikram ($SourceDescription) is installed." -ForegroundColor Green
     }
     Write-Host ''
     Write-Host '  Next step - run the setup wizard:'
     Write-Host ''
-    Write-Host '    levik onboard'
+    Write-Host '    vikram onboard'
     Write-Host ''
     Write-Host '  Or silent cloud setup:'
     Write-Host ''
-    Write-Host '    levik onboard --auto --provider gemini --api-key YOUR_KEY'
+    Write-Host '    vikram onboard --auto --provider gemini --api-key YOUR_KEY'
     Write-Host ''
     Write-Host '  Local setup example:'
     Write-Host ''
-    Write-Host '    levik onboard --auto --provider ollama --model llama3.2'
+    Write-Host '    vikram onboard --auto --provider ollama --model llama3.2'
     Write-Host ''
     Write-Host '  For CI or offline setup, add:'
     Write-Host ''

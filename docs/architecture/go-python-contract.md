@@ -4,8 +4,8 @@ Current code anchors:
 
 - Go: `pkg/orchestrator/types.go`
 - Go host server: `pkg/orchestratorhost/server.go`
-- Python: `services/orchestrator/src/levik_orchestrator/models.py`
-- Python client: `services/orchestrator/src/levik_orchestrator/host_client.py`
+- Python: `services/orchestrator/src/vikram_orchestrator/models.py`
+- Python client: `services/orchestrator/src/vikram_orchestrator/host_client.py`
 
 ## Transport
 
@@ -62,7 +62,7 @@ Example task payload:
   "requested_by": "founder",
   "objective": "Implement OAuth callback hardening",
   "repo": {
-    "path": "/Users/levik/repos/app",
+    "path": "/Users/vikram/repos/app",
     "default_branch": "main"
   },
   "operator_channel": "telegram",

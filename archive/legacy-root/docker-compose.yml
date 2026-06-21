@@ -1,40 +1,40 @@
 services:
   # ─────────────────────────────────────────────
-  # LeVik Agent (one-shot query)
-  #   docker compose run --rm levik-agent -m "Hello"
+  # Vikram Agent (one-shot query)
+  #   docker compose run --rm vikram-agent -m "Hello"
   # ─────────────────────────────────────────────
-  levik-agent:
+  vikram-agent:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: levik-agent
+    container_name: vikram-agent
     profiles:
       - agent
     volumes:
-      - ./config/config.json:/home/levik/.levik/config.json:ro
-      - levik-workspace:/home/levik/.levik/workspace
-    entrypoint: ["levik", "agent"]
+      - ./config/config.json:/home/vikram/.vikram/config.json:ro
+      - vikram-workspace:/home/vikram/.vikram/workspace
+    entrypoint: ["vikram", "agent"]
     stdin_open: true
     tty: true
 
   # ─────────────────────────────────────────────
-  # LeVik Gateway (Long-running Bot)
-  #   docker compose up levik-gateway
+  # Vikram Gateway (Long-running Bot)
+  #   docker compose up vikram-gateway
   # ─────────────────────────────────────────────
-  levik-gateway:
+  vikram-gateway:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: levik-gateway
+    container_name: vikram-gateway
     restart: unless-stopped
     profiles:
       - gateway
     volumes:
       # Configuration file
-      - ./config/config.json:/home/levik/.levik/config.json:ro
+      - ./config/config.json:/home/vikram/.vikram/config.json:ro
       # Persistent workspace (sessions, memory, logs)
-      - levik-workspace:/home/levik/.levik/workspace
+      - vikram-workspace:/home/vikram/.vikram/workspace
     command: ["gateway"]
 
 volumes:
-  levik-workspace:
+  vikram-workspace:

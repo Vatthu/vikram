@@ -16,7 +16,7 @@
 - app surfaces for macOS, iOS, and Android
 - gateway and sandbox concepts
 
-The upstream docs and repository shape confirm the same conclusion we already discussed: OpenClaw is strong on control-plane and operator-surface ideas, but it is not the architecture model for LeVik’s engineering team.
+The upstream docs and repository shape confirm the same conclusion we already discussed: OpenClaw is strong on control-plane and operator-surface ideas, but it is not the architecture model for Vikram’s engineering team.
 
 ## What Problem It Solves Well
 
@@ -25,9 +25,9 @@ The upstream docs and repository shape confirm the same conclusion we already di
 - session and gateway control
 - packaging a usable AI system as a host-native product
 
-## Why It Matters For LeVik
+## Why It Matters For Vikram
 
-This is one of the best local references for the Go shell side of LeVik:
+This is one of the best local references for the Go shell side of Vikram:
 
 - Telegram as a serious operator surface
 - control-plane oriented CLI/docs structure
@@ -42,9 +42,9 @@ This is one of the best local references for the Go shell side of LeVik:
 
 ## Immediate Cautions
 
-- OpenClaw assumes a broader personal assistant mission than LeVik.
-- Its sandbox defaults lean toward Docker-based isolation, which does not fit LeVik’s host-native control-plane requirement.
-- Much of the repo is irrelevant for LeVik v1, especially companion apps and broad consumer channel surfaces.
+- OpenClaw assumes a broader personal assistant mission than Vikram.
+- Its sandbox defaults lean toward Docker-based isolation, which does not fit Vikram’s host-native control-plane requirement.
+- Much of the repo is irrelevant for Vikram v1, especially companion apps and broad consumer channel surfaces.
 
 ## Next Inspection Targets
 

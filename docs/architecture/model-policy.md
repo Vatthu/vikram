@@ -2,7 +2,7 @@
 
 ## Position
 
-LeVik should not permanently bind a specific model vendor to a specific role.
+Vikram should not permanently bind a specific model vendor to a specific role.
 
 The system will outlive today’s leaderboard. Roles should stay stable while model assignment changes as the ecosystem changes.
 
@@ -72,4 +72,4 @@ Middle ground:
 - do not hardcode model names to roles
 - do not let the leader invent arbitrary teams without policy
 
-That gives LeVik room to evolve without drifting into fantasy.
+That gives Vikram room to evolve without drifting into fantasy.

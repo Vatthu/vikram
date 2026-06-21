@@ -1,22 +1,22 @@
-# LeVik Project Ledger
+# Vikram Project Ledger
 
 Last updated: 2026-04-28
 
-This is the founder-facing status ledger for LeVik.
+This is the founder-facing status ledger for Vikram.
 
 It exists to answer four questions in one place:
 
 1. What is already completed?
 2. What is currently active?
 3. What still needs to be built?
-4. Which research source changed which part of LeVik?
+4. Which research source changed which part of Vikram?
 
 This file is the compressed operational view.
-The deeper detail still lives in `implementation-plan.md`, `go-python-contract.md`, `levik-v1-synthesis.md`, and `research/notes/`.
+The deeper detail still lives in `implementation-plan.md`, `go-python-contract.md`, `vikram-v1-synthesis.md`, and `research/notes/`.
 
 ## Current Shape
 
-LeVik v1 is currently being built as:
+Vikram v1 is currently being built as:
 
 - a Go host daemon
 - a Python orchestrator
@@ -30,7 +30,7 @@ LeVik v1 is currently being built as:
 
 Completed:
 
-- LeVik was reframed away from a Jarvis-style assistant and toward a founder-operated engineering team
+- Vikram was reframed away from a Jarvis-style assistant and toward a founder-operated engineering team
 - architecture docs were created for host-native deployment, repo layout, model policy, contract boundaries, and implementation sequencing
 
 Primary docs:
@@ -65,7 +65,7 @@ Completed:
 
 Primary docs:
 
-- `docs/architecture/levik-v1-synthesis.md`
+- `docs/architecture/vikram-v1-synthesis.md`
 - `docs/architecture/model-policy.md`
 - `docs/architecture/go-python-contract.md`
 
@@ -79,7 +79,7 @@ Completed:
 Primary code:
 
 - `pkg/orchestrator/types.go`
-- `services/orchestrator/src/levik_orchestrator/models.py`
+- `services/orchestrator/src/vikram_orchestrator/models.py`
 
 ### 5. Go host daemon capability layer
 
@@ -127,8 +127,8 @@ Completed:
 
 Primary code:
 
-- `services/orchestrator/src/levik_orchestrator/workflow.py`
-- `services/orchestrator/src/levik_orchestrator/server.py`
+- `services/orchestrator/src/vikram_orchestrator/workflow.py`
+- `services/orchestrator/src/vikram_orchestrator/server.py`
 
 ### 7. Founder operations layer
 
@@ -145,8 +145,8 @@ Completed:
 
 Primary code:
 
-- `services/orchestrator/src/levik_orchestrator/server.py`
-- `services/orchestrator/src/levik_orchestrator/console/`
+- `services/orchestrator/src/vikram_orchestrator/server.py`
+- `services/orchestrator/src/vikram_orchestrator/console/`
 
 ### 8. Verification quality improvements
 
@@ -163,12 +163,12 @@ Completed:
 
 Primary code:
 
-- `services/orchestrator/src/levik_orchestrator/workflow.py`
-- `services/orchestrator/src/levik_orchestrator/server.py`
+- `services/orchestrator/src/vikram_orchestrator/workflow.py`
+- `services/orchestrator/src/vikram_orchestrator/server.py`
 
 ## Current Status
 
-LeVik currently has:
+Vikram currently has:
 
 - the correct high-level architecture
 - a real host-native workflow
@@ -177,7 +177,7 @@ LeVik currently has:
 - a real approval-to-merge boundary
 - a build-clean uncommitted candidate patch from the 2026-04-27 assistant handoff after Codex review fixes
 
-LeVik does not yet have:
+Vikram does not yet have:
 
 - a committed acceptance point for the full 2026-04-27 patch set
 - browser/visual verification through a constrained runner
@@ -194,7 +194,7 @@ The large 2026-04-27 assistant patch remains uncommitted. Codex reviewed it as u
 
 - `go test ./...`
 - `python -m unittest discover -s services/orchestrator/tests`
-- `python3 -m py_compile services/orchestrator/src/levik_orchestrator/*.py`
+- `python3 -m py_compile services/orchestrator/src/vikram_orchestrator/*.py`
 - `git diff --check`
 
 Corrections made during review:
@@ -238,7 +238,7 @@ What it gave:
 - pause/resume with interrupts
 - graph-structured workflow control
 
-What changed in LeVik:
+What changed in Vikram:
 
 - Python orchestrator is built around a resumable workflow graph
 - founder approval pauses the real workflow instead of being simulated in chat
@@ -256,7 +256,7 @@ What it gave:
 - post-action state thinking
 - observation shaping
 
-What changed in LeVik:
+What changed in Vikram:
 
 - typed host contract
 - bounded repo operations
@@ -275,7 +275,7 @@ What it gave:
 - SOP thinking
 - artifact-driven handoff
 
-What changed in LeVik:
+What changed in Vikram:
 
 - stable logical roles remain part of the architecture
 - artifacts, not agent chatter, are the main workflow boundary
@@ -293,7 +293,7 @@ What it gave:
 - event-oriented thinking
 - orchestrator vs execution separation
 
-What changed in LeVik:
+What changed in Vikram:
 
 - `TaskSession` is first-class
 - Go owns execution, Python owns workflow intelligence
@@ -310,7 +310,7 @@ What it gave:
 - Telegram/control-plane ideas
 - multi-agent routing lessons
 
-What changed in LeVik:
+What changed in Vikram:
 
 - reinforced founder-first approval and notification design
 - influenced operator-surface thinking, not the core runtime
@@ -328,7 +328,7 @@ What they gave:
 - stronger comprehension before mutation
 - future direction for memory beyond chat history
 
-What changed in LeVik:
+What changed in Vikram:
 
 - repo inspection and target localization now happen before code mutation
 - merge and review artifacts are tied to repo observations, not only prompts
@@ -344,7 +344,7 @@ What it gave:
 - communication protocol matters
 - dehallucination and coordination rules matter
 
-What changed in LeVik:
+What changed in Vikram:
 
 - reinforced the decision to reject free-form chat swarms
 
@@ -358,7 +358,7 @@ What it gave:
 
 - workflow design itself can become an optimization target
 
-What changed in LeVik:
+What changed in Vikram:
 
 - not used in v1
 - informs later evaluation and workflow-search direction
@@ -383,7 +383,7 @@ If you want the current system boundary:
 
 If you want the design synthesis:
 
-- `docs/architecture/levik-v1-synthesis.md`
+- `docs/architecture/vikram-v1-synthesis.md`
 
 If you want the research evidence:
 
@@ -393,7 +393,7 @@ If you want the research evidence:
 
 ## Update Rule
 
-Whenever LeVik changes in a way that affects founder operations, architecture, or research adoption:
+Whenever Vikram changes in a way that affects founder operations, architecture, or research adoption:
 
 - update this ledger
 - update the implementation plan if sequencing changed

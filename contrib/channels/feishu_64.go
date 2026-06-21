@@ -14,10 +14,10 @@ import (
 	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
 	larkws "github.com/larksuite/oapi-sdk-go/v3/ws"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/logger"
-	"github.com/v1claw/levik/pkg/utils"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/utils"
 )
 
 type FeishuChannel struct {
@@ -108,7 +108,7 @@ func (c *FeishuChannel) Send(ctx context.Context, msg bus.OutboundMessage) error
 			ReceiveId(msg.ChatID).
 			MsgType(larkim.MsgTypeText).
 			Content(string(payload)).
-			Uuid(fmt.Sprintf("levik-%d", time.Now().UnixNano())).
+			Uuid(fmt.Sprintf("vikram-%d", time.Now().UnixNano())).
 			Build()).
 		Build()
 

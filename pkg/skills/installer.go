@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 type SkillInstaller struct {
@@ -72,7 +72,7 @@ func (si *SkillInstaller) InstallFromGitHub(ctx context.Context, repo string) er
 		return fmt.Errorf("failed to fetch skill: HTTP %d", resp.StatusCode)
 	}
 
-	tmpDir, err := os.MkdirTemp("", "levik-skill-*")
+	tmpDir, err := os.MkdirTemp("", "vikram-skill-*")
 	if err != nil {
 		return fmt.Errorf("failed to create temp dir: %w", err)
 	}
@@ -300,7 +300,7 @@ func (si *SkillInstaller) Uninstall(skillName string) error {
 }
 
 func (si *SkillInstaller) ListAvailableSkills(ctx context.Context) ([]AvailableSkill, error) {
-	url := "https://raw.githubusercontent.com/amit-vikramaditya/levik-skills/main/skills.json"
+	url := "https://raw.githubusercontent.com/amit-vikramaditya/vikram-skills/main/skills.json"
 
 	client := si.client
 	if client == nil {

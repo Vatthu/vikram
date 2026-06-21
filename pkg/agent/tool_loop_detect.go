@@ -2,7 +2,7 @@ package agent
 
 // tool_loop_detect.go — detects when the agent is stuck in a repetitive tool-call loop.
 //
-// Implements four detection strategies learned from LeVik:
+// Implements four detection strategies learned from Vikram:
 //   1. generic_repeat   — same (tool, args) called 10+ times in the sliding window
 //   2. no_progress      — same args AND same result 5+ times consecutively
 //   3. circuit_breaker  — any single call hash appears 30 times (total trip-wire)

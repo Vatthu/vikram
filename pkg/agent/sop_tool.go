@@ -3,8 +3,8 @@ package agent
 import (
 	"context"
 
-	"github.com/v1claw/levik/pkg/proactive/sop"
-	"github.com/v1claw/levik/pkg/tools"
+	"github.com/Vatthu/vikram/pkg/proactive/sop"
+	"github.com/Vatthu/vikram/pkg/tools"
 )
 
 type SOPTool struct {

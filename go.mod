@@ -1,4 +1,4 @@
-module github.com/v1claw/levik
+module github.com/Vatthu/vikram
 
 go 1.25.5
 

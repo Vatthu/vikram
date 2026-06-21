@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/v1claw/levik/pkg/tools"
+	"github.com/Vatthu/vikram/pkg/tools"
 )
 
-// Adapter wraps an MCP tool as a LeVik Tool implementation.
+// Adapter wraps an MCP tool as a Vikram Tool implementation.
 type Adapter struct {
 	client    *Client
 	toolDef   ToolDef
@@ -16,7 +16,7 @@ type Adapter struct {
 	maxOutput int
 }
 
-// NewAdapter creates a LeVik Tool from an MCP tool definition.
+// NewAdapter creates a Vikram Tool from an MCP tool definition.
 func NewAdapter(client *Client, def ToolDef, prefix string, maxOutput int) *Adapter {
 	if maxOutput == 0 {
 		maxOutput = 50000

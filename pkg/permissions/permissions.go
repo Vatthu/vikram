@@ -8,7 +8,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/v1claw/levik/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/logger"
 )
 
 // Feature identifies a hardware or system capability.

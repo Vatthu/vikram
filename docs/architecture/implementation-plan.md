@@ -1,6 +1,6 @@
 # Implementation Plan
 
-This is LeVik's current implementation plan.
+This is Vikram's current implementation plan.
 
 It is intentionally flexible. The target architecture is stable, but the sequence can change when research or implementation exposes a better path.
 
@@ -80,7 +80,7 @@ Exit criteria:
 Goal:
 
 - connect Telegram approvals, blocker notifications, and phase summaries
-- make LeVik usable as an operator system, not only as code
+- make Vikram usable as an operator system, not only as code
 
 Exit criteria:
 

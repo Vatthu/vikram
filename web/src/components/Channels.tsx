@@ -36,7 +36,7 @@ export default function Channels() {
       </Group>
       <PasswordInput label="Bot Token" description="Leave blank to keep current token." value={tg.token || ''} onChange={e => setTg({ ...tg, token: e.currentTarget.value })} mb="sm" />
       <TextInput label="Proxy URL" value={tg.proxy||data.telegram.proxy||''} onChange={e => setTg({...tg,proxy:e.currentTarget.value})} mb="sm" />
-      <TextInput label="Pairing OTP" description="From 'levik telegram pairing' output" value={tg.otp || ''} onChange={e => setTg({ ...tg, otp: e.currentTarget.value })} mb="sm" />
+      <TextInput label="Pairing OTP" description="From 'vikram telegram pairing' output" value={tg.otp || ''} onChange={e => setTg({ ...tg, otp: e.currentTarget.value })} mb="sm" />
       <Group>
         <Button size="compact-sm" variant="light" color="green" onClick={() => pairTelegram(tg.otp)} disabled={!tg.otp}>Pair Device</Button>
         <Button onClick={() => save('telegram', { enabled: data.telegram.enabled, ...(tg.token ? { token: tg.token } : {}), proxy: tg.proxy || data.telegram.proxy || '' })}>Save</Button>

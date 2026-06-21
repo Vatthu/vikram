@@ -3,9 +3,9 @@
 ## Active Areas
 
 ```text
-levik/
+vikram/
 ├── cmd/
-│   └── levik/                  # Go CLI / daemon entrypoints
+│   └── vikram/                  # Go CLI / daemon entrypoints
 ├── pkg/                        # Go host-layer packages
 ├── services/
 │   └── orchestrator/           # Python orchestration service

@@ -12,19 +12,19 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 func TestParseGitHubRepo(t *testing.T) {
-	spec, err := parseGitHubRepo("amit-vikramaditya/levik-skills/weather")
+	spec, err := parseGitHubRepo("amit-vikramaditya/vikram-skills/weather")
 	if err != nil {
 		t.Fatalf("parseGitHubRepo returned error: %v", err)
 	}
-	if spec.Owner != "amit-vikramaditya" || spec.Repo != "levik-skills" || spec.Path != "weather" {
+	if spec.Owner != "amit-vikramaditya" || spec.Repo != "vikram-skills" || spec.Path != "weather" {
 		t.Fatalf("unexpected spec: %+v", spec)
 	}
 
-	urlSpec, err := parseGitHubRepo("https://github.com/amit-vikramaditya/levik-skills/weather")
+	urlSpec, err := parseGitHubRepo("https://github.com/amit-vikramaditya/vikram-skills/weather")
 	if err != nil {
 		t.Fatalf("parseGitHubRepo returned error for URL: %v", err)
 	}

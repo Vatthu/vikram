@@ -1,4 +1,4 @@
-# LeVik
+# Vikram
 
 An autonomous AI engineering team that plans, implements, verifies, and reviews code on a dedicated machine. Go host layer for execution and safety. Python LangGraph orchestrator for workflow intelligence. Config-driven multi-agent team with per-role model assignment.
 
@@ -11,10 +11,10 @@ make run ARGS="agent -m 'your question'"  # Quick chat
 ```
 
 ```bash
-levik onboard       # Setup wizard
-levik doctor        # Health check
-levik agent         # Interactive chat
-levik gateway       # Start the full daemon
+vikram onboard       # Setup wizard
+vikram doctor        # Health check
+vikram agent         # Interactive chat
+vikram gateway       # Start the full daemon
 ```
 
 ## Architecture
@@ -81,7 +81,7 @@ DeepSeek, Mistral, NVIDIA, OpenAI, Anthropic, Google Vertex AI, Gemini, OpenRout
 ## Repository
 
 ```
-cmd/levik/          Go CLI entrypoints
+cmd/vikram/          Go CLI entrypoints
 pkg/                Go packages (agent, bus, providers, tools, orchestrator, ...)
 services/           Python orchestrator (LangGraph)
 docs/architecture/  Design documents and audit reports

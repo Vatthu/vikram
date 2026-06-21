@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/logger"
-	"github.com/v1claw/levik/pkg/pairing"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/pairing"
 )
 
 //go:embed templates/*
@@ -134,7 +134,7 @@ func (s *Server) SetOnAgentChange(fn AgentChangedFunc) {
 	s.onAgentChange = fn
 }
 
-// SetChatHandler wires the chat callback so the Web UI can talk to LeVik.
+// SetChatHandler wires the chat callback so the Web UI can talk to Vikram.
 func (s *Server) SetChatHandler(fn ChatFunc) {
 	s.chatHandler = fn
 }
@@ -172,18 +172,18 @@ func NewServer(cfg Config, appCfg *config.Config, cfgPath string) *Server {
 }
 
 func defaultOrchestratorSocket() string {
-	if socket := strings.TrimSpace(os.Getenv("LEVIK_ORCHESTRATOR_SOCKET")); socket != "" {
+	if socket := strings.TrimSpace(os.Getenv("VIKRAM_ORCHESTRATOR_SOCKET")); socket != "" {
 		return socket
 	}
-	return "/tmp/levik-orchestrator.sock"
+	return "/tmp/vikram-orchestrator.sock"
 }
 
 func findProjectRoot() string {
 	// Check common locations for the orchestrator directory
 	candidates := []string{
 		".",
-		os.Getenv("LEVIK_PROJECT_ROOT"),
-		filepath.Join(os.Getenv("HOME"), "projects", "levik"),
+		os.Getenv("VIKRAM_PROJECT_ROOT"),
+		filepath.Join(os.Getenv("HOME"), "projects", "vikram"),
 	}
 	for _, c := range candidates {
 		if c != "" {
@@ -351,7 +351,7 @@ func (s *Server) handleOrchStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.orchCmd = exec.Command(venvPython, "-m", "levik_orchestrator.main")
+	s.orchCmd = exec.Command(venvPython, "-m", "vikram_orchestrator.main")
 	s.orchCmd.Dir = orchDir
 	s.orchCmd.Stdout = os.Stdout
 	s.orchCmd.Stderr = os.Stderr

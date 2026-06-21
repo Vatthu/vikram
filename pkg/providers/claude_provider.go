@@ -7,7 +7,7 @@ import (
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
-	"github.com/v1claw/levik/pkg/auth"
+	"github.com/Vatthu/vikram/pkg/auth"
 )
 
 type ClaudeProvider struct {
@@ -200,7 +200,7 @@ func createClaudeTokenSource() func() (string, error) {
 			return "", fmt.Errorf("loading auth credentials: %w", err)
 		}
 		if cred == nil {
-			return "", fmt.Errorf("no credentials for anthropic. Run: levik auth login --provider anthropic")
+			return "", fmt.Errorf("no credentials for anthropic. Run: vikram auth login --provider anthropic")
 		}
 		return cred.AccessToken, nil
 	}

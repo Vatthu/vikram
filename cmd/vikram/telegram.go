@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/pairing"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/pairing"
 )
 
 func telegramCmd() {
@@ -27,7 +27,7 @@ func telegramCmd() {
 }
 
 func telegramHelp() {
-	fmt.Println("Usage: levik telegram <subcommand>")
+	fmt.Println("Usage: vikram telegram <subcommand>")
 	fmt.Println()
 	fmt.Println("Subcommands:")
 	fmt.Println("  pairing <otp>   Approve a pending Telegram pairing request")
@@ -36,8 +36,8 @@ func telegramHelp() {
 
 func telegramPairingCmd() {
 	if len(os.Args) < 4 {
-		fmt.Println("Usage: levik telegram pairing <otp>")
-		fmt.Println("       levik telegram pairing list")
+		fmt.Println("Usage: vikram telegram pairing <otp>")
+		fmt.Println("       vikram telegram pairing list")
 		return
 	}
 
@@ -54,7 +54,7 @@ func telegramPairingCmd() {
 		return
 	}
 	if !cfg.Channels.Telegram.Enabled || strings.TrimSpace(cfg.Channels.Telegram.Token) == "" {
-		fmt.Println("Telegram is not configured. Run `levik configure` or `levik onboard` first.")
+		fmt.Println("Telegram is not configured. Run `vikram configure` or `vikram onboard` first.")
 		return
 	}
 

@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 const defaultSmokeTimeout = 90 * time.Second
@@ -138,7 +138,7 @@ func smokeCmd() {
 		}
 	default:
 		fmt.Printf("Unknown smoke target: %s\n", target)
-		fmt.Println("Usage: levik smoke [orchestrator] [--keep-temp] [--timeout 90s]")
+		fmt.Println("Usage: vikram smoke [orchestrator] [--keep-temp] [--timeout 90s]")
 		os.Exit(1)
 	}
 }
@@ -185,7 +185,7 @@ func runOrchestratorSmoke(opts smokeOptions) error {
 		return fmt.Errorf("orchestrator venv is not ready at %s", venvPython)
 	}
 
-	tmpRoot, err := os.MkdirTemp("", "levik-smoke-*")
+	tmpRoot, err := os.MkdirTemp("", "vikram-smoke-*")
 	if err != nil {
 		return fmt.Errorf("create smoke workspace: %w", err)
 	}
@@ -239,11 +239,11 @@ func runOrchestratorSmoke(opts smokeOptions) error {
 		return attachSmokeContext(fmt.Errorf("write smoke config: %w", err), tmpRoot, logDir)
 	}
 
-	hostSocket := filepath.Join(runDir, "levikd.sock")
-	orchestratorSocket := filepath.Join(runDir, "levik-orchestrator.sock")
+	hostSocket := filepath.Join(runDir, "vikramd.sock")
+	orchestratorSocket := filepath.Join(runDir, "vikram-orchestrator.sock")
 	consoleAddr := fmt.Sprintf("127.0.0.1:%d", consolePort)
 	dashboardAddr := fmt.Sprintf("127.0.0.1:%d", dashboardPort)
-	consoleAPIKey := "levik-smoke-key"
+	consoleAPIKey := "vikram-smoke-key"
 
 	gatewayProc, err := startSmokeProcess(ctx, smokeProcessConfig{
 		projectRoot:        projectRoot,
@@ -306,13 +306,13 @@ func runOrchestratorSmoke(opts smokeOptions) error {
 			{
 				Path:      "README.md",
 				OldText:   "Initial note.\n",
-				NewText:   "Initial note.\nSmoked by LeVik.\n",
+				NewText:   "Initial note.\nSmoked by Vikram.\n",
 				Rationale: "Bounded documentation edit for smoke verification.",
 			},
 		},
 	}
 	var changedTask smokeTaskSession
-	if err := smokeUnixJSON(ctx, orchestratorClient, "http://levik-orchestrator/v1/tasks/"+submitResp.TaskID+"/changes", changeRequest, &changedTask); err != nil {
+	if err := smokeUnixJSON(ctx, orchestratorClient, "http://vikram-orchestrator/v1/tasks/"+submitResp.TaskID+"/changes", changeRequest, &changedTask); err != nil {
 		return attachSmokeContext(fmt.Errorf("apply bounded change: %w", err), tmpRoot, logDir)
 	}
 	if changedTask.Phase != "merge_ready" || changedTask.Status != "completed" {
@@ -323,7 +323,7 @@ func runOrchestratorSmoke(opts smokeOptions) error {
 	}
 
 	var finalTask smokeTaskSession
-	if err := smokeUnixJSON(ctx, orchestratorClient, "http://levik-orchestrator/v1/tasks/"+submitResp.TaskID, nil, &finalTask); err != nil {
+	if err := smokeUnixJSON(ctx, orchestratorClient, "http://vikram-orchestrator/v1/tasks/"+submitResp.TaskID, nil, &finalTask); err != nil {
 		return attachSmokeContext(fmt.Errorf("fetch final task: %w", err), tmpRoot, logDir)
 	}
 	if finalTask.Phase != "merge_ready" {
@@ -331,7 +331,7 @@ func runOrchestratorSmoke(opts smokeOptions) error {
 	}
 
 	var review smokeTaskReview
-	if err := smokeUnixJSON(ctx, orchestratorClient, "http://levik-orchestrator/v1/tasks/"+submitResp.TaskID+"/review", nil, &review); err != nil {
+	if err := smokeUnixJSON(ctx, orchestratorClient, "http://vikram-orchestrator/v1/tasks/"+submitResp.TaskID+"/review", nil, &review); err != nil {
 		return attachSmokeContext(fmt.Errorf("fetch review detail: %w", err), tmpRoot, logDir)
 	}
 	if review.ChangeArtifactPath == "" || review.MergeArtifactPath == "" {
@@ -341,7 +341,7 @@ func runOrchestratorSmoke(opts smokeOptions) error {
 		return attachSmokeContext(fmt.Errorf("expected archive email draft artifact preview"), tmpRoot, logDir)
 	}
 
-	changeArtifactURL := "http://levik-orchestrator/v1/tasks/" + submitResp.TaskID + "/artifacts/content?path=" + url.QueryEscape(review.ChangeArtifactPath)
+	changeArtifactURL := "http://vikram-orchestrator/v1/tasks/" + submitResp.TaskID + "/artifacts/content?path=" + url.QueryEscape(review.ChangeArtifactPath)
 	var changeArtifact smokeArtifactContent
 	if err := smokeUnixJSON(ctx, orchestratorClient, changeArtifactURL, nil, &changeArtifact); err != nil {
 		return attachSmokeContext(fmt.Errorf("read change artifact: %w", err), tmpRoot, logDir)
@@ -350,7 +350,7 @@ func runOrchestratorSmoke(opts smokeOptions) error {
 		return attachSmokeContext(fmt.Errorf("change artifact content missing heading"), tmpRoot, logDir)
 	}
 
-	mergeArtifactURL := "http://levik-orchestrator/v1/tasks/" + submitResp.TaskID + "/artifacts/content?path=" + url.QueryEscape(review.MergeArtifactPath)
+	mergeArtifactURL := "http://vikram-orchestrator/v1/tasks/" + submitResp.TaskID + "/artifacts/content?path=" + url.QueryEscape(review.MergeArtifactPath)
 	var mergeArtifact smokeArtifactContent
 	if err := smokeUnixJSON(ctx, orchestratorClient, mergeArtifactURL, nil, &mergeArtifact); err != nil {
 		return attachSmokeContext(fmt.Errorf("read merge artifact: %w", err), tmpRoot, logDir)
@@ -396,7 +396,7 @@ func runOrchestratorSmoke(opts smokeOptions) error {
 		},
 	}
 	var approvalTask smokeTaskSession
-	if err := smokeUnixJSON(ctx, orchestratorClient, "http://levik-orchestrator/v1/tasks/"+founderSubmit.TaskID+"/changes", founderChange, &approvalTask); err != nil {
+	if err := smokeUnixJSON(ctx, orchestratorClient, "http://vikram-orchestrator/v1/tasks/"+founderSubmit.TaskID+"/changes", founderChange, &approvalTask); err != nil {
 		return attachSmokeContext(fmt.Errorf("apply founder approval change: %w", err), tmpRoot, logDir)
 	}
 	if approvalTask.Phase != "founder_review_requested" || approvalTask.Status != "awaiting_approval" {
@@ -413,7 +413,7 @@ func runOrchestratorSmoke(opts smokeOptions) error {
 		ProposedEdits: map[string]interface{}{},
 	}
 	var resumedTask smokeTaskSession
-	if err := smokeUnixJSON(ctx, orchestratorClient, "http://levik-orchestrator/v1/tasks/"+founderSubmit.TaskID+"/resume", resumeRequest, &resumedTask); err != nil {
+	if err := smokeUnixJSON(ctx, orchestratorClient, "http://vikram-orchestrator/v1/tasks/"+founderSubmit.TaskID+"/resume", resumeRequest, &resumedTask); err != nil {
 		return attachSmokeContext(fmt.Errorf("resume founder approval task: %w", err), tmpRoot, logDir)
 	}
 	if resumedTask.Phase != "merge_ready" || resumedTask.Status != "completed" {
@@ -465,7 +465,7 @@ func smokeRepoPath(workspaceDir string) string {
 
 func detectProjectRoot() (string, error) {
 	candidates := []string{
-		strings.TrimSpace(os.Getenv("LEVIK_PROJECT_ROOT")),
+		strings.TrimSpace(os.Getenv("VIKRAM_PROJECT_ROOT")),
 		".",
 	}
 	if wd, err := os.Getwd(); err == nil {
@@ -492,7 +492,7 @@ func detectProjectRoot() (string, error) {
 			root = next
 		}
 	}
-	return "", fmt.Errorf("could not locate LeVik project root")
+	return "", fmt.Errorf("could not locate Vikram project root")
 }
 
 func startSmokeLLMStub() (string, func(context.Context) error, error) {
@@ -581,10 +581,10 @@ func createSmokeRepo(ctx context.Context, repoDir string) error {
 	if err := runSmokeGit(ctx, repoDir, "init"); err != nil {
 		return err
 	}
-	if err := runSmokeGit(ctx, repoDir, "config", "user.name", "LeVik Smoke"); err != nil {
+	if err := runSmokeGit(ctx, repoDir, "config", "user.name", "Vikram Smoke"); err != nil {
 		return err
 	}
-	if err := runSmokeGit(ctx, repoDir, "config", "user.email", "smoke@levik.local"); err != nil {
+	if err := runSmokeGit(ctx, repoDir, "config", "user.email", "smoke@vikram.local"); err != nil {
 		return err
 	}
 	if err := runSmokeGit(ctx, repoDir, "add", "README.md", "main.go"); err != nil {
@@ -651,13 +651,13 @@ func startSmokeProcess(ctx context.Context, cfg smokeProcessConfig) (*smokeProce
 	cmd.Stderr = logFile
 	cmd.Env = append(os.Environ(),
 		config.HomeEnvVar+"="+cfg.tempHome,
-		"LEVIK_PROJECT_ROOT="+cfg.projectRoot,
-		"LEVIK_HOST_SOCKET="+cfg.hostSocket,
-		"LEVIK_ORCHESTRATOR_SOCKET="+cfg.orchestratorSocket,
-		"LEVIK_CONSOLE_ENABLED=1",
-		"LEVIK_CONSOLE_ADDR="+cfg.consoleAddr,
-		"LEVIK_DASHBOARD_ADDR="+cfg.dashboardAddr,
-		"LEVIK_CONSOLE_API_KEY="+cfg.consoleAPIKey,
+		"VIKRAM_PROJECT_ROOT="+cfg.projectRoot,
+		"VIKRAM_HOST_SOCKET="+cfg.hostSocket,
+		"VIKRAM_ORCHESTRATOR_SOCKET="+cfg.orchestratorSocket,
+		"VIKRAM_CONSOLE_ENABLED=1",
+		"VIKRAM_CONSOLE_ADDR="+cfg.consoleAddr,
+		"VIKRAM_DASHBOARD_ADDR="+cfg.dashboardAddr,
+		"VIKRAM_CONSOLE_API_KEY="+cfg.consoleAPIKey,
 	)
 
 	if err := cmd.Start(); err != nil {
@@ -830,14 +830,14 @@ func attachSmokeContext(err error, tmpRoot, logDir string) error {
 }
 
 func consoleAddrFromEnv() string {
-	if addr := strings.TrimSpace(os.Getenv("LEVIK_CONSOLE_ADDR")); addr != "" {
+	if addr := strings.TrimSpace(os.Getenv("VIKRAM_CONSOLE_ADDR")); addr != "" {
 		return addr
 	}
 	return "127.0.0.1:18793"
 }
 
 func dashboardAddrFromEnv() string {
-	if addr := strings.TrimSpace(os.Getenv("LEVIK_DASHBOARD_ADDR")); addr != "" {
+	if addr := strings.TrimSpace(os.Getenv("VIKRAM_DASHBOARD_ADDR")); addr != "" {
 		return addr
 	}
 	return "127.0.0.1:18792"

@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/orchestrator"
-	"github.com/v1claw/levik/pkg/pairing"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/orchestrator"
+	"github.com/Vatthu/vikram/pkg/pairing"
 )
 
 func TestHandleAPITasksListsRealOrchestratorTasks(t *testing.T) {
@@ -112,8 +112,8 @@ func TestHandleAPITasksSubmitsFounderTaskToOrchestrator(t *testing.T) {
 
 	body := bytes.NewBufferString(`{
 		"task_id":"task-console-001",
-		"objective":"Run a real task through LeVik",
-		"repo_path":"/repos/levik",
+		"objective":"Run a real task through Vikram",
+		"repo_path":"/repos/vikram",
 		"default_branch":"main",
 		"allow_network":true
 	}`)
@@ -131,7 +131,7 @@ func TestHandleAPITasksSubmitsFounderTaskToOrchestrator(t *testing.T) {
 	if upstreamRequest.Source != "console" || upstreamRequest.RequestedBy != "founder" {
 		t.Fatalf("unexpected source/requested_by: %#v", upstreamRequest)
 	}
-	if upstreamRequest.Repo.Path != "/repos/levik" || upstreamRequest.Repo.DefaultBranch != "main" {
+	if upstreamRequest.Repo.Path != "/repos/vikram" || upstreamRequest.Repo.DefaultBranch != "main" {
 		t.Fatalf("unexpected repo: %#v", upstreamRequest.Repo)
 	}
 	if !upstreamRequest.Constraints.RequireHumanApproval {
@@ -289,7 +289,7 @@ func testConsoleServer(transport http.RoundTripper) *Server {
 	var baseURL string
 	if transport != nil {
 		client = &http.Client{Transport: transport}
-		baseURL = "http://levik-orchestrator.test"
+		baseURL = "http://vikram-orchestrator.test"
 		socketPath = "test-orchestrator.sock"
 	}
 	return &Server{

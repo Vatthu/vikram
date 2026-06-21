@@ -6,7 +6,7 @@ import (
 )
 
 func TestTelegramStoreCreateOrReuseAndApprove(t *testing.T) {
-	t.Setenv("LEVIK_HOME", t.TempDir())
+	t.Setenv("VIKRAM_HOME", t.TempDir())
 
 	store := NewTelegramStore()
 
@@ -53,7 +53,7 @@ func TestTelegramStoreCreateOrReuseAndApprove(t *testing.T) {
 
 func TestTelegramStoreAtUsesExplicitHome(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("LEVIK_HOME", t.TempDir())
+	t.Setenv("VIKRAM_HOME", t.TempDir())
 
 	store := NewTelegramStoreAt(home)
 	req, err := store.CreateOrReuse("123|alice", "123", "alice", "Alice")
@@ -71,7 +71,7 @@ func TestTelegramStoreAtUsesExplicitHome(t *testing.T) {
 }
 
 func TestTelegramStorePrunesExpiredRequests(t *testing.T) {
-	t.Setenv("LEVIK_HOME", t.TempDir())
+	t.Setenv("VIKRAM_HOME", t.TempDir())
 
 	store := NewTelegramStore()
 	if err := store.save([]TelegramRequest{

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/v1claw/levik/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/bus"
 )
 
 type Channel interface {

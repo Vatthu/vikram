@@ -3,18 +3,18 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.levik.team</string>
+    <string>com.vikram.team</string>
     <key>ProgramArguments</key>
     <array>
-        <string>__LEVIK_WRAPPER__</string>
+        <string>__VIKRAM_WRAPPER__</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>
-        <key>LEVIK_HOME</key>
-        <string>__LEVIK_HOME__</string>
+        <key>VIKRAM_HOME</key>
+        <string>__VIKRAM_HOME__</string>
     </dict>
     <key>WorkingDirectory</key>
-    <string>__LEVIK_HOME__</string>
+    <string>__VIKRAM_HOME__</string>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
@@ -25,9 +25,9 @@
         <false/>
     </dict>
     <key>StandardOutPath</key>
-    <string>__LEVIK_HOME__/logs/gateway.log</string>
+    <string>__VIKRAM_HOME__/logs/gateway.log</string>
     <key>StandardErrorPath</key>
-    <string>__LEVIK_HOME__/logs/gateway.err</string>
+    <string>__VIKRAM_HOME__/logs/gateway.err</string>
     <key>ProcessType</key>
     <string>Background</string>
     <key>Nice</key>

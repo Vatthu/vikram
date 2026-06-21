@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/v1claw/levik/pkg/providers"
+	"github.com/Vatthu/vikram/pkg/providers"
 )
 
 type Session struct {

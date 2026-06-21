@@ -92,7 +92,7 @@ ok "YAML files parsed successfully"
 
 info "Running installer smoke test..."
 INSTALL_DIR="$install_dir" bash ./install.sh --source >/dev/null
-"$install_dir/levik" version >/dev/null
+"$install_dir/vikram" version >/dev/null
 ok "Installer smoke test passed"
 
 info "Starting local OpenAI-compatible stub..."
@@ -137,9 +137,9 @@ fi
 ok "Local stub is reachable"
 
 info "Running end-to-end local-provider smoke test..."
-LEVIK_HOME="$home_dir" "$install_dir/levik" onboard --auto --provider vllm --api-base http://127.0.0.1:18080/v1 --model fake-model >/dev/null
-LEVIK_HOME="$home_dir" "$install_dir/levik" doctor >/dev/null
-LEVIK_HOME="$home_dir" "$install_dir/levik" agent -m "ping" >"$agent_log" 2>&1
+VIKRAM_HOME="$home_dir" "$install_dir/vikram" onboard --auto --provider vllm --api-base http://127.0.0.1:18080/v1 --model fake-model >/dev/null
+VIKRAM_HOME="$home_dir" "$install_dir/vikram" doctor >/dev/null
+VIKRAM_HOME="$home_dir" "$install_dir/vikram" agent -m "ping" >"$agent_log" 2>&1
 grep -q "stub-ok" "$agent_log"
 ok "Local-provider smoke test passed"
 

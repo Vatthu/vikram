@@ -8,7 +8,7 @@ build/
 *.dylib
 *.test
 *.out
-/levik
+/vikram
 /v1claw
 /v1claw-test
 

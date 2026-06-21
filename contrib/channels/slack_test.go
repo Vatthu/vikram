@@ -5,8 +5,8 @@ package channels
 import (
 	"testing"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 func TestParseSlackChatID(t *testing.T) {

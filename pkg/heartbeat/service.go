@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/constants"
-	"github.com/v1claw/levik/pkg/logger"
-	"github.com/v1claw/levik/pkg/proactive"
-	"github.com/v1claw/levik/pkg/state"
-	"github.com/v1claw/levik/pkg/tools"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/constants"
+	"github.com/Vatthu/vikram/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/proactive"
+	"github.com/Vatthu/vikram/pkg/state"
+	"github.com/Vatthu/vikram/pkg/tools"
 )
 
 const (

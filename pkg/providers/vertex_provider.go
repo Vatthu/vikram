@@ -1,4 +1,4 @@
-// LeVik — Vertex AI provider
+// Vikram — Vertex AI provider
 // Uses the native Google Cloud aiplatform generateContent API.
 // Auth: gcloud ADC (gcloud auth application-default login) or GOOGLE_APPLICATION_CREDENTIALS SA JSON.
 // Supports Google Search grounding when cfg.Providers.Vertex.Grounding == true.
@@ -26,7 +26,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/v1claw/levik/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/logger"
 )
 
 // VertexProvider implements LLMProvider against the Vertex AI REST API.

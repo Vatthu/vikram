@@ -1,6 +1,6 @@
 # Archive
 
-This directory contains material that is no longer on LeVik’s active path.
+This directory contains material that is no longer on Vikram’s active path.
 
 ## Contents
 

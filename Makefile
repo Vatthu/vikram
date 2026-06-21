@@ -1,7 +1,7 @@
 .PHONY: all build install uninstall clean help test release-check
 
 # Build variables
-BINARY_NAME=levik
+BINARY_NAME=vikram
 BUILD_DIR=build
 CMD_DIR=cmd/$(BINARY_NAME)
 MAIN_GO=$(CMD_DIR)/main.go
@@ -23,8 +23,8 @@ INSTALL_BIN_DIR=$(INSTALL_PREFIX)/bin
 INSTALL_MAN_DIR=$(INSTALL_PREFIX)/share/man/man1
 
 # Workspace and Skills
-LEVIK_HOME?=$(HOME)/.levik
-WORKSPACE_DIR?=$(LEVIK_HOME)/workspace
+VIKRAM_HOME?=$(HOME)/.vikram
+WORKSPACE_DIR?=$(VIKRAM_HOME)/workspace
 WORKSPACE_SKILLS_DIR=$(WORKSPACE_DIR)/skills
 BUILTIN_SKILLS_DIR=$(CURDIR)/skills
 
@@ -81,7 +81,7 @@ all: build
 generate:
 	@echo "No generated assets required"
 
-## build: Build the levik binary for current platform
+## build: Build the vikram binary for current platform
 build:
 	@echo "Building $(BINARY_NAME) for $(PLATFORM)/$(ARCH)..."
 	@mkdir -p $(BUILD_DIR)
@@ -89,7 +89,7 @@ build:
 	@echo "Build complete: $(BINARY_PATH)"
 	@ln -sf $(BINARY_NAME)-$(PLATFORM)-$(ARCH) $(BUILD_DIR)/$(BINARY_NAME)
 
-## build-all: Build levik for all platforms
+## build-all: Build vikram for all platforms
 build-all:
 	@echo "Building for multiple platforms..."
 	@mkdir -p $(BUILD_DIR)
@@ -101,7 +101,7 @@ build-all:
 	GOOS=windows GOARCH=amd64 $(GO) build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe ./$(CMD_DIR)
 	@echo "All builds complete"
 
-## install: Install levik to system and copy builtin skills
+## install: Install vikram to system and copy builtin skills
 install: build
 	@echo "Installing $(BINARY_NAME)..."
 	@mkdir -p $(INSTALL_BIN_DIR)
@@ -110,7 +110,7 @@ install: build
 	@echo "Installed binary to $(INSTALL_BIN_DIR)/$(BINARY_NAME)"
 	@echo "Installation complete!"
 
-## uninstall: Remove levik from system
+## uninstall: Remove vikram from system
 uninstall:
 	@echo "Uninstalling $(BINARY_NAME)..."
 	@rm -f $(INSTALL_BIN_DIR)/$(BINARY_NAME)
@@ -118,11 +118,11 @@ uninstall:
 	@echo "Note: Only the executable file has been deleted."
 	@echo "If you need to delete all configurations (config.json, workspace, etc.), run 'make uninstall-all'"
 
-## uninstall-all: Remove levik and all data
+## uninstall-all: Remove vikram and all data
 uninstall-all:
 	@echo "Removing workspace and skills..."
-	@rm -rf $(LEVIK_HOME)
-	@echo "Removed workspace: $(LEVIK_HOME)"
+	@rm -rf $(VIKRAM_HOME)
+	@echo "Removed workspace: $(VIKRAM_HOME)"
 	@echo "Complete uninstallation done!"
 
 ## clean: Remove build artifacts
@@ -160,13 +160,13 @@ check: deps fmt vet test
 release-check:
 	@./scripts/release_check.sh
 
-## run: Build and run levik
+## run: Build and run vikram
 run: build
 	@$(BUILD_DIR)/$(BINARY_NAME) $(ARGS)
 
 ## help: Show this help message
 help:
-	@echo "levik Makefile"
+	@echo "vikram Makefile"
 	@echo ""
 	@echo "Usage:"
 	@echo "  make [target]"
@@ -182,7 +182,7 @@ help:
 	@echo ""
 	@echo "Environment Variables:"
 	@echo "  INSTALL_PREFIX          # Installation prefix (default: ~/.local)"
-	@echo "  LEVIK_HOME            # App home directory (default: $(LEVIK_HOME))"
+	@echo "  VIKRAM_HOME            # App home directory (default: $(VIKRAM_HOME))"
 	@echo "  WORKSPACE_DIR           # Workspace directory (default: $(WORKSPACE_DIR))"
 	@echo "  VERSION                 # Version string (default: git describe)"
 	@echo ""

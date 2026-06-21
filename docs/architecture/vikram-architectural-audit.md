@@ -1,4 +1,4 @@
-# LeVik Architectural Audit — Second-Pass Verified
+# Vikram Architectural Audit — Second-Pass Verified
 
 ## Classification Legend
 
@@ -10,11 +10,11 @@
 
 ## Part 1 — Claim Extraction & Verification
 
-### CLAIM-01: LeVik is a modular monolith with distributed orchestration layer
+### CLAIM-01: Vikram is a modular monolith with distributed orchestration layer
 
 **Classification:** [V] VERIFIED
 
-**Evidence:** `cmd/levik/main.go` lines 1649-2146 — single `gatewayCmd()` function starts 12+ subsystems as goroutines: agentLoop (line 1842), channelManager (line 1830), cronService (line 1855), heartbeatService (line 1860), eventRouter (line 1848), jobQueue (line 1852), apiServer (line 1992), healthServer (line 2015), dashboard (line 2027), console (line 2081), deviceRegistry (line 1791), hostServer (line 1736). Python orchestrator is a separate process (`services/orchestrator/`), communicating over Unix socket (line 1735: `hostSocket := orchestratorHostSocketPath()`).
+**Evidence:** `cmd/vikram/main.go` lines 1649-2146 — single `gatewayCmd()` function starts 12+ subsystems as goroutines: agentLoop (line 1842), channelManager (line 1830), cronService (line 1855), heartbeatService (line 1860), eventRouter (line 1848), jobQueue (line 1852), apiServer (line 1992), healthServer (line 2015), dashboard (line 2027), console (line 2081), deviceRegistry (line 1791), hostServer (line 1736). Python orchestrator is a separate process (`services/orchestrator/`), communicating over Unix socket (line 1735: `hostSocket := orchestratorHostSocketPath()`).
 
 **Reasoning:** All subsystems initialized and started in one function = monolith. Python process is out-of-process = distributed extension.
 
@@ -38,7 +38,7 @@
 - Layer 1 (lint): `POST /v1/repos/discover-lint` (server.go line 1079), `POST /v1/repos/run-lint` (line 1114), `discoverLintCommands()` (detects go vet, ruff, flake8, eslint, clippy per runtime)
 - Layer 2 (test): `POST /v1/repos/discover-verification` (existing, line 99), `run_verification` in workflow.py (line ~855) — runs test commands, checks exit codes
 - Layer 3 (LLM judge): `POST /v1/review/change` (server.go line 108 handler), calls `ReviewFunc` callback wired in `callReviewer()` in main.go (line ~2950), uses reviewer model different from implementer
-- Integration: All three feed into `decide_approval_policy()` in `services/orchestrator/src/levik_orchestrator/policy.py` — lint failure → critical, CHANGES_REQUESTED → founder_review, REJECT → stop
+- Integration: All three feed into `decide_approval_policy()` in `services/orchestrator/src/vikram_orchestrator/policy.py` — lint failure → critical, CHANGES_REQUESTED → founder_review, REJECT → stop
 
 **Reasoning:** All three layers exist as code. VERIFIED.
 
@@ -48,7 +48,7 @@
 
 **Classification:** [V] VERIFIED
 
-**Evidence:** `services/orchestrator/src/levik_orchestrator/workflow.py` lines 658-723 — `grill_spec()` node. Round loop (1 to `max_rounds=3`): Devil's Advocate (role "reviewer") attacks plan via `agent_think()`, then lead revises. CONCEDE detection (line 690). Edge: `agent_plan → grill_spec → write_initial_plan` (lines 1740-1741). Minimum 2 rounds enforced (loop goes 1..3 before checking CONCEDE).
+**Evidence:** `services/orchestrator/src/vikram_orchestrator/workflow.py` lines 658-723 — `grill_spec()` node. Round loop (1 to `max_rounds=3`): Devil's Advocate (role "reviewer") attacks plan via `agent_think()`, then lead revises. CONCEDE detection (line 690). Edge: `agent_plan → grill_spec → write_initial_plan` (lines 1740-1741). Minimum 2 rounds enforced (loop goes 1..3 before checking CONCEDE).
 
 **Reasoning:** Direct code evidence. VERIFIED.
 
@@ -58,7 +58,7 @@
 
 **Classification:** [V] VERIFIED
 
-**Evidence:** `ensureSnapshot()` at server.go line 1023: `git stash push -m "levik-txn-{taskID}"` before first file edit. Called in `handleWriteFile` (line 596) and `handleReplaceFile` (line 660). `handleRollbackWorktree()` at line 908: finds stash by ref, `git stash pop` to restore. `founder_reject` in workflow.py calls `host_client.rollback_worktree()`.
+**Evidence:** `ensureSnapshot()` at server.go line 1023: `git stash push -m "vikram-txn-{taskID}"` before first file edit. Called in `handleWriteFile` (line 596) and `handleReplaceFile` (line 660). `handleRollbackWorktree()` at line 908: finds stash by ref, `git stash pop` to restore. `founder_reject` in workflow.py calls `host_client.rollback_worktree()`.
 
 **Reasoning:** Direct code evidence. VERIFIED.
 
@@ -132,7 +132,7 @@ Applied in `handleExec` at line 847. Working directory injected at line 849.
 
 **Classification:** [V] VERIFIED
 
-**Evidence:** `services/orchestrator/src/levik_orchestrator/workflow.py` lines 442-447: `SqliteSaver(checkpoint_conn)` with `sqlite3.connect(checkpoint_path)`. Graph compiled at line 1767: `builder.compile(checkpointer=checkpointer)`. Thread-based: each `task_id` is a `thread_id` in `apply_change_request()` (line 1783).
+**Evidence:** `services/orchestrator/src/vikram_orchestrator/workflow.py` lines 442-447: `SqliteSaver(checkpoint_conn)` with `sqlite3.connect(checkpoint_path)`. Graph compiled at line 1767: `builder.compile(checkpointer=checkpointer)`. Thread-based: each `task_id` is a `thread_id` in `apply_change_request()` (line 1783).
 
 **Reasoning:** Direct code evidence. VERIFIED.
 
@@ -182,7 +182,7 @@ Applied in `handleExec` at line 847. Working directory injected at line 849.
 
 **Classification:** [V] VERIFIED
 
-**Evidence:** File `contrib/com.levik.team.plist` exists (1142 bytes). Install script at `contrib/install-daemon.sh`. Plist configures KeepAlive on crash, RunAtLoad, log paths.
+**Evidence:** File `contrib/com.vikram.team.plist` exists (1142 bytes). Install script at `contrib/install-daemon.sh`. Plist configures KeepAlive on crash, RunAtLoad, log paths.
 
 **Reasoning:** Direct file evidence. VERIFIED.
 
@@ -192,7 +192,7 @@ Applied in `handleExec` at line 847. Working directory injected at line 849.
 
 **Classification:** [V] VERIFIED
 
-**Evidence:** Go SOP: `pkg/proactive/sop/sop.go` — sequential Plan→Code→Test→Review with `RunToolLoop()`. Python orchestrator: `services/orchestrator/src/levik_orchestrator/workflow.py` — 31-node LangGraph state machine. Unification at sop.go line ~62: `orchHealthOK()` checks `/tmp/levik-orchestrator.sock`, delegates if reachable.
+**Evidence:** Go SOP: `pkg/proactive/sop/sop.go` — sequential Plan→Code→Test→Review with `RunToolLoop()`. Python orchestrator: `services/orchestrator/src/vikram_orchestrator/workflow.py` — 31-node LangGraph state machine. Unification at sop.go line ~62: `orchHealthOK()` checks `/tmp/vikram-orchestrator.sock`, delegates if reachable.
 
 **Reasoning:** Two separate codebases, separate execution models. The health check delegation is the only bridge. VERIFIED.
 
@@ -228,13 +228,13 @@ Applied in `handleExec` at line 847. Working directory injected at line 849.
 
 ---
 
-### CLAIM-22: "LeVik ranks #1 in safety architecture among compared frameworks"
+### CLAIM-22: "Vikram ranks #1 in safety architecture among compared frameworks"
 
 **Classification:** [S] SPECULATIVE
 
-**Evidence:** LeVik has allowlist/deny-pattern security + path containment + hardware permission guards + Unix socket isolation (VERIFIED). SWE-agent has blocklist (VERIFIED from research/upstream/). MetaGPT has no built-in OS-level safety (VERIFIED from research notes). But I have not performed a comprehensive security audit of AutoGen, CrewAI, LangGraph's security features, or ADK's Vertex AI IAM at comparable depth. Cross-framework ranking requires equal-depth audit of ALL frameworks.
+**Evidence:** Vikram has allowlist/deny-pattern security + path containment + hardware permission guards + Unix socket isolation (VERIFIED). SWE-agent has blocklist (VERIFIED from research/upstream/). MetaGPT has no built-in OS-level safety (VERIFIED from research notes). But I have not performed a comprehensive security audit of AutoGen, CrewAI, LangGraph's security features, or ADK's Vertex AI IAM at comparable depth. Cross-framework ranking requires equal-depth audit of ALL frameworks.
 
-**Correction:** "LeVik implements OS-level tool execution safety (allowlist/deny patterns, path containment, hardware permission guards, Unix socket isolation) that exceeds the tool safety mechanisms observed in MetaGPT, SWE-agent, and OpenHands. Comparable depth analysis of AutoGen, CrewAI, and ADK's production security configurations was not performed."
+**Correction:** "Vikram implements OS-level tool execution safety (allowlist/deny patterns, path containment, hardware permission guards, Unix socket isolation) that exceeds the tool safety mechanisms observed in MetaGPT, SWE-agent, and OpenHands. Comparable depth analysis of AutoGen, CrewAI, and ADK's production security configurations was not performed."
 
 ---
 
@@ -242,9 +242,9 @@ Applied in `handleExec` at line 847. Working directory injected at line 849.
 
 **Classification:** [S] SPECULATIVE
 
-**Evidence:** Anthropic's Managed Agents blog post describes a harness/sandbox decoupling pattern. LeVik's Go host/Python orchestrator split over Unix socket is architecturally similar. But I did not audit Anthropic's internal code. I cannot verify that no other framework or company uses this pattern.
+**Evidence:** Anthropic's Managed Agents blog post describes a harness/sandbox decoupling pattern. Vikram's Go host/Python orchestrator split over Unix socket is architecturally similar. But I did not audit Anthropic's internal code. I cannot verify that no other framework or company uses this pattern.
 
-**Correction:** "LeVik's brain/hands decoupling via Unix-socket-isolated Go host is architecturally distinct from all studied open-source frameworks (MetaGPT, SWE-agent, OpenHands, Google ADK), which run agent logic and tool execution in the same process space. Anthropic has described a conceptually similar harness/sandbox pattern in public engineering posts, but internal implementation details are not publicly available."
+**Correction:** "Vikram's brain/hands decoupling via Unix-socket-isolated Go host is architecturally distinct from all studied open-source frameworks (MetaGPT, SWE-agent, OpenHands, Google ADK), which run agent logic and tool execution in the same process space. Anthropic has described a conceptually similar harness/sandbox pattern in public engineering posts, but internal implementation details are not publicly available."
 
 ---
 
@@ -252,7 +252,7 @@ Applied in `handleExec` at line 847. Working directory injected at line 849.
 
 **Classification:** [I] INFERRED
 
-**Evidence:** The launchd daemon config has never been deployed (the install script references `/Users/levik` which is not a real user). No production config files exist under `~/.levik/` with real API keys and channels configured for sustained operation. No log files from multi-day runs exist.
+**Evidence:** The launchd daemon config has never been deployed (the install script references `/Users/vikram` which is not a real user). No production config files exist under `~/.vikram/` with real API keys and channels configured for sustained operation. No log files from multi-day runs exist.
 
 **Correction:** "No evidence of sustained production deployment was found in the repository (no production configs, log files, or deployment artifacts). The launchd config and install script are present but reference placeholder paths."
 
@@ -262,9 +262,9 @@ Applied in `handleExec` at line 847. Working directory injected at line 849.
 
 **Classification:** [S] SPECULATIVE
 
-**Evidence:** No benchmark was run. The estimate is extrapolated from Anthropic's published prompt caching documentation (cache hits cost 10% of uncached tokens) and LeVik's system prompt size (~2000-4000 tokens). Actual savings depend on model, session length, and cache hit rate.
+**Evidence:** No benchmark was run. The estimate is extrapolated from Anthropic's published prompt caching documentation (cache hits cost 10% of uncached tokens) and Vikram's system prompt size (~2000-4000 tokens). Actual savings depend on model, session length, and cache hit rate.
 
-**Correction:** "Anthropic's prompt caching (cache hits cost ~10% of uncached tokens) is not utilized in LeVik. Implementing it for the system prompt and tool definitions could reduce per-request token costs for those components, but actual savings would require benchmarking."
+**Correction:** "Anthropic's prompt caching (cache hits cost ~10% of uncached tokens) is not utilized in Vikram. Implementing it for the system prompt and tool definitions could reduce per-request token costs for those components, but actual savings would require benchmarking."
 
 ---
 
@@ -274,7 +274,7 @@ Applied in `handleExec` at line 847. Working directory injected at line 849.
 2. **CLAIM-23 (Only Anthropic has brain/hands):** Cannot verify internal systems. Companies may have similar architectures not publicly documented.
 3. **CLAIM-25 (30-50% token reduction):** No benchmark. Extrapolated from documentation, not testing.
 4. **"10x-50x total reduction"** from original report: Four speculative optimizations stacked. No testing of any.
-5. **"LeVik is not a framework, it's a runtime":** This is a classification opinion, not a verifiable claim. Reasonable people could classify it as a framework.
+5. **"Vikram is not a framework, it's a runtime":** This is a classification opinion, not a verifiable claim. Reasonable people could classify it as a framework.
 6. **Production maturity ratings for other frameworks:** Inferred from documentation and blog posts, not deployment audits.
 7. **"Prompt caching wastes 30-50% per request":** The 30-50% figure assumes the system prompt is the dominant cost. For short sessions with few tool calls, history dominates.
 8. **"Semantic deduplication would save 10-20%":** Untested. Depends heavily on content patterns.
@@ -287,17 +287,17 @@ Applied in `handleExec` at line 847. Working directory injected at line 849.
 
 **Absolute rankings used:** "#1 in safety", "#1 in verification", "tied for #1 in agent abstraction", "last in production maturity"
 
-**Correction:** Replace with evidence-based comparative statements: "LeVik implements X, Y, Z. Among the frameworks studied (MetaGPT, SWE-agent, OpenHands, ADK, LangGraph, AutoGen, CrewAI), no other framework was observed to implement all three of X, Y, Z in combination."
+**Correction:** Replace with evidence-based comparative statements: "Vikram implements X, Y, Z. Among the frameworks studied (MetaGPT, SWE-agent, OpenHands, ADK, LangGraph, AutoGen, CrewAI), no other framework was observed to implement all three of X, Y, Z in combination."
 
 **Precise numbers used without benchmarks:** "30-50% reduction", "10x-50x", "14.5% overhead"
 
-**Correction:** The 14.5% overhead for transactional rollback is cited from the Fault-Tolerant Sandboxing paper (arXiv 2512.12806), not from LeVik benchmark data. Mark as external-source, not observed. Other percentages are speculative — remove or qualify.
+**Correction:** The 14.5% overhead for transactional rollback is cited from the Fault-Tolerant Sandboxing paper (arXiv 2512.12806), not from Vikram benchmark data. Mark as external-source, not observed. Other percentages are speculative — remove or qualify.
 
 ---
 
 ## Part 5 — Corrected Conclusions
 
-### What LeVik demonstrably is (VERIFIED)
+### What Vikram demonstrably is (VERIFIED)
 
 1. A Go daemon running 12+ in-process subsystems with a separate Python LangGraph orchestrator process, communicating over a Unix domain socket via HTTP+JSON.
 
@@ -311,7 +311,7 @@ Applied in `handleExec` at line 847. Working directory injected at line 849.
 
 6. Implementation of SWE-agent-style observation shaping (empty/truncated/normal templates with model guidance) and history compression (elision of observations older than 5 messages).
 
-### What LeVik demonstrably lacks (VERIFIED)
+### What Vikram demonstrably lacks (VERIFIED)
 
 1. No formal agent lifecycle abstraction (compare MetaGPT's observe/think/act/publish cycle or ADK's run_async with before/after callbacks).
 
@@ -333,7 +333,7 @@ Applied in `handleExec` at line 847. Working directory injected at line 849.
 
 2. Exact token savings from proposed optimizations — no benchmarks were run.
 
-3. Whether brain/hands decoupling is unique to LeVik and Anthropic — internal systems at other companies may use similar patterns.
+3. Whether brain/hands decoupling is unique to Vikram and Anthropic — internal systems at other companies may use similar patterns.
 
 ---
 
@@ -341,14 +341,14 @@ Applied in `handleExec` at line 847. Working directory injected at line 849.
 
 **Where the first report overreached:**
 - Rankings (#1, best, last) without equal-depth analysis of all compared systems. Once a system is measured against others, the measurement must be equally rigorous for all.
-- Extrapolation from research papers to LeVik-specific numbers (30-50% from Anthropic caching docs, 14.5% from Fault-Tolerant Sandboxing paper) without noting these are external-source estimates, not observed data.
+- Extrapolation from research papers to Vikram-specific numbers (30-50% from Anthropic caching docs, 14.5% from Fault-Tolerant Sandboxing paper) without noting these are external-source estimates, not observed data.
 - Classification opinion presented as fact ("runtime", not "framework") — these are interpretive, not verifiable.
 
 **Why LLMs overstate architecture conclusions:**
-Pattern-matching against known architectures (monolith, microservice, event-driven) creates an illusion of classification precision. The training data contains thousands of architecture descriptions, so the model is primed to produce confident-sounding categorizations. But real systems are messy — LeVik is a monolith, a distributed system, an event bus, and a state machine depending on which subsystem you examine. Forced classification loses this nuance.
+Pattern-matching against known architectures (monolith, microservice, event-driven) creates an illusion of classification precision. The training data contains thousands of architecture descriptions, so the model is primed to produce confident-sounding categorizations. But real systems are messy — Vikram is a monolith, a distributed system, an event bus, and a state machine depending on which subsystem you examine. Forced classification loses this nuance.
 
 **Reliable vs risky reasoning patterns:**
 - RELIABLE: Claims directly traceable to code (line numbers, function names, specific struct fields). All VERIFIED claims above.
 - RISKY: Comparative rankings, cross-framework statements, numeric projections, architectural taxonomies. These require evidence external to the codebase and were not equally rigorous.
-- MOST RELIABLE: "LeVik implements X" — existence claims are easy to verify.
-- MOST RISKY: "LeVik is better than Y at Z" — requires defining "better" and measuring both systems equally.
+- MOST RELIABLE: "Vikram implements X" — existence claims are easy to verify.
+- MOST RISKY: "Vikram is better than Y at Z" — requires defining "better" and measuring both systems equally.

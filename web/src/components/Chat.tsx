@@ -5,7 +5,7 @@ import { api } from '../api';
 
 interface Message { role: 'user' | 'assistant' | 'system'; content: string; ts: number }
 
-const chatStorageKey = 'levik.web.chat.messages';
+const chatStorageKey = 'vikram.web.chat.messages';
 
 export default function Chat({ wsLive }: { wsLive: boolean }) {
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -76,13 +76,13 @@ export default function Chat({ wsLive }: { wsLive: boolean }) {
     <Stack h="calc(100vh - 100px)">
       <Group justify="space-between" mb="xs">
         <Badge color={wsLive ? 'green' : 'red'} variant="dot" size="lg">{wsLive ? 'Connected' : 'Offline'}</Badge>
-        {thinking && <Badge color="blue" variant="light">LeVik is thinking...</Badge>}
+        {thinking && <Badge color="blue" variant="light">Vikram is thinking...</Badge>}
       </Group>
       <Card withBorder style={{ flex: 1, overflow: 'hidden' }} padding="md">
         <ScrollArea h="100%" viewportRef={viewport}>
           {messages.length === 0 && (
             <div style={{ textAlign: 'center', padding: 60, color: '#888' }}>
-              <div style={{ fontSize: 32, marginBottom: 16 }}>LeVik</div>
+              <div style={{ fontSize: 32, marginBottom: 16 }}>Vikram</div>
               <div style={{ fontSize: 14 }}>Your enterprise AI engineering team.<br/>Ask us anything: plan, implement, review, deploy.</div>
             </div>
           )}
@@ -97,7 +97,7 @@ export default function Chat({ wsLive }: { wsLive: boolean }) {
             >
               <div style={{ fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{m.content}</div>
               <div style={{ fontSize: 10, color: '#888', marginTop: 4 }}>
-                {m.role === 'user' ? 'You' : 'LeVik'} · {new Date(m.ts).toLocaleTimeString()}
+                {m.role === 'user' ? 'You' : 'Vikram'} · {new Date(m.ts).toLocaleTimeString()}
               </div>
             </Paper>
           ))}
@@ -109,7 +109,7 @@ export default function Chat({ wsLive }: { wsLive: boolean }) {
         </ScrollArea>
       </Card>
       <Group gap="sm">
-        <TextInput placeholder="Ask LeVik..." value={input} onChange={e => setInput(e.currentTarget.value)}
+        <TextInput placeholder="Ask Vikram..." value={input} onChange={e => setInput(e.currentTarget.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
           style={{ flex: 1 }} size="md" />
         <Button onClick={send} size="md" leftSection={<IconSend size={16} />}>Send</Button>

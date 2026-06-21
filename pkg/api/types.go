@@ -3,8 +3,8 @@ package api
 import (
 	"time"
 
-	"github.com/v1claw/levik/pkg/state"
-	devsync "github.com/v1claw/levik/pkg/sync"
+	"github.com/Vatthu/vikram/pkg/state"
+	devsync "github.com/Vatthu/vikram/pkg/sync"
 )
 
 // ChatRequest is the request body for POST /api/v1/chat.

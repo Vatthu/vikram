@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/v1claw/levik/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/bus"
 )
 
 // NotifyUserTool sends a project completion summary to the user's active channel.

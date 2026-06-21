@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import unittest
 
-from levik_orchestrator.models import AgentProfile
-from levik_orchestrator.team import TeamRouter
+from vikram_orchestrator.models import AgentProfile
+from vikram_orchestrator.team import TeamRouter
 
 
 class TeamRouterTests(unittest.TestCase):

@@ -4,8 +4,8 @@ import unittest
 
 import httpx
 
-from levik_orchestrator.host_client import HostClient
-from levik_orchestrator.models import FileReadRequest
+from vikram_orchestrator.host_client import HostClient
+from vikram_orchestrator.models import FileReadRequest
 
 
 class HostClientTests(unittest.TestCase):
@@ -17,10 +17,10 @@ class HostClientTests(unittest.TestCase):
             )
 
         client = HostClient.__new__(HostClient)
-        client.socket_path = "/tmp/levikd.sock"
+        client.socket_path = "/tmp/vikramd.sock"
         client._client = httpx.Client(
             transport=httpx.MockTransport(handler),
-            base_url="http://levikd",
+            base_url="http://vikramd",
         )
 
         with self.assertRaises(httpx.HTTPStatusError) as ctx:

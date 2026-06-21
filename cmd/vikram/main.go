@@ -1,4 +1,4 @@
-// LeVik — Enterprise AI Engineering Team
+// Vikram — Enterprise AI Engineering Team
 // License: MIT
 
 package main
@@ -28,34 +28,34 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/gorilla/websocket"
-	levikassets "github.com/v1claw/levik"
-	"github.com/v1claw/levik/pkg/agent"
-	"github.com/v1claw/levik/pkg/api"
-	"github.com/v1claw/levik/pkg/auth"
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/channels"
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/console"
-	"github.com/v1claw/levik/pkg/cron"
-	"github.com/v1claw/levik/pkg/dashboard"
-	"github.com/v1claw/levik/pkg/events"
-	"github.com/v1claw/levik/pkg/health"
-	"github.com/v1claw/levik/pkg/heartbeat"
-	"github.com/v1claw/levik/pkg/logger"
-	"github.com/v1claw/levik/pkg/mcp"
-	"github.com/v1claw/levik/pkg/orchestrator"
-	"github.com/v1claw/levik/pkg/orchestratorhost"
-	"github.com/v1claw/levik/pkg/permissions"
-	"github.com/v1claw/levik/pkg/proactive"
-	"github.com/v1claw/levik/pkg/providers"
-	"github.com/v1claw/levik/pkg/queue"
-	"github.com/v1claw/levik/pkg/skills"
-	"github.com/v1claw/levik/pkg/state"
-	devsync "github.com/v1claw/levik/pkg/sync"
-	"github.com/v1claw/levik/pkg/tools"
+	vikramassets "github.com/Vatthu/vikram"
+	"github.com/Vatthu/vikram/pkg/agent"
+	"github.com/Vatthu/vikram/pkg/api"
+	"github.com/Vatthu/vikram/pkg/auth"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/channels"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/console"
+	"github.com/Vatthu/vikram/pkg/cron"
+	"github.com/Vatthu/vikram/pkg/dashboard"
+	"github.com/Vatthu/vikram/pkg/events"
+	"github.com/Vatthu/vikram/pkg/health"
+	"github.com/Vatthu/vikram/pkg/heartbeat"
+	"github.com/Vatthu/vikram/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/mcp"
+	"github.com/Vatthu/vikram/pkg/orchestrator"
+	"github.com/Vatthu/vikram/pkg/orchestratorhost"
+	"github.com/Vatthu/vikram/pkg/permissions"
+	"github.com/Vatthu/vikram/pkg/proactive"
+	"github.com/Vatthu/vikram/pkg/providers"
+	"github.com/Vatthu/vikram/pkg/queue"
+	"github.com/Vatthu/vikram/pkg/skills"
+	"github.com/Vatthu/vikram/pkg/state"
+	devsync "github.com/Vatthu/vikram/pkg/sync"
+	"github.com/Vatthu/vikram/pkg/tools"
 )
 
-var embeddedFiles = levikassets.Workspace
+var embeddedFiles = vikramassets.Workspace
 
 var (
 	version   = "dev"
@@ -64,7 +64,7 @@ var (
 	goVersion string
 )
 
-const logo = "LeVik"
+const logo = "Vikram"
 
 // agentBudget tracks daily token usage per agent role and notifies (or
 // optionally stops) when a budget threshold is crossed.
@@ -203,7 +203,7 @@ func formatBuildInfo() (build string, goVer string) {
 }
 
 func printVersion() {
-	fmt.Printf("LeVik %s\n", formatVersion())
+	fmt.Printf("Vikram %s\n", formatVersion())
 	build, goVer := formatBuildInfo()
 	if build != "" {
 		fmt.Printf("  Build: %s\n", build)
@@ -305,7 +305,7 @@ func main() {
 			skillsInstallCmd(installer)
 		case "remove", "uninstall":
 			if len(os.Args) < 4 {
-				fmt.Println("Usage: levik skills remove <skill-name>")
+				fmt.Println("Usage: vikram skills remove <skill-name>")
 				return
 			}
 			skillsRemoveCmd(installer, os.Args[3])
@@ -317,7 +317,7 @@ func main() {
 			skillsSearchCmd(installer)
 		case "show":
 			if len(os.Args) < 4 {
-				fmt.Println("Usage: levik skills show <skill-name>")
+				fmt.Println("Usage: vikram skills show <skill-name>")
 				return
 			}
 			skillsShowCmd(skillsLoader, os.Args[3])
@@ -339,12 +339,12 @@ func main() {
 }
 
 func printHelp() {
-	fmt.Printf("LeVik v%s\n\n", version)
+	fmt.Printf("Vikram v%s\n\n", version)
 
 	fmt.Println(titleStyle.Render("  ✨ First time here?"))
-	fmt.Printf("     %s\n\n", stepStyle.Render("Run:  levik onboard   ← 2-minute setup wizard"))
+	fmt.Printf("     %s\n\n", stepStyle.Render("Run:  vikram onboard   ← 2-minute setup wizard"))
 
-	fmt.Println("Usage: levik <command>")
+	fmt.Println("Usage: vikram <command>")
 	fmt.Println()
 	fmt.Println("Getting started:")
 	fmt.Println("  onboard     Guided setup wizard — start here if you're new")
@@ -352,7 +352,7 @@ func printHelp() {
 	fmt.Println()
 	fmt.Println("Daily use:")
 	fmt.Println("  agent       Chat with your AI assistant")
-	fmt.Println("  client      Connect to a remote LeVik gateway")
+	fmt.Println("  client      Connect to a remote Vikram gateway")
 	fmt.Println("  gateway     Start V1 gateway")
 	fmt.Println("  status      Show V1 status")
 	fmt.Println()
@@ -365,7 +365,7 @@ func printHelp() {
 	fmt.Println("  smoke       Run operational smoke checks")
 	fmt.Println("  version     Show version information")
 	fmt.Println()
-	fmt.Printf("%s\n", stepStyle.Render("  Tip: run  levik agent -m \"your question\"  to ask something quickly."))
+	fmt.Printf("%s\n", stepStyle.Render("  Tip: run  vikram agent -m \"your question\"  to ask something quickly."))
 }
 
 func expandHome(path string) string {
@@ -640,7 +640,7 @@ func gatewayProviderConfigError(cfg *config.Config) error {
 		return nil
 	}
 	if hint == "" {
-		hint = "Run  levik onboard  or  levik configure → Brain  to finish setup."
+		hint = "Run  vikram onboard  or  vikram configure → Brain  to finish setup."
 	}
 	return fmt.Errorf("provider %q is not ready. %s", providerName, hint)
 }
@@ -929,7 +929,7 @@ func clientCmd() {
 	}
 
 	if server == "" {
-		fmt.Println("Usage: levik client --server <host[:port]|url> [options]")
+		fmt.Println("Usage: vikram client --server <host[:port]|url> [options]")
 		fmt.Println()
 		fmt.Println("Options:")
 		fmt.Println("  --server, -s    Gateway address or URL (required)")
@@ -940,11 +940,11 @@ func clientCmd() {
 		fmt.Println("  --debug, -d     Enable debug logging")
 		fmt.Println()
 		fmt.Println("Examples:")
-		fmt.Println("  levik client --server mypc.tail1234.ts.net:18791")
-		fmt.Println("  levik client --server https://gateway.example.com")
-		fmt.Println("  levik client --server 100.91.10.18:18791 --api-key mykey")
-		fmt.Println("  levik client --server https://example.com/v1 --advertise-host phone.local")
-		fmt.Println("  levik client -s 192.168.1.10:18791 -m \"Hello from my phone\"")
+		fmt.Println("  vikram client --server mypc.tail1234.ts.net:18791")
+		fmt.Println("  vikram client --server https://gateway.example.com")
+		fmt.Println("  vikram client --server 100.91.10.18:18791 --api-key mykey")
+		fmt.Println("  vikram client --server https://example.com/v1 --advertise-host phone.local")
+		fmt.Println("  vikram client -s 192.168.1.10:18791 -m \"Hello from my phone\"")
 		os.Exit(1)
 	}
 
@@ -979,7 +979,7 @@ func clientCmd() {
 	if err != nil {
 		fmt.Printf("Error connecting to gateway: %v\n", err)
 		fmt.Println("\nTroubleshooting:")
-		fmt.Println("  - Is the gateway running? (levik gateway)")
+		fmt.Println("  - Is the gateway running? (vikram gateway)")
 		fmt.Println("  - Is v1_api enabled in config? (\"v1_api\": {\"enabled\": true})")
 		fmt.Println("  - Is the address correct?")
 		fmt.Println("  - Check firewall / Tailscale connectivity")
@@ -1213,7 +1213,7 @@ func executeLocalCapability(capability, action string, params map[string]interfa
 	switch capability {
 	case "camera":
 		if isTermux {
-			outFile := filepath.Join(os.TempDir(), fmt.Sprintf("levik_cap_%d.jpg", time.Now().UnixNano()))
+			outFile := filepath.Join(os.TempDir(), fmt.Sprintf("vikram_cap_%d.jpg", time.Now().UnixNano()))
 			output, err := execCommand("termux-camera-photo", "-c", "0", outFile)
 			if err != nil {
 				return nil, fmt.Sprintf("camera capture failed: %v (%s)", err, output)
@@ -1232,7 +1232,7 @@ func executeLocalCapability(capability, action string, params map[string]interfa
 
 	case "microphone":
 		if isTermux {
-			outFile := filepath.Join(os.TempDir(), fmt.Sprintf("levik_mic_%d.wav", time.Now().UnixNano()))
+			outFile := filepath.Join(os.TempDir(), fmt.Sprintf("vikram_mic_%d.wav", time.Now().UnixNano()))
 			duration := 5 // Default to 5 seconds
 			if dStr, ok := params["duration"].(string); ok {
 				parsedDuration, err := strconv.Atoi(dStr)
@@ -1265,7 +1265,7 @@ func executeLocalCapability(capability, action string, params map[string]interfa
 
 	case "screen":
 		if isTermux {
-			outFile := filepath.Join(os.TempDir(), fmt.Sprintf("levik_screen_%d.png", time.Now().UnixNano()))
+			outFile := filepath.Join(os.TempDir(), fmt.Sprintf("vikram_screen_%d.png", time.Now().UnixNano()))
 			if _, err := execCommand("termux-screenshot", outFile); err != nil {
 				return nil, fmt.Sprintf("screenshot failed: %v", err)
 			}
@@ -1523,7 +1523,7 @@ func getAdvertisedHost(routeTarget string, override string) string {
 	if host := strings.TrimSpace(override); host != "" {
 		return host
 	}
-	if host := strings.TrimSpace(os.Getenv("LEVIK_ADVERTISE_HOST")); host != "" {
+	if host := strings.TrimSpace(os.Getenv("VIKRAM_ADVERTISE_HOST")); host != "" {
 		return host
 	}
 	if host := advertisedHostFromRoute(routeTarget); host != "" {
@@ -2082,12 +2082,12 @@ func gatewayCmd() {
 	}()
 	fmt.Printf("✓ Health endpoints available at http://%s:%d/health and /ready\n", cfg.Gateway.Host, cfg.Gateway.Port)
 
-	if os.Getenv("LEVIK_CONSOLE_ENABLED") == "1" {
+	if os.Getenv("VIKRAM_CONSOLE_ENABLED") == "1" {
 		// Management dashboard with team, config, and task views. This remains
 		// opt-in until the web control plane has production authentication.
 		dashboardAddr := dashboardAddrFromEnv()
 		consoleAddr := consoleAddrFromEnv()
-		dashCfg := dashboard.Config{Enabled: true, Addr: dashboardAddr, Title: "LeVik"}
+		dashCfg := dashboard.Config{Enabled: true, Addr: dashboardAddr, Title: "Vikram"}
 		dashSrv := dashboard.NewServer(dashCfg)
 		dashSrv.SetStatusProvider(func() dashboard.StatusData {
 			return dashboard.StatusData{
@@ -2141,7 +2141,7 @@ func gatewayCmd() {
 		}()
 		fmt.Printf("✓ Dashboard available at http://%s/manage\n", dashboardAddr)
 
-		consoleSrv := console.NewServer(console.Config{Enabled: true, Addr: consoleAddr, APIKey: os.Getenv("LEVIK_CONSOLE_API_KEY")}, cfg, getConfigPath())
+		consoleSrv := console.NewServer(console.Config{Enabled: true, Addr: consoleAddr, APIKey: os.Getenv("VIKRAM_CONSOLE_API_KEY")}, cfg, getConfigPath())
 		consoleSrv.SetOnAgentChange(func(action string, agentCfg config.AgentConfig) {
 			if action == "add" {
 				if agentCfg.Provider != "" && agentCfg.Model != "" {
@@ -2170,7 +2170,7 @@ func gatewayCmd() {
 				Channel: "web", SenderID: "founder", ChatID: "web-console",
 				Content: message, SessionKey: "web:web-console",
 			})
-			return "Queued for LeVik agent.", nil
+			return "Queued for Vikram agent.", nil
 		})
 		go func() {
 			sub := msgBus.SubscribeOutbound()
@@ -2279,10 +2279,10 @@ func validateGatewaySecurity(cfg *config.Config) error {
 }
 
 func orchestratorHostSocketPath() string {
-	if socketPath := strings.TrimSpace(os.Getenv("LEVIK_HOST_SOCKET")); socketPath != "" {
+	if socketPath := strings.TrimSpace(os.Getenv("VIKRAM_HOST_SOCKET")); socketPath != "" {
 		return socketPath
 	}
-	return "/tmp/levikd.sock"
+	return "/tmp/vikramd.sock"
 }
 
 func statusCmd() {
@@ -2432,11 +2432,11 @@ func authHelp() {
 	fmt.Println("  --device-code        Use device code flow (for headless environments)")
 	fmt.Println()
 	fmt.Println("Examples:")
-	fmt.Println("  levik auth login --provider openai")
-	fmt.Println("  levik auth login --provider openai --device-code")
-	fmt.Println("  levik auth login --provider anthropic")
-	fmt.Println("  levik auth logout --provider openai")
-	fmt.Println("  levik auth status")
+	fmt.Println("  vikram auth login --provider openai")
+	fmt.Println("  vikram auth login --provider openai --device-code")
+	fmt.Println("  vikram auth login --provider anthropic")
+	fmt.Println("  vikram auth logout --provider openai")
+	fmt.Println("  vikram auth status")
 }
 
 func authLoginCmd() {
@@ -2595,7 +2595,7 @@ func authStatusCmd() {
 
 	if len(store.Credentials) == 0 {
 		fmt.Println("No authenticated providers.")
-		fmt.Println("Run: levik auth login --provider <name>")
+		fmt.Println("Run: vikram auth login --provider <name>")
 		return
 	}
 
@@ -2681,7 +2681,7 @@ func cronCmd() {
 		cronAddCmd(cronStorePath)
 	case "remove":
 		if len(os.Args) < 4 {
-			fmt.Println("Usage: levik cron remove <job_id>")
+			fmt.Println("Usage: vikram cron remove <job_id>")
 			return
 		}
 		cronRemoveCmd(cronStorePath, os.Args[3])
@@ -2851,7 +2851,7 @@ func cronRemoveCmd(storePath, jobID string) {
 
 func cronEnableCmd(storePath string, disable bool) {
 	if len(os.Args) < 4 {
-		fmt.Println("Usage: levik cron enable/disable <job_id>")
+		fmt.Println("Usage: vikram cron enable/disable <job_id>")
 		return
 	}
 
@@ -2882,11 +2882,11 @@ func skillsHelp() {
 	fmt.Println("  show <name>             Show skill details")
 	fmt.Println()
 	fmt.Println("Examples:")
-	fmt.Println("  levik skills list")
-	fmt.Println("  levik skills install amit-vikramaditya/levik-skills/weather")
-	fmt.Println("  levik skills install-builtin")
-	fmt.Println("  levik skills list-builtin")
-	fmt.Println("  levik skills remove weather")
+	fmt.Println("  vikram skills list")
+	fmt.Println("  vikram skills install amit-vikramaditya/vikram-skills/weather")
+	fmt.Println("  vikram skills install-builtin")
+	fmt.Println("  vikram skills list-builtin")
+	fmt.Println("  vikram skills remove weather")
 }
 
 func skillsListCmd(loader *skills.SkillsLoader) {
@@ -2909,8 +2909,8 @@ func skillsListCmd(loader *skills.SkillsLoader) {
 
 func skillsInstallCmd(installer *skills.SkillInstaller) {
 	if len(os.Args) < 4 {
-		fmt.Println("Usage: levik skills install <github-repo>")
-		fmt.Println("Example: levik skills install amit-vikramaditya/levik-skills/weather")
+		fmt.Println("Usage: vikram skills install <github-repo>")
+		fmt.Println("Example: vikram skills install amit-vikramaditya/vikram-skills/weather")
 		return
 	}
 
@@ -2944,7 +2944,7 @@ func detectBuiltinSkillsDir(workspace string) string {
 		filepath.Join(workspace, "skills"),
 		config.GlobalSkillsDir(),
 		filepath.Join(".", "workspace", "skills"),
-		filepath.Join(".", "cmd", "levik", "workspace", "skills"),
+		filepath.Join(".", "cmd", "vikram", "workspace", "skills"),
 		filepath.Join(".", "skills"),
 	}
 
@@ -2996,7 +2996,7 @@ func skillsInstallBuiltinCmd(workspace string) {
 	builtinSkillsDir := detectBuiltinSkillsDir(workspace)
 	if builtinSkillsDir == "" {
 		fmt.Println("✗ No builtin skills directory found.")
-		fmt.Println("  Run `levik onboard` first, or execute from the source repository.")
+		fmt.Println("  Run `vikram onboard` first, or execute from the source repository.")
 		return
 	}
 
@@ -3298,7 +3298,7 @@ func sendTeamSummary(cfg *config.Config, msgBus *bus.MessageBus) {
 	}
 
 	var lines []string
-	lines = append(lines, "📊 LeVik Team Summary")
+	lines = append(lines, "📊 Vikram Team Summary")
 	lines = append(lines, "")
 	for _, a := range cfg.Agents.List {
 		role := a.Role

@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/v1claw/levik/pkg/events"
-	"github.com/v1claw/levik/pkg/logger"
-	devsync "github.com/v1claw/levik/pkg/sync"
+	"github.com/Vatthu/vikram/pkg/events"
+	"github.com/Vatthu/vikram/pkg/logger"
+	devsync "github.com/Vatthu/vikram/pkg/sync"
 )
 
 var upgrader = websocket.Upgrader{

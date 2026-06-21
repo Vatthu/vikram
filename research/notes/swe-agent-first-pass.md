@@ -26,9 +26,9 @@ The README also contains an important current-state note: the team says most new
 
 The paper backs the same thesis directly: interface design, not just model quality, materially changes software engineering agent performance.
 
-## Why It Matters For LeVik
+## Why It Matters For Vikram
 
-This is one of the highest-signal references for LeVik’s execution contract:
+This is one of the highest-signal references for Vikram’s execution contract:
 
 - a coding agent should operate through a deliberate interface
 - repo operations should be explicit
@@ -37,14 +37,14 @@ This is one of the highest-signal references for LeVik’s execution contract:
 ## First Extraction Decision
 
 - borrow the ACI mindset aggressively
-- adapt the concrete tool contracts into LeVik’s Go host executor and Python workflow steps
+- adapt the concrete tool contracts into Vikram’s Go host executor and Python workflow steps
 - reject benchmark-chasing complexity that does not improve founder-facing reliability
 
 ## Immediate Cautions
 
 - The upstream itself points to `mini-SWE-agent` as the simpler forward path, so we should inspect that next before borrowing too deeply from the larger system.
 - SWE-agent is more about agent-computer interaction than about multi-agent team management.
-- Its default assumptions are benchmark-heavy, while LeVik must optimize for real startup work and operator trust.
+- Its default assumptions are benchmark-heavy, while Vikram must optimize for real startup work and operator trust.
 
 ## Next Inspection Targets
 

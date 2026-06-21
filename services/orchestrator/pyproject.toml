@@ -1,7 +1,7 @@
 [project]
-name = "levik-orchestrator"
+name = "vikram-orchestrator"
 version = "0.1.0"
-description = "Python orchestration service for LeVik"
+description = "Python orchestration service for Vikram"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-levik-orchestrator = "levik_orchestrator.main:main"
+vikram-orchestrator = "vikram_orchestrator.main:main"
 
 [build-system]
 requires = ["setuptools>=80", "wheel"]
@@ -28,4 +28,4 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-levik_orchestrator = ["console/index.html", "console/static/*"]
+vikram_orchestrator = ["console/index.html", "console/static/*"]

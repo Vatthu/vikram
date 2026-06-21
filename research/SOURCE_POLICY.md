@@ -1,6 +1,6 @@
 # Source Policy
 
-LeVik will be built from clean, attributable inputs.
+Vikram will be built from clean, attributable inputs.
 
 This research area exists to turn upstream code, official docs, and papers into design decisions. It does not exist to justify copying code from questionable sources.
 

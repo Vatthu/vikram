@@ -1,6 +1,6 @@
-# LeVik Orchestrator
+# Vikram Orchestrator
 
-This service is the Python workflow brain for LeVik.
+This service is the Python workflow brain for Vikram.
 
 ## Responsibilities
 
@@ -66,8 +66,8 @@ Founder control now sits on top of that path through an explicit approval matrix
 
 - low-risk single-file documentation changes can auto-complete after successful verification
 - multi-file, code, configuration, automation, or failed-verification attempts are risk-classed and escalated
-- LeVik writes an approval artifact before pausing
-- LeVik can notify Telegram when `operator_channel` and `operator_chat_id` are provided
+- Vikram writes an approval artifact before pausing
+- Vikram can notify Telegram when `operator_channel` and `operator_chat_id` are provided
 - `POST /v1/tasks/{task_id}/resume` resumes the saved LangGraph thread with an approval decision
 - approval is not the final state anymore; approved attempts continue into post-change repo inspection and merge-readiness evaluation
 
@@ -105,8 +105,8 @@ Follow-up handling is now native too:
 
 Merge readiness now sits after approval:
 
-- LeVik re-inspects repo state after an approved or auto-approved attempt
-- LeVik writes a merge-readiness artifact with blockers, notes, and current git status
+- Vikram re-inspects repo state after an approved or auto-approved attempt
+- Vikram writes a merge-readiness artifact with blockers, notes, and current git status
 - `merge_ready` means the change has bounded edits, passing verification, detected changed files on the expected task branch, and no open follow-up
 - `merge_blocked` means the change is approved or executed but still not safe to hand off as merge-ready
 - merge handoff evidence now includes branch, HEAD, changed-file count, additions, deletions, short diff stat, and changed-file summaries

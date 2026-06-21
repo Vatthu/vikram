@@ -1,5 +1,5 @@
 # ============================================================
-# Stage 1: Build the levik binary
+# Stage 1: Build the vikram binary
 # ============================================================
 FROM golang:1.26.0-alpine AS builder
 
@@ -22,23 +22,23 @@ FROM alpine:3.23
 
 RUN apk add --no-cache ca-certificates tzdata curl
 
-RUN addgroup -S levik && adduser -S -G levik levik
+RUN addgroup -S vikram && adduser -S -G vikram vikram
 
-ENV LEVIK_HOME=/home/levik/.levik
+ENV VIKRAM_HOME=/home/vikram/.vikram
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -fsS http://localhost:18790/health >/dev/null || exit 1
 
 # Copy binary
-COPY --from=builder /src/build/levik /usr/local/bin/levik
+COPY --from=builder /src/build/vikram /usr/local/bin/vikram
 
-RUN mkdir -p /home/levik && chown -R levik:levik /home/levik
+RUN mkdir -p /home/vikram && chown -R vikram:vikram /home/vikram
 
-USER levik
+USER vikram
 
-# Create levik home directory
-RUN /usr/local/bin/levik onboard
+# Create vikram home directory
+RUN /usr/local/bin/vikram onboard
 
-ENTRYPOINT ["levik"]
+ENTRYPOINT ["vikram"]
 CMD ["gateway"]

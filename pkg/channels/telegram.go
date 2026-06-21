@@ -16,11 +16,11 @@ import (
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/logger"
-	"github.com/v1claw/levik/pkg/pairing"
-	"github.com/v1claw/levik/pkg/utils"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/pairing"
+	"github.com/Vatthu/vikram/pkg/utils"
 )
 
 type TelegramChannel struct {
@@ -128,7 +128,7 @@ func (c *TelegramChannel) Start(ctx context.Context) error {
 		fmt.Printf("Have the user send any message to the bot.\n")
 		fmt.Printf("The bot will reply with a 6-digit OTP.\n")
 		fmt.Printf("Approve it from this terminal with:\n")
-		fmt.Printf("  levik telegram pairing <otp>\n")
+		fmt.Printf("  vikram telegram pairing <otp>\n")
 		fmt.Printf("=======================================================\n\n")
 	}
 
@@ -444,7 +444,7 @@ func (c *TelegramChannel) handleMessage(ctx context.Context, message *telego.Mes
 		}
 
 		reply := fmt.Sprintf(
-			"🔒 Pairing required.\n\nYour OTP is: %s\n\nAsk the terminal owner to approve it with:\n`levik telegram pairing %s`",
+			"🔒 Pairing required.\n\nYour OTP is: %s\n\nAsk the terminal owner to approve it with:\n`vikram telegram pairing %s`",
 			req.OTP, req.OTP,
 		)
 		replyCtx, replyCancel := context.WithTimeout(ctx, telegramRequestTimeout)

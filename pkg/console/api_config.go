@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 // --- Dashboard ---

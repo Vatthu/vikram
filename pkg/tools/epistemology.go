@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/v1claw/levik/pkg/epistemology"
+	"github.com/Vatthu/vikram/pkg/epistemology"
 )
 
 // AssertFactTool allows the agent to store explicit logical facts.

@@ -1,4 +1,4 @@
-// LeVik — Azure OpenAI provider
+// Vikram — Azure OpenAI provider
 // Uses private Azure OpenAI endpoints with deployment-based model selection.
 // Auth: api-key header (or Azure AD — set auth_method: "azure_ad" and api_key to the AD token).
 

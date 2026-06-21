@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/providers"
-	"github.com/v1claw/levik/pkg/tools"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/providers"
+	"github.com/Vatthu/vikram/pkg/tools"
 )
 
 // mockProvider is a simple mock LLM provider for testing

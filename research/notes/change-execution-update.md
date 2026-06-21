@@ -2,7 +2,7 @@
 
 ## Problem
 
-LeVik had reached `change_ready`, but it still lacked an honest execution seam:
+Vikram had reached `change_ready`, but it still lacked an honest execution seam:
 
 - planning artifacts existed
 - verification candidates existed
@@ -26,7 +26,7 @@ That gap is where many systems either:
 
 Agentless reinforces that localization, repair, and validation should stay explicit and inspectable.
 
-For LeVik, that means:
+For Vikram, that means:
 
 - `change_ready` should remain a preparation state
 - actual execution should be a separate step with its own artifacts
@@ -35,7 +35,7 @@ For LeVik, that means:
 
 VRpilot reinforces the value of patch validation feedback as a first-class loop component.
 
-For LeVik, the practical v1 lesson is:
+For Vikram, the practical v1 lesson is:
 
 - after a bounded edit is applied, verification output must be captured as structured evidence
 - the system should not rely on the model “remembering” what happened
@@ -48,7 +48,7 @@ LangGraph’s persisted thread state and `update_state` pattern make it possible
 - later inject a change request into the saved thread
 - resume execution without rebuilding the whole workflow from scratch
 
-## LeVik Decision
+## Vikram Decision
 
 Borrow now:
 
@@ -68,7 +68,7 @@ Reject for now:
 - hiding verification inside the same opaque step as editing
 - claiming the orchestrator itself is already the autonomous patch generator
 
-## Concrete Impact On LeVik
+## Concrete Impact On Vikram
 
 This step justifies the addition of:
 
@@ -83,4 +83,4 @@ And the execution pattern:
 
 An enterprise-grade engineering team needs a recoverable execution seam between planning and validation.
 
-LeVik now has that seam.
+Vikram now has that seam.

@@ -1,6 +1,6 @@
-# LeVik Workspace Agent
+# Vikram Workspace Agent
 
-You are working inside a LeVik-managed workspace.
+You are working inside a Vikram-managed workspace.
 
 ## Mission
 

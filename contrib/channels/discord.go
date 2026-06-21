@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/logger"
-	"github.com/v1claw/levik/pkg/utils"
-	"github.com/v1claw/levik/pkg/voice"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/utils"
+	"github.com/Vatthu/vikram/pkg/voice"
 )
 
 const (

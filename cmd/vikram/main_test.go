@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/v1claw/levik/pkg/config"
+	"github.com/Vatthu/vikram/pkg/config"
 )
 
 func TestIsPublicHost(t *testing.T) {
@@ -121,14 +121,14 @@ func TestSelectAdvertisedIP_PrefersPrivateIPv6OverGlobalIPv6(t *testing.T) {
 }
 
 func TestGetAdvertisedHost_UsesOverrides(t *testing.T) {
-	t.Setenv("LEVIK_ADVERTISE_HOST", "env-device.local")
+	t.Setenv("VIKRAM_ADVERTISE_HOST", "env-device.local")
 	assert.Equal(t, "cli-device.local", getAdvertisedHost("", "cli-device.local"))
 	assert.Equal(t, "env-device.local", getAdvertisedHost("", ""))
 }
 
-func TestHistoryFilePath_UsesLeVikHome(t *testing.T) {
+func TestHistoryFilePath_UsesVikramHome(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("LEVIK_HOME", home)
+	t.Setenv("VIKRAM_HOME", home)
 
 	path := historyFilePath("agent.history")
 	assert.Equal(t, filepath.Join(home, "history", "agent.history"), path)

@@ -1,6 +1,6 @@
-# LeVik V1 Synthesis
+# Vikram V1 Synthesis
 
-This document turns the upstream research into concrete design constraints for LeVik v1.
+This document turns the upstream research into concrete design constraints for Vikram v1.
 
 ## Inputs We Are Actually Using
 
@@ -9,16 +9,16 @@ This document turns the upstream research into concrete design constraints for L
 - `MetaGPT`: SOP and artifact-driven team workflow
 - `OpenHands SDK`: conversation, workspace, and event boundaries
 
-## Core LeVik Shape
+## Core Vikram Shape
 
-LeVik v1 is:
+Vikram v1 is:
 
 - a Go host daemon
 - a Python orchestrator
 - a typed contract between them
 - a founder-operated engineering system
 
-LeVik v1 is not:
+Vikram v1 is not:
 
 - a Jarvis-style personal assistant
 - a chatty agent swarm
@@ -67,7 +67,7 @@ Minimum shared object families:
 
 ## Role Model
 
-LeVik should keep stable logical roles:
+Vikram should keep stable logical roles:
 
 - `planner`
 - `implementer`
@@ -79,7 +79,7 @@ But actual model assignment must remain dynamic and policy-driven.
 
 ## Artifact Model
 
-LeVik should pass artifacts, not conversations, across major phases.
+Vikram should pass artifacts, not conversations, across major phases.
 
 Minimum artifact families:
 
@@ -114,4 +114,4 @@ The first reliable execution loop should be:
 
 ## Immediate Next Build Implication
 
-Before more refactoring, LeVik should define the typed Go/Python execution contract in code and align it with the action, observation, artifact, and approval objects above.
+Before more refactoring, Vikram should define the typed Go/Python execution contract in code and align it with the action, observation, artifact, and approval objects above.

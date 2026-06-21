@@ -2,13 +2,13 @@
 
 ## Problem
 
-LeVik could prepare and execute a bounded change attempt, but it still lacked a native founder-control loop:
+Vikram could prepare and execute a bounded change attempt, but it still lacked a native founder-control loop:
 
 - no explicit pause point for risky or failed changes
 - no durable approval payload
 - no clean resume path for founder decisions
 
-Without that, LeVik would either:
+Without that, Vikram would either:
 
 - auto-complete changes too aggressively
 - bury approval in ad hoc chat behavior
@@ -25,7 +25,7 @@ Without that, LeVik would either:
 
 LangGraph interrupts provide a durable pause point for human review.
 
-The important behavior for LeVik is:
+The important behavior for Vikram is:
 
 - a workflow can stop at a review gate
 - the interrupt payload becomes the approval prompt
@@ -39,7 +39,7 @@ Persistence makes the approval flow operationally real:
 - the orchestrator process can survive restarts
 - the review decision can resume the same thread instead of reconstructing context
 
-## LeVik Decision
+## Vikram Decision
 
 Borrow now:
 
@@ -60,7 +60,7 @@ Reject for now:
 - auto-merging risky code changes without a founder gate
 - making Telegram a hard dependency for the approval model
 
-## Concrete Impact On LeVik
+## Concrete Impact On Vikram
 
 This step justifies:
 
@@ -72,4 +72,4 @@ This step justifies:
 
 An enterprise-grade engineering team needs a durable operator boundary.
 
-LeVik now has one for risky or failed change attempts.
+Vikram now has one for risky or failed change attempts.

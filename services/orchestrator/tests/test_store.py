@@ -5,8 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from levik_orchestrator.models import RepoRef, TaskConstraints, TaskSession
-from levik_orchestrator.store import TaskStore
+from vikram_orchestrator.models import RepoRef, TaskConstraints, TaskSession
+from vikram_orchestrator.store import TaskStore
 
 
 class TaskStoreTests(unittest.TestCase):
@@ -21,7 +21,7 @@ class TaskStoreTests(unittest.TestCase):
                     source="console",
                     requested_by="founder",
                     objective="Keep task state after restart",
-                    repo=RepoRef(path="/repos/levik", default_branch="main"),
+                    repo=RepoRef(path="/repos/vikram", default_branch="main"),
                     constraints=TaskConstraints(),
                     status="running",
                     phase="change_ready",

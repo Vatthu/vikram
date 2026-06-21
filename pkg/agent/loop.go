@@ -15,19 +15,19 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/v1claw/levik/pkg/bus"
-	"github.com/v1claw/levik/pkg/channels"
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/constants"
-	"github.com/v1claw/levik/pkg/epistemology"
-	"github.com/v1claw/levik/pkg/logger"
-	"github.com/v1claw/levik/pkg/proactive"
-	"github.com/v1claw/levik/pkg/proactive/sop"
-	"github.com/v1claw/levik/pkg/providers"
-	"github.com/v1claw/levik/pkg/session"
-	"github.com/v1claw/levik/pkg/state"
-	"github.com/v1claw/levik/pkg/tools"
-	"github.com/v1claw/levik/pkg/utils"
+	"github.com/Vatthu/vikram/pkg/bus"
+	"github.com/Vatthu/vikram/pkg/channels"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/constants"
+	"github.com/Vatthu/vikram/pkg/epistemology"
+	"github.com/Vatthu/vikram/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/proactive"
+	"github.com/Vatthu/vikram/pkg/proactive/sop"
+	"github.com/Vatthu/vikram/pkg/providers"
+	"github.com/Vatthu/vikram/pkg/session"
+	"github.com/Vatthu/vikram/pkg/state"
+	"github.com/Vatthu/vikram/pkg/tools"
+	"github.com/Vatthu/vikram/pkg/utils"
 )
 
 type AgentLoop struct {
@@ -937,7 +937,7 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 			loopArgsHash := loopDetector.Record(tc.Name, tc.Arguments)
 
 			// Create async callback for tools that implement AsyncTool
-			// NOTE: Following levik's design, async tools do NOT send results directly to users.
+			// NOTE: Following vikram's design, async tools do NOT send results directly to users.
 			// Instead, they notify the agent via PublishInbound, and the agent decides
 			// whether to forward the result to the user (in processSystemMessage).
 			asyncCallback := func(callbackCtx context.Context, result *tools.ToolResult) {
@@ -1330,7 +1330,7 @@ func (al *AgentLoop) handleCommand(ctx context.Context, msg bus.InboundMessage) 
 		switch args[0] {
 		case "models":
 			// TODO: Fetch available models dynamically if possible
-			return "Available models depend on your configured provider (e.g. gemini-3.1-pro-preview, claude-opus-4-6, gpt-5, llama-3.3-70b). Edit model in config.json or run: levik configure", true
+			return "Available models depend on your configured provider (e.g. gemini-3.1-pro-preview, claude-opus-4-6, gpt-5, llama-3.3-70b). Edit model in config.json or run: vikram configure", true
 		case "channels":
 			if al.channelManager == nil {
 				return "Channel manager not initialized", true

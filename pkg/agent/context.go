@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/epistemology"
-	"github.com/v1claw/levik/pkg/logger"
-	"github.com/v1claw/levik/pkg/providers"
-	"github.com/v1claw/levik/pkg/skills"
-	"github.com/v1claw/levik/pkg/tools"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/epistemology"
+	"github.com/Vatthu/vikram/pkg/logger"
+	"github.com/Vatthu/vikram/pkg/providers"
+	"github.com/Vatthu/vikram/pkg/skills"
+	"github.com/Vatthu/vikram/pkg/tools"
 )
 
 // systemPromptCacheTTL is how long the built system prompt is considered fresh.
@@ -61,7 +61,7 @@ func resolveBuiltinSkillsDir(workspace string) string {
 	if wd, err := os.Getwd(); err == nil {
 		candidates = append(candidates,
 			filepath.Join(wd, "workspace", "skills"),
-			filepath.Join(wd, "cmd", "levik", "workspace", "skills"),
+			filepath.Join(wd, "cmd", "vikram", "workspace", "skills"),
 			filepath.Join(wd, "skills"),
 		)
 	}

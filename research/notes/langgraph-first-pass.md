@@ -21,7 +21,7 @@
 - `libs/sdk-py`
 - `libs/sdk-js`
 
-That structure matches what we care about for LeVik: the runtime graph library, checkpoint backends, and surrounding operational tooling live as separate packages.
+That structure matches what we care about for Vikram: the runtime graph library, checkpoint backends, and surrounding operational tooling live as separate packages.
 
 ## What Problem It Solves Well
 
@@ -30,9 +30,9 @@ That structure matches what we care about for LeVik: the runtime graph library, 
 - explicit state transitions instead of free-form agent chat
 - human approval points through interrupts
 
-## Why It Matters For LeVik
+## Why It Matters For Vikram
 
-This is the clearest upstream reference for the Python orchestrator side of LeVik. It maps directly to:
+This is the clearest upstream reference for the Python orchestrator side of Vikram. It maps directly to:
 
 - task state machines
 - checkpointed execution
@@ -43,12 +43,12 @@ This is the clearest upstream reference for the Python orchestrator side of LeVi
 
 - adopt as a dependency, not as vendored code
 - study `libs/langgraph` and `libs/checkpoint-sqlite` first
-- ignore hosted ecosystem pieces unless they solve a concrete LeVik v1 problem
+- ignore hosted ecosystem pieces unless they solve a concrete Vikram v1 problem
 
 ## Immediate Cautions
 
 - LangGraph is infrastructure, not the full product architecture.
-- It does not replace LeVik’s Go host layer, Telegram gateway, secrets handling, or workspace policy.
+- It does not replace Vikram’s Go host layer, Telegram gateway, secrets handling, or workspace policy.
 - We should borrow workflow discipline from it, not inherit LangChain ecosystem assumptions blindly.
 
 ## Next Inspection Targets

@@ -2,16 +2,16 @@
 
 ## Position
 
-LeVik runs directly on a dedicated macOS machine.
+Vikram runs directly on a dedicated macOS machine.
 
-The control plane is not container-first. This avoids Docker-in-Docker and keeps LeVik close to the actual development environment it is managing.
+The control plane is not container-first. This avoids Docker-in-Docker and keeps Vikram close to the actual development environment it is managing.
 
 ## Process Model
 
-LeVik v1 uses two long-running local services:
+Vikram v1 uses two long-running local services:
 
-- `levikd` in Go
-- `levik-orchestrator` in Python
+- `vikramd` in Go
+- `vikram-orchestrator` in Python
 
 Optional worker processes may be launched by the host layer for:
 
@@ -43,7 +43,7 @@ Python owns:
 
 ## Storage Layout
 
-Suggested runtime layout under `~/.levik/`:
+Suggested runtime layout under `~/.vikram/`:
 
 - `run/` for sockets and pid files
 - `db/` for SQLite files
@@ -56,10 +56,10 @@ Suggested runtime layout under `~/.levik/`:
 The launchd installer now creates the production layout with private
 permissions:
 
-- `run/levikd.sock` for the Go host API
-- `run/levik-orchestrator.sock` for the Python orchestrator API
+- `run/vikramd.sock` for the Go host API
+- `run/vikram-orchestrator.sock` for the Python orchestrator API
 - `secrets/console-api-key` with `0600` permissions
-- `bin/levik-gateway-wrapper.sh` with `0700` permissions
+- `bin/vikram-gateway-wrapper.sh` with `0700` permissions
 - `logs/gateway.log` and `logs/gateway.err` for daemon output
 
 Install without starting the daemon:
@@ -76,7 +76,7 @@ contrib/install-daemon.sh
 
 The launchd plist runs the wrapper directly, not through `sh -c`. The wrapper
 sets stable socket paths and reads the console API key from the private secrets
-file before starting `levik gateway`.
+file before starting `vikram gateway`.
 
 ## Dedicated macOS User
 
@@ -88,20 +88,20 @@ For the production Mac mini, a dedicated macOS user is strongly recommended beca
 - easier audit boundaries
 - safer secret handling
 - fewer accidental repo and SSH crossovers
-- a clearer “this machine works for LeVik” operating model
+- a clearer “this machine works for Vikram” operating model
 
 Tradeoff:
 
 - file sharing becomes explicit
-- you need a handoff path when you want to inspect or move artifacts between your account and LeVik’s account
+- you need a handoff path when you want to inspect or move artifacts between your account and Vikram’s account
 
 Middle ground:
 
 - develop under your current user now
-- deploy under a dedicated `levik` macOS user on the production Mac mini
+- deploy under a dedicated `vikram` macOS user on the production Mac mini
 
 ## Docker Position
 
-LeVik itself is not run inside Docker.
+Vikram itself is not run inside Docker.
 
-If a target project needs Docker, LeVik may invoke Docker on the host as a normal project tool. That is acceptable because the project is using Docker, not LeVik nesting its own control plane inside Docker.
+If a target project needs Docker, Vikram may invoke Docker on the host as a normal project tool. That is acceptable because the project is using Docker, not Vikram nesting its own control plane inside Docker.

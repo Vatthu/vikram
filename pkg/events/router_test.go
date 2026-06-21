@@ -267,7 +267,7 @@ func TestWebhookSource(t *testing.T) {
 	// Simulate webhook push.
 	wh.Receive(NewEvent(KindWebhook, "github", PriorityHigh).
 		WithPayload("action", "push").
-		WithPayload("repo", "levik"))
+		WithPayload("repo", "vikram"))
 
 	select {
 	case event := <-ch:

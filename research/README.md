@@ -1,6 +1,6 @@
 # Research
 
-This directory is for study material that informs LeVik but does not become product code by default.
+This directory is for study material that informs Vikram but does not become product code by default.
 
 ## Structure
 
@@ -10,6 +10,6 @@ This directory is for study material that informs LeVik but does not become prod
 ## Rules
 
 - upstream code is reference material, not a dumping ground for copied implementation
-- any borrowed pattern should be rewritten to fit LeVik’s architecture
-- research notes should explain what we learned and whether it changes LeVik
+- any borrowed pattern should be rewritten to fit Vikram’s architecture
+- research notes should explain what we learned and whether it changes Vikram
 - source provenance rules live in `SOURCE_POLICY.md`

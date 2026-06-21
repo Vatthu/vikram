@@ -10,8 +10,8 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/v1claw/levik/pkg/config"
-	"github.com/v1claw/levik/pkg/providers"
+	"github.com/Vatthu/vikram/pkg/config"
+	"github.com/Vatthu/vikram/pkg/providers"
 )
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -50,10 +50,10 @@ func onboardCmd() {
 	}
 
 	// --auto mode: non-interactive setup via flags.
-	//   levik onboard --auto --provider gemini --api-key sk-...
-	//   levik onboard --auto --provider gemini --api-key sk-... --model gemini-3.1-pro-preview
-	//   levik onboard --auto --provider gemini --api-key sk-... --workspace /my/path
-	//   levik onboard --auto --provider gemini --api-key sk-... --skip-test
+	//   vikram onboard --auto --provider gemini --api-key sk-...
+	//   vikram onboard --auto --provider gemini --api-key sk-... --model gemini-3.1-pro-preview
+	//   vikram onboard --auto --provider gemini --api-key sk-... --workspace /my/path
+	//   vikram onboard --auto --provider gemini --api-key sk-... --skip-test
 	autoMode := false
 	for _, arg := range args {
 		if arg == "--auto" {
@@ -192,7 +192,7 @@ func runManualOnboarding(cfg *config.Config, configPath string) {
 		huh.NewGroup(
 			huh.NewConfirm().
 				Title("Do you want to configure messaging channels now?").
-				Description("You can always do this later with levik configure.").
+				Description("You can always do this later with vikram configure.").
 				Affirmative("Yes").
 				Negative("Later").
 				Value(&configureChannelsNow),
@@ -244,7 +244,7 @@ func onboardFounderAlerts(cfg *config.Config) {
 		huh.NewGroup(
 			huh.NewConfirm().
 				Title("Connect Telegram for founder approvals and blocker alerts?").
-				Description("You can skip this now and configure it later with levik configure.").
+				Description("You can skip this now and configure it later with vikram configure.").
 				Affirmative("Yes").
 				Negative("Later").
 				Value(&connectTelegram),
@@ -260,11 +260,11 @@ func onboardFounderAlerts(cfg *config.Config) {
 
 func printOnboardWelcome() {
 	welcome := `
- Welcome to LeVik 🤖
+ Welcome to Vikram 🤖
 
- LeVik is your personal AI assistant that runs on your own computer.
+ Vikram is your personal AI assistant that runs on your own computer.
  This wizard will get you to a working setup first, then you can tune
- the details later with  levik configure.
+ the details later with  vikram configure.
 
  Choose Quick Start for the fastest path.
  Choose Manual if you want to review security, gateway, and permissions now.
@@ -713,7 +713,7 @@ func onboardAPIKeyWithKey(cfg *config.Config, providerID, keyURL string) bool {
 					huh.NewSelect[string]().
 						Title("What would you like to do?").
 						Options(
-							huh.NewOption("Continue anyway  "+stepStyle.Render("(you can fix this later with: levik configure)"), "continue"),
+							huh.NewOption("Continue anyway  "+stepStyle.Render("(you can fix this later with: vikram configure)"), "continue"),
 							huh.NewOption("Quit and fix the key", "quit"),
 						).
 						Value(&skip),
@@ -721,7 +721,7 @@ func onboardAPIKeyWithKey(cfg *config.Config, providerID, keyURL string) bool {
 			)
 			_ = skipForm.Run()
 			if skip == "quit" {
-				fmt.Println("\nRun  levik onboard  again when you have the correct key.")
+				fmt.Println("\nRun  vikram onboard  again when you have the correct key.")
 				return false
 			}
 			// User chose to continue despite failure.
@@ -752,7 +752,7 @@ func onboardValidateProvider(cfg *config.Config, providerID string) bool {
 			huh.NewSelect[string]().
 				Title("What would you like to do?").
 				Options(
-					huh.NewOption("Continue anyway  "+stepStyle.Render("(you can fix this later with: levik configure)"), "continue"),
+					huh.NewOption("Continue anyway  "+stepStyle.Render("(you can fix this later with: vikram configure)"), "continue"),
 					huh.NewOption("Quit and fix it now", "quit"),
 				).
 				Value(&choice),
@@ -931,7 +931,7 @@ func onboardTools(cfg *config.Config) {
 		cfg.Tools.Web.DuckDuckGo.Enabled = true
 		fmt.Printf("  %s Web search enabled (DuckDuckGo)\n", successStyle.Render("✓"))
 	} else {
-		fmt.Printf("  %s Web search skipped  %s\n", warnStyle.Render("○"), stepStyle.Render("(enable later with: levik configure)"))
+		fmt.Printf("  %s Web search skipped  %s\n", warnStyle.Render("○"), stepStyle.Render("(enable later with: vikram configure)"))
 	}
 }
 
@@ -974,7 +974,7 @@ func onboardSaveAndTest(cfg *config.Config, configPath string, aiName string, us
 		fmt.Printf("  %s Live test failed: %s\n", warnStyle.Render("⚠"), simplifyProviderErrorFor(cfg.Agents.Defaults.Provider, testErr))
 		fmt.Printf("  %s %s\n", stepStyle.Render("→"), providerConnectionHint(cfg, cfg.Agents.Defaults.Provider))
 		fmt.Printf("  %s This is usually fine — your provider settings were already saved.\n", stepStyle.Render("→"))
-		fmt.Printf("  %s Run  levik doctor  to check your setup anytime.\n\n", stepStyle.Render("→"))
+		fmt.Printf("  %s Run  vikram doctor  to check your setup anytime.\n\n", stepStyle.Render("→"))
 		return true
 	}
 
@@ -1046,20 +1046,20 @@ func printOnboardSuccess(cfg *config.Config, configPath string, aiName string) {
 
  Start chatting now:
 
-   levik agent                         ← interactive chat
-   levik agent -m "your question"      ← single question
+   vikram agent                         ← interactive chat
+   vikram agent -m "your question"      ← single question
 
  Try these demo prompts:
 
-   levik agent -m "Who are you and what can you do?"
-   levik agent -m "Search the web for today's top AI news"
-   levik agent -m "Create a file called hello.txt saying Hello World"
+   vikram agent -m "Who are you and what can you do?"
+   vikram agent -m "Search the web for today's top AI news"
+   vikram agent -m "Create a file called hello.txt saying Hello World"
 
  Useful commands:
 
-   levik doctor      ← check that everything is working
-   levik configure   ← change settings, add channels (Telegram, Discord)
-   levik skills list ← see available skills
+   vikram doctor      ← check that everything is working
+   vikram configure   ← change settings, add channels (Telegram, Discord)
+   vikram skills list ← see available skills
 `,
 		headline,
 	)
@@ -1082,15 +1082,15 @@ func printOnboardSuccess(cfg *config.Config, configPath string, aiName string) {
 			names = append(names, worker.DisplayName)
 		}
 		fmt.Printf("  Local AI workers detected: %s\n", stepStyle.Render(strings.Join(names, ", ")))
-		fmt.Printf("  These are auto-available for delegated/subagent tasks while LeVik is running.\n\n")
+		fmt.Printf("  These are auto-available for delegated/subagent tasks while Vikram is running.\n\n")
 	}
 
 	if channels := enabledChannelNames(cfg); len(channels) > 0 {
 		fmt.Printf("  Channels configured: %s\n", stepStyle.Render(strings.Join(channels, ", ")))
-		fmt.Printf("  Keep them online with: %s\n\n", stepStyle.Render("levik gateway"))
+		fmt.Printf("  Keep them online with: %s\n\n", stepStyle.Render("vikram gateway"))
 		if cfg.Channels.Telegram.Enabled && len(cfg.Channels.Telegram.AllowFrom) == 0 {
 			fmt.Printf("  Telegram first-use flow: user messages the bot, bot shows an OTP, then approve it with:\n")
-			fmt.Printf("    %s\n\n", stepStyle.Render("levik telegram pairing <otp>"))
+			fmt.Printf("    %s\n\n", stepStyle.Render("vikram telegram pairing <otp>"))
 		}
 	}
 
@@ -1098,7 +1098,7 @@ func printOnboardSuccess(cfg *config.Config, configPath string, aiName string) {
 		fmt.Printf("  Multi-device API: %s  (key: %s)\n",
 			stepStyle.Render(cfg.V1API.Addr), stepStyle.Render(maskKey(cfg.V1API.APIKey)))
 		fmt.Printf("  Example client: %s\n\n",
-			stepStyle.Render(fmt.Sprintf("levik client -s YOUR_GATEWAY_HOST%s -k %s", cfg.V1API.Addr, cfg.V1API.APIKey)))
+			stepStyle.Render(fmt.Sprintf("vikram client -s YOUR_GATEWAY_HOST%s -k %s", cfg.V1API.Addr, cfg.V1API.APIKey)))
 	}
 }
 
@@ -1178,7 +1178,7 @@ func wrapText(s string, maxWidth int, indent string) string {
 //	--api-base <url>    Optional. Useful for Ollama, vLLM, and custom endpoints.
 //	--connect-mode <m>  Optional. Used by github_copilot (`stdio` or `grpc`).
 //	--model    <model> Optional. Defaults to the first model for the provider.
-//	--workspace <path> Optional. Defaults to the standard LeVik workspace path.
+//	--workspace <path> Optional. Defaults to the standard Vikram workspace path.
 //	--skip-test        Optional. Skip live provider validation and save config immediately.
 func onboardAuto(args []string) {
 	providerID := flagValue(args, "--provider")
@@ -1193,7 +1193,7 @@ func onboardAuto(args []string) {
 	if providerID == "" {
 		fmt.Printf("  %s --provider is required for --auto mode.\n\n", errorStyle.Render("✗"))
 		fmt.Printf("  Example:\n")
-		fmt.Printf("    levik onboard --auto --provider gemini --api-key YOUR_KEY\n\n")
+		fmt.Printf("    vikram onboard --auto --provider gemini --api-key YOUR_KEY\n\n")
 		fmt.Printf("  Providers: %s\n", supportedProviderList())
 		fmt.Printf("  Keyless/local: vertex, bedrock, ollama, vllm, github_copilot\n\n")
 		os.Exit(1)
@@ -1209,7 +1209,7 @@ func onboardAuto(args []string) {
 	if needsKey && apiKey == "" {
 		fmt.Printf("  %s --api-key is required for provider %q.\n\n", errorStyle.Render("✗"), providerID)
 		fmt.Printf("  Example:\n")
-		fmt.Printf("    levik onboard --auto --provider %s --api-key YOUR_KEY\n\n", providerID)
+		fmt.Printf("    vikram onboard --auto --provider %s --api-key YOUR_KEY\n\n", providerID)
 		os.Exit(1)
 	}
 
@@ -1218,11 +1218,11 @@ func onboardAuto(args []string) {
 		fmt.Printf("  %s --model is required for provider %q.\n\n", errorStyle.Render("✗"), providerID)
 		fmt.Printf("  This provider does not have a built-in default model.\n")
 		fmt.Printf("  Example:\n")
-		fmt.Printf("    levik onboard --auto --provider %s --api-key YOUR_KEY --model YOUR_MODEL\n\n", providerID)
+		fmt.Printf("    vikram onboard --auto --provider %s --api-key YOUR_KEY --model YOUR_MODEL\n\n", providerID)
 		os.Exit(1)
 	}
 
-	fmt.Printf("\n%s LeVik non-interactive setup\n\n", titleStyle.Render("⚡"))
+	fmt.Printf("\n%s Vikram non-interactive setup\n\n", titleStyle.Render("⚡"))
 
 	configPath := getConfigPath()
 	cfg := config.DefaultConfig()
@@ -1302,7 +1302,7 @@ func onboardAuto(args []string) {
 
 	fmt.Printf("  %s Config saved to: %s\n\n", successStyle.Render("✓"), configPath)
 	fmt.Printf("  %s\n\n", titleStyle.Render("Setup complete. Try it:"))
-	fmt.Printf("    levik agent -m \"Hello! What can you do?\"\n\n")
+	fmt.Printf("    vikram agent -m \"Hello! What can you do?\"\n\n")
 }
 
 // flagValue returns the value for a --flag <value> pair in args,
@@ -1397,15 +1397,15 @@ func apiBaseFromConfig(cfg *config.Config, providerID string) string {
 //  3. Re-sync workspace templates (skipping files that already exist).
 //
 // Equivalent to nanobot's "N" (keep) path in onboard. Run it after upgrading
-// levik to get new config fields without re-running the full wizard.
+// vikram to get new config fields without re-running the full wizard.
 func onboardRefresh() {
 	configPath := getConfigPath()
-	fmt.Printf("\n%s Refreshing LeVik config…\n\n", titleStyle.Render("↻"))
+	fmt.Printf("\n%s Refreshing Vikram config…\n\n", titleStyle.Render("↻"))
 
 	cfg, err := loadConfig()
 	if err != nil {
 		if os.IsNotExist(err) {
-			fmt.Printf("  %s No config found at %s — run  levik onboard  first.\n",
+			fmt.Printf("  %s No config found at %s — run  vikram onboard  first.\n",
 				errorStyle.Render("✗"), configPath)
 			return
 		}
@@ -1432,6 +1432,6 @@ func onboardRefresh() {
 		fmt.Printf("    %s\n\n", stepStyle.Render(workspace))
 	}
 
-	fmt.Printf("  %s Run  levik doctor  to verify everything is configured.\n\n",
+	fmt.Printf("  %s Run  vikram doctor  to verify everything is configured.\n\n",
 		stepStyle.Render("→"))
 }
