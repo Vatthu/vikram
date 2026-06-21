@@ -9,13 +9,13 @@ build/
 *.test
 *.out
 /vikram
-/v1claw
-/v1claw-test
+/vikram
+/vikram-test
 
 # V1Claw specific
 
 # V1Claw
-.v1claw/
+.vikram/
 config.json
 sessions/
 build/

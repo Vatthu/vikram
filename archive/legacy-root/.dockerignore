@@ -1,7 +1,7 @@
 .git
 .gitignore
 build/
-.v1claw/
+.vikram/
 config/
 .env
 .env.example
