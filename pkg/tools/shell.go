@@ -321,7 +321,7 @@ func runParsedCommands(ctx context.Context, cwd string, parsed []parsedExecComma
 
 	// Pipeline path. Each segment is still executed without invoking a shell.
 	cmds := make([]*exec.Cmd, 0, len(parsed))
-	var stderr bytes.Buffer
+	stderrBufs := make([]*bytes.Buffer, 0, len(parsed))
 	var finalStdout bytes.Buffer
 	var prevStdout io.ReadCloser
 
@@ -330,7 +330,9 @@ func runParsedCommands(ctx context.Context, cwd string, parsed []parsedExecComma
 		if cwd != "" {
 			cmd.Dir = cwd
 		}
-		cmd.Stderr = &stderr
+		cmdStderr := &bytes.Buffer{}
+		cmd.Stderr = cmdStderr
+		stderrBufs = append(stderrBufs, cmdStderr)
 
 		if prevStdout != nil {
 			cmd.Stdin = prevStdout
@@ -363,15 +365,21 @@ func runParsedCommands(ctx context.Context, cwd string, parsed []parsedExecComma
 	}
 
 	output := finalStdout.String()
-	if stderr.Len() > 0 {
+	// Merge stderr buffers sequentially (safe — all commands have finished).
+	var mergedStderr bytes.Buffer
+	for _, buf := range stderrBufs {
+		mergedStderr.Write(buf.Bytes())
+	}
+	if mergedStderr.Len() > 0 {
 		if output != "" {
 			output += "\n"
 		}
-		output += "STDERR:\n" + stderr.String()
+		output += "STDERR:\n" + mergedStderr.String()
 	}
 
 	return output, runErr
 }
+
 
 func splitPipelineSegments(command string) ([]string, error) {
 	runes := []rune(command)
