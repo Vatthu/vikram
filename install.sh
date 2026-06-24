@@ -56,7 +56,7 @@ if ! curl -sSL -o "${TMPDIR}/checksums.txt" "$CHECKSUM_URL" 2>/dev/null; then
     echo "Error: Could not download checksums.txt — aborting for security."
     exit 1
 fi
-EXPECTED=$(grep "${ARCHIVE}" "${TMPDIR}/checksums.txt" | awk '{print $1}')
+EXPECTED=$(awk -v archive="${ARCHIVE}" '$2 == archive {print $1}' "${TMPDIR}/checksums.txt")
 if [ -z "$EXPECTED" ]; then
     echo "Error: Archive not found in checksums.txt — aborting for security."
     exit 1

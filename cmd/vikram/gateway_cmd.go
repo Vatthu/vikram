@@ -701,11 +701,6 @@ func validateGatewaySecurity(cfg *config.Config) error {
 			return fmt.Errorf("agents.defaults.restrict_to_workspace must be true for public gateway host %q", cfg.Gateway.Host)
 		}
 
-		// SEC-API-01: Enforce API key when the V1 API is exposed on a public host.
-		if cfg.V1API.Enabled && strings.TrimSpace(cfg.V1API.APIKey) == "" {
-			return fmt.Errorf("v1_api.api_key is required when gateway is on public host %q", cfg.Gateway.Host)
-		}
-
 		if insecureChannels := enabledChannelsWithoutAllowlist(cfg); len(insecureChannels) > 0 {
 			return fmt.Errorf("public gateway host %q requires allow_from for enabled channels: %s", cfg.Gateway.Host, strings.Join(insecureChannels, ", "))
 		}

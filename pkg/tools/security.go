@@ -3,7 +3,6 @@ package tools
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/Vatthu/vikram/pkg/logger"
 )
@@ -20,17 +19,16 @@ type AllowlistMiddleware struct {
 }
 
 func (m *AllowlistMiddleware) VerifyCommand(command string) (string, error) {
-	// Security (SEC-SHELL-01): Use the same tokenization as the execution
-	// parser in shell.go (splits on space/tab only). strings.Fields splits
-	// on ALL Unicode whitespace, which could cause a mismatch where the
-	// allowlist sees different tokens than the executor.
-	parts := splitCommandTokens(command)
-	if len(parts) == 0 {
+	// Security (SEC-SHELL-01): Reuse the same parser as the execution engine
+	// (parseCommandForDirectExecution in shell.go) so the allowlist verifier
+	// and executor always see identical tokens, including backslash escaping.
+	program, _ := parseCommandForDirectExecution(command)
+	if program == "" {
 		return "", fmt.Errorf("empty command")
 	}
 
 	// Resolve to basename so "/usr/bin/ls" matches "ls" in the allowlist.
-	baseCmd := filepath.Base(parts[0])
+	baseCmd := filepath.Base(program)
 	for _, a := range m.Allowed {
 		if baseCmd == a {
 			return command, nil
@@ -41,38 +39,14 @@ func (m *AllowlistMiddleware) VerifyCommand(command string) (string, error) {
 }
 
 // splitCommandTokens splits a command string into tokens using the same rules
-// as the shell execution parser: split on ASCII space and tab only, respecting
-// single and double quotes. This ensures the allowlist verifier and the
-// execution engine always see the same command tokens.
+// as the shell execution parser. Delegates to parseCommandForDirectExecution
+// to ensure a single source of truth for tokenization.
 func splitCommandTokens(cmd string) []string {
-	cmd = strings.TrimSpace(cmd)
-	if cmd == "" {
+	program, args := parseCommandForDirectExecution(cmd)
+	if program == "" {
 		return nil
 	}
-	var tokens []string
-	var current strings.Builder
-	inSingle := false
-	inDouble := false
-	for i := 0; i < len(cmd); i++ {
-		c := cmd[i]
-		switch {
-		case c == '\'' && !inDouble:
-			inSingle = !inSingle
-		case c == '"' && !inSingle:
-			inDouble = !inDouble
-		case (c == ' ' || c == '\t') && !inSingle && !inDouble:
-			if current.Len() > 0 {
-				tokens = append(tokens, current.String())
-				current.Reset()
-			}
-		default:
-			current.WriteByte(c)
-		}
-	}
-	if current.Len() > 0 {
-		tokens = append(tokens, current.String())
-	}
-	return tokens
+	return append([]string{program}, args...)
 }
 
 // DefaultAllowlist provides a minimal safe subset of commands the shell tool
