@@ -52,7 +52,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: aquasecurity/trivy-action@v0.31.0
+      - uses: aquasecurity/trivy-action@v0.35.0  # First safe release after supply chain compromise (GHSA-69fq-xp46-6x23)
         with:
           scan-type: fs
           format: sarif
