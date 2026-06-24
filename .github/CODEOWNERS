@@ -2,6 +2,9 @@
 /pkg/                @Vatthu
 /cmd/                @Vatthu
 
+# CUA Driver (security-sensitive — desktop automation)
+/pkg/cua/            @Vatthu
+
 # Python orchestrator
 /services/           @Vatthu
 
@@ -9,6 +12,12 @@
 /.github/            @Vatthu
 /Makefile            @Vatthu
 /.goreleaser.yaml    @Vatthu
+
+# Security-sensitive files
+SECURITY.md          @Vatthu
+/pkg/permissions/    @Vatthu
+/pkg/auth/           @Vatthu
+/pkg/tools/security.go @Vatthu
 
 # Documentation
 /docs/               @Vatthu

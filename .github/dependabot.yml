@@ -1,5 +1,6 @@
 version: 2
 updates:
+  # ── Go modules ──────────────────────────────────────────────────────────
   - package-ecosystem: gomod
     directory: /
     schedule:
@@ -11,11 +12,18 @@ updates:
       - dependencies
       - go
     groups:
+      golang-x:
+        patterns:
+          - "golang.org/x/*"
       minor-and-patch:
         update-types:
           - minor
           - patch
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps(go):"
 
+  # ── Python (orchestrator) ──────────────────────────────────────────────
   - package-ecosystem: pip
     directory: /services/orchestrator
     schedule:
@@ -26,11 +34,43 @@ updates:
     labels:
       - dependencies
       - python
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(py):"
 
+  # ── npm (web dashboard) ────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+      day: monday
+    reviewers:
+      - Vatthu
+    labels:
+      - dependencies
+      - javascript
+    groups:
+      vite-ecosystem:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps(npm):"
+
+  # ── GitHub Actions ─────────────────────────────────────────────────────
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    reviewers:
+      - Vatthu
     labels:
       - dependencies
       - ci
+    commit-message:
+      prefix: "ci(deps):"
