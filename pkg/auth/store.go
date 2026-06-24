@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -55,6 +56,7 @@ func (c *AuthCredential) NeedsRefresh() bool {
 // AuthStore holds all authentication credentials.
 type AuthStore struct {
 	Credentials map[string]*AuthCredential `json:"credentials"`
+	KDFSalt     string                     `json:"kdf_salt,omitempty"` // Per-install random salt (base64)
 }
 
 // authFilePath returns the path to the auth store file.
@@ -74,13 +76,14 @@ func loadStoreLocked() (*AuthStore, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &AuthStore{Credentials: make(map[string]*AuthCredential)}, nil
+			return &AuthStore{Credentials: make(map[string]*AuthCredential), KDFSalt: generateSalt()}, nil
 		}
 		return nil, fmt.Errorf("failed to read auth store: %w", err)
 	}
 
 	var encryptedStore struct {
 		Credentials map[string]*AuthCredential `json:"credentials"`
+		KDFSalt     string                     `json:"kdf_salt,omitempty"`
 	}
 	if err := json.Unmarshal(data, &encryptedStore); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal encrypted auth store: %w", err)
@@ -238,9 +241,24 @@ func DeleteAllCredentials() error {
 	return nil
 }
 
-// authKDFSalt is the application-level PBKDF2 salt.
-// NOTE: Changing this value invalidates all previously encrypted credentials.
-const authKDFSalt = "vikram-auth-kdf-v1"
+// legacyKDFSalt is the original static salt, kept only for backward compatibility
+// with auth.json files created before per-install salts were introduced.
+const legacyKDFSalt = "vikram-auth-kdf-v1"
+
+// cachedMasterPassphrase holds the passphrase after initial read, allowing us
+// to clear it from the process environment to prevent leakage to child processes.
+var cachedMasterPassphrase string
+var masterPassphraseOnce sync.Once
+
+// generateSalt creates a random 16-byte salt encoded as base64.
+func generateSalt() string {
+	salt := make([]byte, 16)
+	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
+		// Fallback: this should never happen with crypto/rand
+		return legacyKDFSalt
+	}
+	return base64.StdEncoding.EncodeToString(salt)
+}
 
 // getMasterKey derives a 32-byte AES-256 key from the master passphrase using
 // PBKDF2-SHA256 (100 000 iterations).  The passphrase is read from the
@@ -250,11 +268,47 @@ const authKDFSalt = "vikram-auth-kdf-v1"
 //   - An attacker who steals auth.json must run 100 000 SHA-256 rounds per guess,
 //     making brute-force of weak passphrases significantly more expensive.
 func getMasterKey() ([]byte, error) {
-	keyStr := os.Getenv(MasterKeyEnvVar)
-	if keyStr == "" {
+	masterPassphraseOnce.Do(func() {
+		cachedMasterPassphrase = os.Getenv(MasterKeyEnvVar)
+		// Security (SEC-AUTH-02): Clear the master key from the process
+		// environment so it is not inherited by child processes (shell
+		// commands, subagents, etc.).
+		os.Unsetenv(MasterKeyEnvVar)
+	})
+	if cachedMasterPassphrase == "" {
 		return nil, fmt.Errorf("environment variable %s is not set", MasterKeyEnvVar)
 	}
-	return pbkdf2.Key([]byte(keyStr), []byte(authKDFSalt), 100_000, 32, sha256.New), nil
+	return pbkdf2.Key([]byte(cachedMasterPassphrase), []byte(legacyKDFSalt), 100_000, 32, sha256.New), nil
+}
+
+// getMasterKeyWithSalt derives the key using a per-install salt (preferred)
+// or falls back to the legacy static salt for backward compatibility.
+func getMasterKeyWithSalt(salt string) ([]byte, error) {
+	masterPassphraseOnce.Do(func() {
+		cachedMasterPassphrase = os.Getenv(MasterKeyEnvVar)
+		os.Unsetenv(MasterKeyEnvVar)
+	})
+	if cachedMasterPassphrase == "" {
+		return nil, fmt.Errorf("environment variable %s is not set", MasterKeyEnvVar)
+	}
+	if salt == "" {
+		salt = legacyKDFSalt
+	}
+	return pbkdf2.Key([]byte(cachedMasterPassphrase), []byte(salt), 100_000, 32, sha256.New), nil
+}
+
+// SanitizedEnv returns a copy of the current environment with security-sensitive
+// variables (master key) removed. Use this for child process Cmd.Env to prevent
+// credential leakage.
+func SanitizedEnv() []string {
+	var clean []string
+	prefix := MasterKeyEnvVar + "="
+	for _, e := range os.Environ() {
+		if !strings.HasPrefix(e, prefix) {
+			clean = append(clean, e)
+		}
+	}
+	return clean
 }
 
 // encrypt encrypts plaintext using AES-GCM.

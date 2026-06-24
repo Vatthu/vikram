@@ -365,14 +365,38 @@ func newWebFetchHTTPClient() *http.Client {
 		DisableCompression:  false,
 		TLSHandshakeTimeout: 15 * time.Second,
 		DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
-			host, _, err := net.SplitHostPort(address)
+			host, port, err := net.SplitHostPort(address)
 			if err != nil {
 				host = address
+				port = "443"
 			}
-			if err := validateFetchHostResolution(ctx, host); err != nil {
-				return nil, err
+			// Security: Resolve the host and validate ALL returned IPs,
+			// then dial one of the validated IPs directly. This prevents
+			// DNS rebinding attacks where a second resolution could return
+			// a different (internal/private) IP address.
+			if ip := net.ParseIP(host); ip != nil {
+				if isBlockedIP(ip) {
+					return nil, fmt.Errorf("URL blocked: resolved to internal/private address %s", ip.String())
+				}
+				return dialer.DialContext(ctx, network, address)
 			}
-			return dialer.DialContext(ctx, network, address)
+			resolveCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+			addrs, err := net.DefaultResolver.LookupIPAddr(resolveCtx, host)
+			if err != nil {
+				return nil, fmt.Errorf("failed to resolve host: %w", err)
+			}
+			if len(addrs) == 0 {
+				return nil, fmt.Errorf("failed to resolve host: no addresses")
+			}
+			for _, addr := range addrs {
+				if isBlockedIP(addr.IP) {
+					return nil, fmt.Errorf("URL blocked: resolved to internal/private address %s", addr.IP.String())
+				}
+			}
+			// Dial the first validated IP directly — never re-resolve.
+			pinnedAddr := net.JoinHostPort(addrs[0].IP.String(), port)
+			return dialer.DialContext(ctx, network, pinnedAddr)
 		},
 	}
 

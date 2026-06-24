@@ -613,7 +613,11 @@ func validateDeviceHost(host string) error {
 }
 
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {
+	// SEC-API-03: Security response headers for defense-in-depth.
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("X-Frame-Options", "DENY")
+	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		logger.WarnCF("api", "Failed to encode JSON response", map[string]interface{}{"error": err.Error()})

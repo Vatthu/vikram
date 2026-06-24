@@ -629,6 +629,11 @@ func guardParsedCommand(program string, args []string) string {
 			if strings.Contains(lowerArg, "system(") || strings.Contains(lowerArg, "| getline") || strings.Contains(lowerArg, "|getline") || strings.Contains(lowerArg, "|&") {
 				return "Command blocked by safety guard (awk command execution detected)"
 			}
+			// SEC-SHELL-02: Block @load which loads arbitrary shared libraries
+			// and popen() which opens pipes to external commands.
+			if strings.Contains(lowerArg, "@load") || strings.Contains(lowerArg, "popen(") {
+				return "Command blocked by safety guard (awk library load or popen detected)"
+			}
 		}
 
 	case "sed":
@@ -668,10 +673,18 @@ func guardCurlArgs(args []string) string {
 		case arg == "-T", lowerArg == "--upload-file",
 			arg == "-F", lowerArg == "--form", lowerArg == "--form-string",
 			arg == "-d", lowerArg == "--data", lowerArg == "--data-raw", lowerArg == "--data-binary", lowerArg == "--data-urlencode",
+			lowerArg == "--data-ascii", // SEC-SHELL-04: synonym for --data
 			lowerArg == "--json",
 			arg == "-K", lowerArg == "--config",
 			arg == "-x", lowerArg == "--proxy":
 			return "Command blocked by safety guard (curl upload/config/proxy flags detected)"
+		// SEC-SHELL-04: Block flags that enable SSRF to local Unix sockets
+		// (e.g., the orchestrator host socket) or DNS/connection hijacking.
+		case lowerArg == "--unix-socket", strings.HasPrefix(lowerArg, "--unix-socket="),
+			lowerArg == "--abstract-unix-socket", strings.HasPrefix(lowerArg, "--abstract-unix-socket="),
+			lowerArg == "--connect-to", strings.HasPrefix(lowerArg, "--connect-to="),
+			lowerArg == "--resolve", strings.HasPrefix(lowerArg, "--resolve="):
+			return "Command blocked by safety guard (curl socket/connection override detected)"
 		case lowerArg == "-xpost", lowerArg == "-xput", lowerArg == "-xdelete", lowerArg == "-xpatch":
 			return "Command blocked by safety guard (curl non-GET request detected)"
 		case arg == "-X", lowerArg == "--request":

@@ -20,7 +20,11 @@ type AllowlistMiddleware struct {
 }
 
 func (m *AllowlistMiddleware) VerifyCommand(command string) (string, error) {
-	parts := strings.Fields(command)
+	// Security (SEC-SHELL-01): Use the same tokenization as the execution
+	// parser in shell.go (splits on space/tab only). strings.Fields splits
+	// on ALL Unicode whitespace, which could cause a mismatch where the
+	// allowlist sees different tokens than the executor.
+	parts := splitCommandTokens(command)
 	if len(parts) == 0 {
 		return "", fmt.Errorf("empty command")
 	}
@@ -34,6 +38,41 @@ func (m *AllowlistMiddleware) VerifyCommand(command string) (string, error) {
 	}
 
 	return "", fmt.Errorf("command %q is not in the security allowlist", baseCmd)
+}
+
+// splitCommandTokens splits a command string into tokens using the same rules
+// as the shell execution parser: split on ASCII space and tab only, respecting
+// single and double quotes. This ensures the allowlist verifier and the
+// execution engine always see the same command tokens.
+func splitCommandTokens(cmd string) []string {
+	cmd = strings.TrimSpace(cmd)
+	if cmd == "" {
+		return nil
+	}
+	var tokens []string
+	var current strings.Builder
+	inSingle := false
+	inDouble := false
+	for i := 0; i < len(cmd); i++ {
+		c := cmd[i]
+		switch {
+		case c == '\'' && !inDouble:
+			inSingle = !inSingle
+		case c == '"' && !inSingle:
+			inDouble = !inDouble
+		case (c == ' ' || c == '\t') && !inSingle && !inDouble:
+			if current.Len() > 0 {
+				tokens = append(tokens, current.String())
+				current.Reset()
+			}
+		default:
+			current.WriteByte(c)
+		}
+	}
+	if current.Len() > 0 {
+		tokens = append(tokens, current.String())
+	}
+	return tokens
 }
 
 // DefaultAllowlist provides a minimal safe subset of commands the shell tool

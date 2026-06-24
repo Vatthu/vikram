@@ -60,7 +60,15 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	conn.SetReadLimit(maxInboundBodyBytes)
 
-	clientID := fmt.Sprintf("ws_%d", time.Now().UnixNano())
+	// SEC-WS-01: Use cryptographically random client IDs instead of
+	// predictable nanosecond timestamps to prevent client enumeration.
+	idBytes := make([]byte, 8)
+	if _, err := rand.Read(idBytes); err != nil {
+		logger.ErrorC("api", fmt.Sprintf("WebSocket client ID generation failed: %v", err))
+		_ = conn.Close()
+		return
+	}
+	clientID := fmt.Sprintf("ws_%s", hex.EncodeToString(idBytes))
 	registerToken, err := newWSRegistrationToken()
 	if err != nil {
 		logger.ErrorC("api", fmt.Sprintf("WebSocket registration token generation failed: %v", err))
