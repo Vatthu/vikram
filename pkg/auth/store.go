@@ -67,11 +67,6 @@ func authFilePath() string {
 // loadStoreLocked loads the authentication store from disk, decrypting credentials. Requires storeMu lock.
 func loadStoreLocked() (*AuthStore, error) {
 
-	key, err := getMasterKey()
-	if err != nil {
-		return nil, fmt.Errorf("master encryption key not found: %w", err)
-	}
-
 	path := authFilePath()
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -89,7 +84,23 @@ func loadStoreLocked() (*AuthStore, error) {
 		return nil, fmt.Errorf("failed to unmarshal encrypted auth store: %w", err)
 	}
 
-	decryptedStore := &AuthStore{Credentials: make(map[string]*AuthCredential)}
+	// Use the store's per-install salt, falling back to legacy static salt
+	// for stores created before the per-install salt was introduced.
+	salt := encryptedStore.KDFSalt
+	key, err := getMasterKeyWithSalt(salt)
+	if err != nil {
+		return nil, fmt.Errorf("master encryption key not found: %w", err)
+	}
+
+	decryptedStore := &AuthStore{
+		Credentials: make(map[string]*AuthCredential),
+		KDFSalt:     salt,
+	}
+	// Auto-migrate: assign a new random salt for legacy stores (will be
+	// persisted on the next save).
+	if decryptedStore.KDFSalt == "" {
+		decryptedStore.KDFSalt = generateSalt()
+	}
 	for provider, encCred := range encryptedStore.Credentials {
 		decryptedCred := &AuthCredential{
 			AccountID:  encCred.AccountID,
@@ -131,12 +142,18 @@ func LoadStore() (*AuthStore, error) {
 // saveStoreLocked saves the authentication store to disk, encrypting credentials atomically. Requires storeMu lock.
 func saveStoreLocked(store *AuthStore) error {
 
-	key, err := getMasterKey()
+	// Use the store's per-install salt for key derivation.
+	// If the store was migrated from legacy (no salt), one was assigned
+	// during load; it gets persisted here.
+	key, err := getMasterKeyWithSalt(store.KDFSalt)
 	if err != nil {
 		return fmt.Errorf("master encryption key not found: %w", err)
 	}
 
-	encryptedStore := &AuthStore{Credentials: make(map[string]*AuthCredential)}
+	encryptedStore := &AuthStore{
+		Credentials: make(map[string]*AuthCredential),
+		KDFSalt:     store.KDFSalt,
+	}
 	for provider, cred := range store.Credentials {
 		encryptedCred := &AuthCredential{
 			AccountID:  cred.AccountID,

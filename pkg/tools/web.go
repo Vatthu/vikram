@@ -394,9 +394,19 @@ func newWebFetchHTTPClient() *http.Client {
 					return nil, fmt.Errorf("URL blocked: resolved to internal/private address %s", addr.IP.String())
 				}
 			}
-			// Dial the first validated IP directly — never re-resolve.
-			pinnedAddr := net.JoinHostPort(addrs[0].IP.String(), port)
-			return dialer.DialContext(ctx, network, pinnedAddr)
+			// Dial each validated IP in order until one succeeds.
+			// This preserves reliability for dual-stack networks
+			// while preventing DNS rebinding (no re-resolution).
+			var lastErr error
+			for _, addr := range addrs {
+				pinnedAddr := net.JoinHostPort(addr.IP.String(), port)
+				conn, dialErr := dialer.DialContext(ctx, network, pinnedAddr)
+				if dialErr == nil {
+					return conn, nil
+				}
+				lastErr = dialErr
+			}
+			return nil, fmt.Errorf("failed to connect to any resolved address: %w", lastErr)
 		},
 	}
 
