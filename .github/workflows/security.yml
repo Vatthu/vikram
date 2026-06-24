@@ -6,17 +6,18 @@ on:
   schedule:
     - cron: '0 6 * * 1'  # Weekly Monday 06:00 UTC
 
+# Top-level: read-only (required by OpenSSF Scorecard)
 permissions:
-  security-events: write
   contents: read
-  actions: read
-  id-token: write
 
 jobs:
   # ── CodeQL (Go + Python) ───────────────────────────────────────────────
   codeql:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      security-events: write
+      contents: read
     strategy:
       matrix:
         language: [go, python]
@@ -46,6 +47,9 @@ jobs:
   trivy:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      security-events: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: aquasecurity/trivy-action@master
