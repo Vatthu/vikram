@@ -701,6 +701,11 @@ func validateGatewaySecurity(cfg *config.Config) error {
 			return fmt.Errorf("agents.defaults.restrict_to_workspace must be true for public gateway host %q", cfg.Gateway.Host)
 		}
 
+		// SEC-API-01: Enforce API key when the V1 API is exposed on a public host.
+		if cfg.V1API.Enabled && strings.TrimSpace(cfg.V1API.APIKey) == "" {
+			return fmt.Errorf("v1_api.api_key is required when gateway is on public host %q", cfg.Gateway.Host)
+		}
+
 		if insecureChannels := enabledChannelsWithoutAllowlist(cfg); len(insecureChannels) > 0 {
 			return fmt.Errorf("public gateway host %q requires allow_from for enabled channels: %s", cfg.Gateway.Host, strings.Join(insecureChannels, ", "))
 		}
@@ -713,6 +718,13 @@ func orchestratorHostSocketPath() string {
 	if socketPath := strings.TrimSpace(os.Getenv("VIKRAM_HOST_SOCKET")); socketPath != "" {
 		return socketPath
 	}
-	return "/tmp/vikramd.sock"
+	// Security: Use a user-private directory instead of world-writable /tmp
+	// to prevent symlink attacks, socket hijacking, and unauthorized access.
+	runDir := filepath.Join(config.HomeDir(), "run")
+	if err := os.MkdirAll(runDir, 0700); err != nil {
+		// Fallback to a user-namespaced path in /tmp if home dir is unavailable
+		return fmt.Sprintf("/tmp/vikramd-%d.sock", os.Getuid())
+	}
+	return filepath.Join(runDir, "vikramd.sock")
 }
 

@@ -45,37 +45,37 @@ URL="https://github.com/${REPO}/releases/download/${LATEST}/${ARCHIVE}"
 
 # Download
 TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT  # SEC-INSTALL-02: Always clean up temp dir
 echo "Downloading ${URL}..."
 curl -sSL -o "${TMPDIR}/${ARCHIVE}" "$URL"
 
 # Verify checksum (GoReleaser generates checksums.txt alongside release artifacts)
 CHECKSUM_URL="https://github.com/${REPO}/releases/download/${LATEST}/checksums.txt"
 echo "Verifying checksum..."
-if curl -sSL -o "${TMPDIR}/checksums.txt" "$CHECKSUM_URL" 2>/dev/null; then
-    EXPECTED=$(grep "${ARCHIVE}" "${TMPDIR}/checksums.txt" | awk '{print $1}')
-    if [ -n "$EXPECTED" ]; then
-        if command -v sha256sum >/dev/null 2>&1; then
-            ACTUAL=$(sha256sum "${TMPDIR}/${ARCHIVE}" | awk '{print $1}')
-        elif command -v shasum >/dev/null 2>&1; then
-            ACTUAL=$(shasum -a 256 "${TMPDIR}/${ARCHIVE}" | awk '{print $1}')
-        else
-            echo "Warning: No sha256sum or shasum found — skipping checksum verification"
-            ACTUAL="$EXPECTED"
-        fi
-        if [ "$ACTUAL" != "$EXPECTED" ]; then
-            echo "Error: Checksum verification failed!"
-            echo "  Expected: $EXPECTED"
-            echo "  Actual:   $ACTUAL"
-            rm -rf "$TMPDIR"
-            exit 1
-        fi
-        echo "✓ Checksum verified"
-    else
-        echo "Warning: Archive not found in checksums.txt — skipping verification"
-    fi
-else
-    echo "Warning: Could not download checksums.txt — skipping verification"
+if ! curl -sSL -o "${TMPDIR}/checksums.txt" "$CHECKSUM_URL" 2>/dev/null; then
+    echo "Error: Could not download checksums.txt — aborting for security."
+    exit 1
 fi
+EXPECTED=$(grep "${ARCHIVE}" "${TMPDIR}/checksums.txt" | awk '{print $1}')
+if [ -z "$EXPECTED" ]; then
+    echo "Error: Archive not found in checksums.txt — aborting for security."
+    exit 1
+fi
+if command -v sha256sum >/dev/null 2>&1; then
+    ACTUAL=$(sha256sum "${TMPDIR}/${ARCHIVE}" | awk '{print $1}')
+elif command -v shasum >/dev/null 2>&1; then
+    ACTUAL=$(shasum -a 256 "${TMPDIR}/${ARCHIVE}" | awk '{print $1}')
+else
+    echo "Error: No sha256sum or shasum found — cannot verify integrity."
+    exit 1
+fi
+if [ "$ACTUAL" != "$EXPECTED" ]; then
+    echo "Error: Checksum verification failed!"
+    echo "  Expected: $EXPECTED"
+    echo "  Actual:   $ACTUAL"
+    exit 1
+fi
+echo "✓ Checksum verified"
 
 # Extract
 cd "$TMPDIR"
@@ -97,8 +97,7 @@ fi
 
 chmod +x "${INSTALL_DIR}/${BINARY}"
 
-# Cleanup
-rm -rf "$TMPDIR"
+# Cleanup handled by EXIT trap
 
 echo ""
 echo "✅ Vikram ${LATEST} installed successfully!"
