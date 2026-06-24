@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -97,16 +98,16 @@ func (s *Server) SetChatHandler(handler ChatHandler) {
 func (s *Server) Start(ctx context.Context) error {
 	mux := http.NewServeMux()
 
-	// API routes
-	mux.HandleFunc("/api/v1/chat", s.rateLimitMiddleware(s.authMiddleware(s.handleChat)))
-	mux.HandleFunc("/api/v1/status", s.rateLimitMiddleware(s.authMiddleware(s.handleStatus)))
-	mux.HandleFunc("/api/v1/users", s.rateLimitMiddleware(s.authMiddleware(s.handleUsers)))
-	mux.HandleFunc("/api/v1/events", s.rateLimitMiddleware(s.authMiddleware(s.handleEvents)))
-	mux.HandleFunc("/api/v1/ws", s.rateLimitMiddleware(s.authMiddleware(s.handleWebSocket)))
+	// API routes — CORS + rate-limit + auth middleware chain.
+	mux.HandleFunc("/api/v1/chat", s.corsMiddleware(s.rateLimitMiddleware(s.authMiddleware(s.handleChat))))
+	mux.HandleFunc("/api/v1/status", s.corsMiddleware(s.rateLimitMiddleware(s.authMiddleware(s.handleStatus))))
+	mux.HandleFunc("/api/v1/users", s.corsMiddleware(s.rateLimitMiddleware(s.authMiddleware(s.handleUsers))))
+	mux.HandleFunc("/api/v1/events", s.corsMiddleware(s.rateLimitMiddleware(s.authMiddleware(s.handleEvents))))
+	mux.HandleFunc("/api/v1/ws", s.corsMiddleware(s.rateLimitMiddleware(s.authMiddleware(s.handleWebSocket))))
 
 	// Device registration routes
-	mux.HandleFunc("/api/v1/devices", s.rateLimitMiddleware(s.authMiddleware(s.handleDevices)))
-	mux.HandleFunc("/api/v1/devices/", s.rateLimitMiddleware(s.authMiddleware(s.handleDeviceByID)))
+	mux.HandleFunc("/api/v1/devices", s.corsMiddleware(s.rateLimitMiddleware(s.authMiddleware(s.handleDevices))))
+	mux.HandleFunc("/api/v1/devices/", s.corsMiddleware(s.rateLimitMiddleware(s.authMiddleware(s.handleDeviceByID))))
 
 	// Health endpoints (no auth)
 	mux.HandleFunc("/health", s.handleHealth)
@@ -201,7 +202,42 @@ func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// limiterForIP returns the per-IP token-bucket rate limiter, creating one if needed.
+// corsMiddleware restricts cross-origin requests to same-host origins only.
+// This prevents malicious websites from issuing fetch/XHR requests to the
+// local Vikram API (e.g., http://localhost:18791/api/v1/chat) via CSRF.
+func (s *Server) corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		origin := strings.TrimSpace(r.Header.Get("Origin"))
+
+		// No Origin header → non-browser client (CLI, programmatic).
+		if origin == "" {
+			next(w, r)
+			return
+		}
+
+		// Only allow same-host origins.
+		u, err := url.Parse(origin)
+		if err != nil || u.Host == "" || !strings.EqualFold(u.Host, r.Host) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			_, _ = w.Write([]byte(`{"error":"cross-origin request blocked"}`))
+			return
+		}
+
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+		w.Header().Set("Access-Control-Max-Age", "3600")
+
+		// Handle preflight.
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next(w, r)
+	}
+}
 func (s *Server) limiterForIP(ip string) *rate.Limiter {
 	if v, ok := s.ipLimiters.Load(ip); ok {
 		return v.(*rate.Limiter)

@@ -21,6 +21,7 @@ import (
 	"github.com/Vatthu/vikram/pkg/channels"
 	"github.com/Vatthu/vikram/pkg/config"
 	"github.com/Vatthu/vikram/pkg/console"
+	"github.com/Vatthu/vikram/pkg/cua"
 	"github.com/Vatthu/vikram/pkg/cron"
 	"github.com/Vatthu/vikram/pkg/dashboard"
 
@@ -110,6 +111,7 @@ func gatewayCmd() {
 		permissions.ShellHardware: cfg.Permissions.ShellHardware,
 		permissions.Notifications: cfg.Permissions.Notifications,
 		permissions.Screen:        cfg.Permissions.Screen,
+		permissions.ComputerUse:   cfg.Permissions.ComputerUse,
 	}); err != nil {
 		fmt.Printf("Error setting permissions: %v\n", err)
 		os.Exit(1)
@@ -181,6 +183,20 @@ func gatewayCmd() {
 				count++
 			}
 			fmt.Printf("✓ MCP %s: %d tools\n", srv.Name, count)
+		}
+	}
+
+	// CUA Driver — native macOS computer-use (background GUI automation).
+	if cfg.CUA.Enabled {
+		cuaBridge, err := cua.NewBridge(ctx, cfg.CUA)
+		if err != nil {
+			fmt.Printf("⚠ CUA Driver: %v\n", err)
+		} else {
+			for _, t := range cuaBridge.Tools() {
+				agentLoop.RegisterTool(t)
+			}
+			defer cuaBridge.Close()
+			fmt.Printf("✓ CUA Driver: %d computer-use tools loaded\n", len(cuaBridge.Tools()))
 		}
 	}
 

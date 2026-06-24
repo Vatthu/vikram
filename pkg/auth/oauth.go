@@ -433,6 +433,13 @@ func extractAccountID(token string) string {
 	return ""
 }
 
+// parseJWTClaims extracts claims from a JWT WITHOUT verifying the signature.
+//
+// SECURITY NOTE: This is intentionally trust-on-first-use. The token is received
+// directly from the OAuth provider over a TLS-protected HTTPS connection during
+// the interactive login flow. The token never comes from an external/untrusted
+// source. Do NOT use this function for tokens received from API clients or
+// WebSocket messages — those require proper signature verification via JWKS.
 func parseJWTClaims(token string) (map[string]interface{}, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) < 2 {

@@ -25,11 +25,12 @@ const (
 	ShellHardware Feature = "shell_hardware"
 	Notifications Feature = "notifications"
 	Screen        Feature = "screen"
+	ComputerUse   Feature = "computer_use"
 )
 
 // AllFeatures returns all defined features.
 func AllFeatures() []Feature {
-	return []Feature{Camera, Microphone, SMS, PhoneCalls, Location, Clipboard, Sensors, ShellHardware, Notifications, Screen}
+	return []Feature{Camera, Microphone, SMS, PhoneCalls, Location, Clipboard, Sensors, ShellHardware, Notifications, Screen, ComputerUse}
 }
 
 // Registry holds the current permission state for each feature.

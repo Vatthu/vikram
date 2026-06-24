@@ -26,6 +26,11 @@ var (
 	ddgSnippetPattern = regexp.MustCompile(`<a[^>]+class="result__snippet[^"]*"[^>]*>([^<]+)</a>`)
 	htmlTagPattern    = regexp.MustCompile(`<[^>]+>`)
 	allowedFetchURL   = regexp.MustCompile(`^https://(?:api\.github\.com|arxiv\.org|cloud\.google\.com|developer\.mozilla\.org|dl\.acm\.org|docs\.anthropic\.com|docs\.github\.com|docs\.langchain\.com|docs\.python\.org|export\.arxiv\.org|github\.com|gist\.githubusercontent\.com|go\.dev|huggingface\.co|ieeexplore\.ieee\.org|learn\.microsoft\.com|openreview\.net|papers\.nips\.cc|pkg\.go\.dev|platform\.openai\.com|proceedings\.mlr\.press|pypi\.org|raw\.githubusercontent\.com|registry\.npmjs\.org)(?::443)?(?:/[A-Za-z0-9._~%!$&'()*+,;=:@/-]*)?(?:\?[A-Za-z0-9._~%!$&'()*+,;=:@/?-]*)?$`)
+
+	// Regexes for extractText HTML stripping — compiled once at package init.
+	scriptTagPattern = regexp.MustCompile(`(?i)<script[\s\S]*?</script>`)
+	styleTagPattern  = regexp.MustCompile(`(?i)<style[\s\S]*?</style>`)
+	whitespaceRun    = regexp.MustCompile(`\s+`)
 )
 
 type SearchProvider interface {
@@ -577,17 +582,14 @@ func (t *WebFetchTool) Execute(ctx context.Context, tc ToolContext, args map[str
 }
 
 func (t *WebFetchTool) extractText(htmlContent string) string {
-	re := regexp.MustCompile(`<script[\s\S]*?</script>`)
-	result := re.ReplaceAllLiteralString(htmlContent, "")
-	re = regexp.MustCompile(`<style[\s\S]*?</style>`)
-	result = re.ReplaceAllLiteralString(result, "")
-	re = regexp.MustCompile(`<[^>]+>`)
-	result = re.ReplaceAllLiteralString(result, "")
+	// Use package-level compiled regexes to avoid per-call recompilation.
+	result := scriptTagPattern.ReplaceAllLiteralString(htmlContent, "")
+	result = styleTagPattern.ReplaceAllLiteralString(result, "")
+	result = htmlTagPattern.ReplaceAllLiteralString(result, "")
 
 	result = strings.TrimSpace(result)
 
-	re = regexp.MustCompile(`\s+`)
-	result = re.ReplaceAllLiteralString(result, " ")
+	result = whitespaceRun.ReplaceAllLiteralString(result, " ")
 
 	lines := strings.Split(result, "\n")
 	var cleanLines []string

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -141,6 +142,28 @@ func runDoctor() bool {
 	} else {
 		fmt.Printf("%s  Channels           none configured  (optional)\n", warn)
 		hint("Add channels with  vikram configure → Channels.")
+	}
+
+	// ── 9. CUA Driver (macOS computer-use) ───────────────────────────────────
+	if cfg.CUA.Enabled {
+		cuaPath := cfg.CUA.DriverPath
+		if cuaPath == "" {
+			cuaPath = "cua-driver"
+		}
+		if path, err := exec.LookPath(cuaPath); err == nil {
+			fmt.Printf("%s  CUA Driver         %s\n", pass, path)
+		} else {
+			fmt.Printf("%s  CUA Driver         not found in PATH\n", fail)
+			hint("Install: /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh)\"")
+			allGood = false
+		}
+		if !cfg.Permissions.ComputerUse {
+			fmt.Printf("%s  computer_use perm  disabled — CUA tools will be blocked at runtime\n", warn)
+			hint("Enable with  \"permissions\": {\"computer_use\": true}  in config.json")
+		}
+	} else {
+		fmt.Printf("%s  CUA Driver         not enabled  (optional)\n", warn)
+		hint("Enable with  \"cua\": {\"enabled\": true}  in config.json")
 	}
 
 	fmt.Println()

@@ -594,7 +594,11 @@ func guardParsedCommand(program string, args []string) string {
 		}
 
 	case "git":
-		for _, arg := range args {
+		// Block git config alias with shell-executing values (prefix "!").
+		// git aliases starting with "!" invoke an arbitrary shell command,
+		// enabling sandbox escape via: git config alias.x '!bash -c "cmd"'
+		hasConfigAlias := false
+		for i, arg := range args {
 			lowerArg := strings.ToLower(arg)
 			switch {
 			case lowerArg == "-c", strings.HasPrefix(lowerArg, "-c"),
@@ -604,6 +608,19 @@ func guardParsedCommand(program string, args []string) string {
 				lowerArg == "--receive-pack", strings.HasPrefix(lowerArg, "--receive-pack="):
 				return "Command blocked by safety guard (git runtime command/config injection detected)"
 			}
+			// Detect "git config [--global|--system] alias.<name>" patterns.
+			if lowerArg == "config" {
+				for _, subsequent := range args[i+1:] {
+					subLower := strings.ToLower(subsequent)
+					if strings.HasPrefix(subLower, "alias.") {
+						hasConfigAlias = true
+						break
+					}
+				}
+			}
+		}
+		if hasConfigAlias {
+			return "Command blocked by safety guard (git alias creation can execute arbitrary shell commands)"
 		}
 
 	case "awk":
@@ -616,6 +633,11 @@ func guardParsedCommand(program string, args []string) string {
 
 	case "sed":
 		for _, arg := range args {
+			// Block -f/--file which loads sed scripts from files the agent may
+			// have written, potentially bypassing inline script guards.
+			if arg == "-f" || strings.HasPrefix(arg, "--file") {
+				return "Command blocked by safety guard (sed -f script file execution detected)"
+			}
 			if sedExecPattern.MatchString(arg) || sedFileWritePattern.MatchString(arg) {
 				return "Command blocked by safety guard (sed execution or file write detected)"
 			}

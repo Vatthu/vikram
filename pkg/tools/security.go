@@ -43,17 +43,21 @@ func (m *AllowlistMiddleware) VerifyCommand(command string) (string, error) {
 // the effective exfiltration defence is that bash/sh/exec are NOT in the list,
 // so `curl … | sh`-style attacks are blocked at the shell-tool level.
 // Use DevAllowlist in development workspaces where build tools are required.
+//
+// Security exclusions:
+//   - env:   can execute arbitrary binaries (env /bin/bash ...)
+//   - xargs: can pass arguments to arbitrary executables
+//   - read:  unnecessary for agent workflow; extends attack surface
 var DefaultAllowlist = []string{
 	"ls", "cat", "grep", "find", "wc", "head", "tail", "du", "df",
 	"awk", "sed", "sort", "uniq", "tr", "cut", "paste", "tee",
 	"sleep", "true", "false", "test",
 	"git",
 	"mkdir", "cp", "mv", "rm", "touch", "stat", "file",
-	"echo", "printf", "pwd", "date", "env", "which", "basename", "dirname",
+	"echo", "printf", "pwd", "date", "which", "basename", "dirname",
 	"zip", "unzip", "tar", "gzip", "gunzip",
 	"curl", "wget",
 	"diff", "patch",
-	"xargs", "read",
 }
 
 // DevAllowlist extends DefaultAllowlist with build tools and language runtimes

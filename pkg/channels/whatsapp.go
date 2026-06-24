@@ -23,6 +23,7 @@ type WhatsAppChannel struct {
 	url       string
 	mu        sync.Mutex
 	connected bool
+	startedAt time.Time // set at Start(); messages older than this are discarded
 }
 
 func NewWhatsAppChannel(cfg config.WhatsAppConfig, bus *bus.MessageBus) (*WhatsAppChannel, error) {
@@ -56,6 +57,7 @@ func (c *WhatsAppChannel) Start(ctx context.Context) error {
 	c.mu.Lock()
 	c.conn = conn
 	c.connected = true
+	c.startedAt = time.Now()
 	c.mu.Unlock()
 
 	c.setRunning(true)
@@ -155,6 +157,18 @@ func (c *WhatsAppChannel) handleIncomingMessage(msg map[string]interface{}) {
 	senderID, ok := msg["from"].(string)
 	if !ok {
 		return
+	}
+
+	// Discard stale messages replayed from before this channel started.
+	if ts, ok := msg["timestamp"].(float64); ok {
+		msgTime := time.Unix(int64(ts), 0)
+		if !c.startedAt.IsZero() && msgTime.Before(c.startedAt.Add(-5*time.Second)) {
+			logger.DebugCF("whatsapp", "Discarding stale replayed message", map[string]interface{}{
+				"msg_time": msgTime.Format(time.RFC3339),
+				"user_id":  senderID,
+			})
+			return
+		}
 	}
 
 	chatID, ok := msg["chat"].(string)

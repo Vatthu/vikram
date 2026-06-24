@@ -62,6 +62,7 @@ type Config struct {
 	Voice       VoiceConfig       `json:"voice"`
 	Permissions PermissionsConfig `json:"permissions"`
 	MCP         MCPConfig         `json:"mcp"`
+	CUA         CUAConfig         `json:"cua"`
 	mu          sync.RWMutex
 }
 
@@ -95,6 +96,7 @@ type PermissionsConfig struct {
 	ShellHardware bool `json:"shell_hardware" env:"VIKRAM_PERMISSIONS_SHELL_HARDWARE"` // Allow shell exec of hardware commands (termux-*)
 	Notifications bool `json:"notifications" env:"VIKRAM_PERMISSIONS_NOTIFICATIONS"`   // Allow toast/notification APIs
 	Screen        bool `json:"screen" env:"VIKRAM_PERMISSIONS_SCREEN"`                 // Allow screenshot capture
+	ComputerUse   bool `json:"computer_use" env:"VIKRAM_PERMISSIONS_COMPUTER_USE"`     // Allow CUA desktop automation
 }
 
 // VoiceConfig configures the voice I/O pipeline.
@@ -283,6 +285,14 @@ type MCPConfig struct {
 	Servers []MCPServerConfig `json:"servers"`
 }
 
+// CUAConfig configures the CUA Driver integration for native macOS computer-use.
+// The CUA Driver (cua-driver) must be installed separately.
+type CUAConfig struct {
+	Enabled    bool   `json:"enabled" env:"VIKRAM_CUA_ENABLED"`         // Enable CUA desktop automation
+	DriverPath string `json:"driver_path,omitempty"`                    // Path to cua-driver binary (default: "cua-driver" from PATH)
+	Timeout    int    `json:"timeout,omitempty"`                        // Per-tool timeout in seconds (default: 30)
+}
+
 func DefaultWorkspaceDir() string {
 	return filepath.Join(HomeDir(), "workspace")
 }
@@ -455,6 +465,11 @@ func DefaultConfig() *Config {
 			Addr:    ":18791",
 			APIKey:  "",
 		},
+		CUA: CUAConfig{
+			Enabled:    false,
+			DriverPath: "cua-driver",
+			Timeout:    30,
+		},
 	}
 }
 
@@ -484,6 +499,11 @@ func LoadConfig(path string) (*Config, error) {
 	// template-style tags that caarlos0/env cannot resolve, so we do it here.
 	applyProviderEnvOverrides(cfg)
 	cfg.normalizeWorkspacePaths()
+
+	// Warn when API keys appear to be plaintext literals (not ${ENV_VAR} refs).
+	// This is a defence-in-depth nudge — config.json is stored with 0600 but
+	// plaintext keys can still leak via backups, dotfile repos, or log output.
+	warnPlaintextKeys(cfg)
 
 	return cfg, nil
 }
@@ -720,4 +740,53 @@ func expandHome(path string) string {
 		return home
 	}
 	return path
+}
+
+// isPlaintextKey returns true if s looks like a literal API key rather than
+// an environment variable reference (${VAR_NAME}) or an empty/placeholder value.
+func isPlaintextKey(s string) bool {
+	if s == "" || strings.HasPrefix(s, "${") {
+		return false
+	}
+	// Common placeholders from config.example.json
+	lower := strings.ToLower(s)
+	if strings.HasPrefix(lower, "your_") || lower == "pplx-xxx" {
+		return false
+	}
+	return true
+}
+
+// warnPlaintextKeys emits a one-time security warning to stderr when plaintext
+// API keys are found in the loaded config.  This nudges users toward the safer
+// ${ENV_VAR} reference pattern without blocking startup.
+func warnPlaintextKeys(cfg *Config) {
+	type entry struct {
+		name string
+		key  string
+	}
+	keys := []entry{
+		{"anthropic", cfg.Providers.Anthropic.APIKey},
+		{"openai", cfg.Providers.OpenAI.APIKey},
+		{"openrouter", cfg.Providers.OpenRouter.APIKey},
+		{"gemini", cfg.Providers.Gemini.APIKey},
+		{"groq", cfg.Providers.Groq.APIKey},
+		{"deepseek", cfg.Providers.DeepSeek.APIKey},
+		{"nvidia", cfg.Providers.Nvidia.APIKey},
+		{"mistral", cfg.Providers.Mistral.APIKey},
+		{"xai", cfg.Providers.XAI.APIKey},
+		{"v1_api", cfg.V1API.APIKey},
+	}
+
+	var found []string
+	for _, k := range keys {
+		if isPlaintextKey(k.key) {
+			found = append(found, k.name)
+		}
+	}
+
+	if len(found) > 0 {
+		fmt.Fprintf(os.Stderr, "⚠ Security: plaintext API keys detected for: %s\n", strings.Join(found, ", "))
+		fmt.Fprintf(os.Stderr, "  Consider using ${ENV_VAR} references in config.json instead.\n")
+		fmt.Fprintf(os.Stderr, "  Example: \"api_key\": \"${OPENAI_API_KEY}\"\n")
+	}
 }

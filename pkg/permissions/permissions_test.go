@@ -101,8 +101,8 @@ func TestGlobalSingleton(t *testing.T) {
 
 func TestAllFeatures(t *testing.T) {
 	features := AllFeatures()
-	if len(features) != 10 {
-		t.Errorf("expected 10 features, got %d", len(features))
+	if len(features) != 11 {
+		t.Errorf("expected 11 features, got %d", len(features))
 	}
 }
 

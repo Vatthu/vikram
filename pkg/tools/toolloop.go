@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/Vatthu/vikram/pkg/bus"
@@ -141,6 +142,13 @@ func RunToolLoop(ctx context.Context, config ToolLoopConfig, messages []provider
 			contentForLLM := toolResult.ForLLM
 			if contentForLLM == "" && toolResult.Err != nil {
 				contentForLLM = toolResult.Err.Error()
+			}
+
+			// Wrap tool output in boundary markers to help the LLM distinguish
+			// untrusted tool output from its own instructions.  This mitigates
+			// indirect prompt injection from file contents, web pages, etc.
+			if contentForLLM != "" && !toolResult.IsError {
+				contentForLLM = "<tool_output>\n" + contentForLLM + "\n</tool_output>"
 			}
 
 			// Add tool result message
@@ -302,8 +310,11 @@ func (sm *SubagentManager) Spawn(ctx context.Context, task, label string, tc Too
 		subagentMessages = stub.BuildMessages(nil, "", task, nil, tc.Channel, tc.ChatID)
 	}
 	// Inject role-specific system prompt when the agent entry carries one.
+	// Sanitize the system prompt to prevent prompt injection via task parameter.
 	if agentSysPrompt != "" && len(subagentMessages) > 0 && subagentMessages[0].Role == "system" {
-		subagentMessages[0].Content += "\n\n## Role-Specific Instructions\n\n" + agentSysPrompt
+		// Strip any system-prompt override attempts from the injected prompt.
+		sanitized := strings.ReplaceAll(agentSysPrompt, "## Role-Specific Instructions", "")
+		subagentMessages[0].Content += "\n\n## Role-Specific Instructions\n\n" + sanitized
 	}
 
 	go func() {
@@ -380,8 +391,10 @@ func (sm *SubagentManager) RunToolLoop(ctx context.Context, task, label, channel
 		subagentMessages = stub.BuildMessages(nil, "", task, nil, channel, chatID)
 	}
 	// Inject role-specific system prompt when the agent entry carries one.
+	// Sanitize the system prompt to prevent prompt injection via task parameter.
 	if agentSysPrompt != "" && len(subagentMessages) > 0 && subagentMessages[0].Role == "system" {
-		subagentMessages[0].Content += "\n\n## Role-Specific Instructions\n\n" + agentSysPrompt
+		sanitized := strings.ReplaceAll(agentSysPrompt, "## Role-Specific Instructions", "")
+		subagentMessages[0].Content += "\n\n## Role-Specific Instructions\n\n" + sanitized
 	}
 
 	toolLoopConfig := ToolLoopConfig{
